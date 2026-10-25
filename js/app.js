@@ -3,7 +3,7 @@ const UNITS = window.UNITS || [];
 /* ============ STATE & STORAGE ============ */
 const KEY = "ielts45-progress-v2";
 function load(){ try{ return JSON.parse(localStorage.getItem(KEY)) || {}; }catch(e){ return {}; } }
-const P = Object.assign({known:{},scores:{},drafts:{},spoke:{}}, load());
+const P = Object.assign({known:{},scores:{},drafts:{},spoke:{},custom:{},edits:{},hidden:{}}, load());
 function save(){ try{ localStorage.setItem(KEY, JSON.stringify(P)); }catch(e){} }
 
 const TABS = [["vocab","Từ vựng"],["grammar","Ngữ pháp"],["reading","Reading"],["listening","Listening"],["writing","Writing"],["speaking","Speaking"]];
@@ -211,9 +211,34 @@ const VMODES = {
   colloc: {field:"collocs", key:":col:", qid:":col",   unit:"cụm", Unit:"Cụm", name:"Collocation", gapName:"collocation",
            tip:"Collocation là những từ người bản xứ hay đi cùng nhau, ví dụ “make progress” chứ không nói “do progress”. Dùng đúng collocation giúp tăng điểm Lexical Resource."}
 };
+/* Danh sách từ của một chế độ, đã gộp phần người học tự sửa / thêm / xóa (lưu trong localStorage) */
+function userList(u, m){
+  const pre = u.id+":"+m+":", out = [];
+  (u[VMODES[m].field]||[]).forEach(x => {
+    const id = "b:"+x.w; if(P.hidden[pre+id]) return;
+    const e = P.edits[pre+id]; out.push(Object.assign({}, x, e||{}, {_id:id, _edited:!!e}));
+  });
+  (P.custom[u.id+":"+m]||[]).forEach(x => out.push(Object.assign({g:"Từ của tôi"}, x, {_custom:true})));
+  return out;
+}
+function hasMode(u, m){ return m==="word" || (u[VMODES[m].field]||[]).length || (P.custom[u.id+":"+m]||[]).length; }
 function vocabPool(u){
-  const m = VMODES[S.vmode] && (u[VMODES[S.vmode].field]||[]).length ? S.vmode : "word", M = VMODES[m];
-  return {list: u[M.field], key: u.id + M.key, qid: u.id + M.qid, np: m!=="word", M, mode: m};
+  const m = VMODES[S.vmode] && hasMode(u, S.vmode) ? S.vmode : "word", M = VMODES[m];
+  return {list: userList(u, m), key: u.id + M.key, qid: u.id + M.qid, np: m!=="word", M, mode: m};
+}
+function editorHTML(u, V){
+  if(!S.edit || S.edit.u !== u.id || S.edit.m !== V.mode) return "";
+  const x = S.edit.id === "new" ? {g:"Từ của tôi"} : V.list.find(y => y._id === S.edit.id);
+  if(!x) return "";
+  const f = (n, label, ph, req) => `<label class="ve-f"><span class="small muted">${label}${req?" *":""}</span><input name="${n}" value="${esc(x[n]||"")}" placeholder="${esc(ph)}" ${req?"required":""} autocomplete="off"></label>`;
+  const extra = S.edit.id === "new" ? "" : x._custom
+    ? `<button class="btn" type="button" data-act="vdel">🗑 Xóa ${V.M.unit} này</button>`
+    : `${x._edited?`<button class="btn" type="button" data-act="vreset">↺ Khôi phục bản gốc</button>`:""}<button class="btn" type="button" data-act="vdel">🗑 Ẩn ${V.M.unit} này</button>`;
+  return `<form class="sheet vedit" id="vedit"><h3>${S.edit.id==="new" ? `Thêm ${V.M.unit} mới` : `Sửa “${esc(x.w)}”`} <span class="muted small">· ${V.M.name}</span></h3>
+    <div class="ve-grid">${f("w", V.M.Unit+" tiếng Anh", V.mode==="word"?"vd: persevere":"vd: make progress", true)}${f("vi", "Nghĩa tiếng Việt", "vd: tiến bộ", true)}
+      ${f("p", "Loại từ", "n / v / adj / phrase…")}${f("ipa", "Phiên âm", "/ˈwɜːd/")}
+      ${f("ex", "Câu ví dụ", "Viết một câu có dùng từ này")}${f("g", "Nhóm", "vd: Từ của tôi")}</div>
+    <div class="row" style="margin-top:12px"><button class="btn primary" type="submit">Lưu</button><button class="btn" type="button" data-act="vcancel">Hủy</button><span style="flex:1"></span>${extra}</div></form>`;
 }
 function vocabDeck(u){
   const V = vocabPool(u), all = V.list.map((_,i)=>i);
@@ -230,6 +255,13 @@ function gapQuestions(pool, n){
 }
 function vVocab(u){
   const V = vocabPool(u), pool = V.list;
+  const nHidden = Object.keys(P.hidden).filter(k => k.startsWith(u.id+":"+V.mode+":")).length;
+  const tools = `<div class="row ve-tools"><button class="btn small primary" type="button" data-act="vnew">＋ Thêm ${V.M.unit}</button>
+    ${nHidden?`<button class="btn small" type="button" data-act="vunhide">Hiện lại ${nHidden} ${V.M.unit} đã ẩn</button>`:""}
+    <span style="flex:1"></span><button class="btn small" type="button" data-act="vexport">⬇ Sao lưu</button>
+    <label class="btn small">⬆ Khôi phục<input type="file" id="vimport" accept=".json,application/json" hidden></label></div>
+    ${S.note?`<p class="small muted" role="status" style="margin:-6px 0 12px">${esc(S.note)}</p>`:""}`; S.note = "";
+  if(!pool.length) return tools + editorHTML(u, V) + `<div class="sheet"><p class="muted">Chưa có ${V.M.unit} nào. Bấm “Thêm ${V.M.unit}” để bắt đầu.</p></div>`;
   const deck = vocabDeck(u); S.card = ((S.card % deck.length) + deck.length) % deck.length;
   const v = pool[deck[S.card]], k = V.key+v.w;
   const nKnown = pool.filter(x=>P.known[V.key+x.w]).length;
@@ -238,13 +270,13 @@ function vVocab(u){
   const list = pool.map((x,i)=>{
     const head = x.g && x.g!==lastG ? `<p class="eyebrow wl-group">${esc(x.g)}</p>` : ""; lastG = x.g;
     return head + `<div class="wl"><span><b>${esc(x.w)}</b> <span class="ipa">${esc(x.ipa)}</span><br><span class="muted small">${esc(x.vi)}</span></span>
-      <span class="row">${P.known[V.key+x.w]?'<span class="tick">đã thuộc</span>':''}<button class="btn small" type="button" data-act="goto" data-i="${i}">Xem</button></span></div>`;
+      <span class="row">${P.known[V.key+x.w]?'<span class="tick">đã thuộc</span>':''}${x._custom?'<span class="tick mine">của tôi</span>':x._edited?'<span class="tick mine">đã sửa</span>':''}<button class="btn small" type="button" data-act="goto" data-i="${i}">Xem</button><button class="btn small" type="button" data-act="vedit" data-id="${esc(x._id)}" aria-label="Sửa ${esc(x.w)}">✎</button></span></div>`;
   }).join("");
-  const avail = Object.keys(VMODES).filter(m => (u[VMODES[m].field]||[]).length);
+  const avail = Object.keys(VMODES).filter(m => hasMode(u, m));
   const modes = avail.length > 1 ? `<div class="seg" role="tablist" aria-label="Loại từ vựng">${avail.map(m=>
-      `<button type="button" role="tab" data-act="vmode" data-m="${m}" aria-selected="${V.mode===m}">${VMODES[m].name} · ${u[VMODES[m].field].length}</button>`).join("")}</div>` : "";
+      `<button type="button" role="tab" data-act="vmode" data-m="${m}" aria-selected="${V.mode===m}">${VMODES[m].name} · ${userList(u, m).length}</button>`).join("")}</div>` : "";
   const tip = V.M.tip ? `<p class="muted small" style="margin:-6px 0 14px">${V.M.tip}</p>` : "";
-  return modes + tip + `<div class="flash-area">
+  return modes + tip + tools + editorHTML(u, V) + `<div class="flash-area">
     <div class="stack">
       <button type="button" class="card ${S.flipped?'flipped':''}" data-act="flip" aria-label="Lật thẻ">
         <div class="card-in">
@@ -386,6 +418,19 @@ document.addEventListener("click", e => {
   else if(a==="onlynew"){ S.onlyNew=b.checked; S.card=0; S.flipped=false; render(); }
   else if(a==="known"){ const k=b.dataset.k; if(P.known[k]) delete P.known[k]; else { P.known[k]=true; if(!S.onlyNew) S.card++; S.flipped=false; } save(); render(); }
   else if(a==="newvq"){ S.vq=null; render(); }
+  else if(a==="vnew"){ S.edit={u:u.id, m:vocabPool(u).mode, id:"new"}; render(); focusEditor(); }
+  else if(a==="vedit"){ S.edit={u:u.id, m:vocabPool(u).mode, id:b.dataset.id}; render(); focusEditor(); }
+  else if(a==="vcancel"){ S.edit=null; render(); }
+  else if(a==="vdel"){ const V=vocabPool(u), x=V.list.find(y=>y._id===S.edit.id);
+    if(!x) return;
+    if(!b.dataset.sure){ b.dataset.sure="1"; b.textContent="Bấm lần nữa để xác nhận"; b.classList.add("danger"); return; }
+    if(x._custom){ const c=P.custom[u.id+":"+V.mode]; c.splice(c.findIndex(y=>y._id===x._id),1); }
+    else P.hidden[u.id+":"+V.mode+":"+x._id]=true;
+    vocabChanged(); }
+  else if(a==="vreset"){ delete P.edits[u.id+":"+vocabPool(u).mode+":"+S.edit.id]; vocabChanged(); }
+  else if(a==="vunhide"){ const pre=u.id+":"+vocabPool(u).mode+":"; Object.keys(P.hidden).filter(k=>k.startsWith(pre)).forEach(k=>delete P.hidden[k]); vocabChanged(); }
+  else if(a==="vexport"){ const blob=new Blob([JSON.stringify({app:"hiking-ielts", custom:P.custom, edits:P.edits, hidden:P.hidden}, null, 1)], {type:"application/json"});
+    const l=document.createElement("a"); l.href=URL.createObjectURL(blob); l.download="tu-vung-cua-toi.json"; l.click(); setTimeout(()=>URL.revokeObjectURL(l.href), 1000); }
   else if(a==="say"){ stopSpeech(); speak(b.dataset.text); }
   else if(a==="play"){ playDialogue(); }
   else if(a==="stop"){ stopSpeech(); }
@@ -395,7 +440,19 @@ document.addEventListener("click", e => {
   else if(a==="spoke"){ P.spoke[u.id]=!P.spoke[u.id]; save(); render(); }
 });
 
+function focusEditor(){ const f=$("#vedit"); if(f){ f.scrollIntoView({behavior:"smooth", block:"center"}); f.querySelector("input").focus({preventScroll:true}); } }
+function vocabChanged(){ S.edit=null; S.vq=null; S.flipped=false; save(); render(); }
 document.addEventListener("submit", e => {
+  if(e.target.id === "vedit"){ e.preventDefault();
+    const u = UNITS[S.u], m = S.edit.m, d = {}, fd = new FormData(e.target);
+    ["w","vi","p","ipa","ex","g"].forEach(k => d[k] = (fd.get(k)||"").trim());
+    if(!d.w || !d.vi) return;
+    if(!d.g) d.g = "Từ của tôi";
+    if(S.edit.id === "new"){ d._id = "c:"+Date.now().toString(36); (P.custom[u.id+":"+m] = P.custom[u.id+":"+m] || []).push(d); }
+    else if(S.edit.id.startsWith("c:")){ const c = P.custom[u.id+":"+m], i = c.findIndex(y=>y._id===S.edit.id); c[i] = Object.assign(c[i], d); }
+    else P.edits[u.id+":"+m+":"+S.edit.id] = d;
+    vocabChanged(); return;
+  }
   const f = e.target.closest("form.quiz"); if(!f) return; e.preventDefault();
   const [got, total] = gradeQuiz(f);
   f.querySelector(".qscore").innerHTML = scoreHTML(got, total);
@@ -404,6 +461,15 @@ document.addEventListener("submit", e => {
 document.addEventListener("reset", e => { const f=e.target.closest("form.quiz"); if(!f) return;
   setTimeout(()=>{ f.querySelectorAll(".opt").forEach(o=>o.classList.remove("right","wrong")); f.querySelectorAll(".gap,.pick-sel").forEach(o=>o.classList.remove("right","wrong"));
     f.querySelectorAll(".fix").forEach(x=>{x.textContent="";x.className="fix";}); f.querySelectorAll(".explain").forEach(x=>x.hidden=true); f.querySelector(".qscore").innerHTML=""; }); });
+
+document.addEventListener("change", e => {
+  if(e.target.id !== "vimport" || !e.target.files[0]) return;
+  e.target.files[0].text().then(t => { const d = JSON.parse(t);
+    if(d.app !== "hiking-ielts") throw 0;
+    ["custom","edits","hidden"].forEach(k => P[k] = Object.assign(P[k], d[k]||{}));
+    S.note = "Đã khôi phục từ vựng từ file sao lưu."; vocabChanged();
+  }).catch(() => { S.note = "File không hợp lệ, hãy chọn file tu-vung-cua-toi.json."; render(); });
+});
 
 let draftT;
 document.addEventListener("input", e => {

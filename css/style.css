@@ -200,3 +200,14 @@ details[open] summary{margin-bottom:8px}
   h1{font-size:1.6rem}
   .word{font-size:1.8rem}
 }
+.ve-tools{margin-bottom:14px;gap:8px}
+.ve-tools label.btn{cursor:pointer}
+.vedit{margin-bottom:18px;border-color:var(--accent)}
+.vedit h3{margin-bottom:12px}
+.ve-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 14px}
+.ve-f{display:flex;flex-direction:column;gap:4px}
+.ve-f input{font:inherit;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--ink)}
+.ve-f input:focus{outline:2px solid var(--accent);outline-offset:1px}
+.tick.mine{background:none;border:1px solid var(--line);color:var(--muted)}
+@media (max-width:640px){.ve-grid{grid-template-columns:1fr}}
+.btn.danger{border-color:var(--bad);color:var(--bad)}
