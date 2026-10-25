@@ -93,7 +93,12 @@ main{min-width:0}
 
 /* vocab */
 .flash-area{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px}
-.card{perspective:1000px;min-height:240px;cursor:pointer;border:0;background:none;padding:0;text-align:left;width:100%}
+.card{perspective:1000px;min-height:240px;cursor:pointer;border:0;background:none;padding:0;text-align:left;width:100%;touch-action:pan-y;user-select:none;-webkit-user-select:none;transition:transform .16s ease,opacity .16s ease}
+.card.dragging{transition:none;cursor:grabbing}
+.card.enter-right{animation:cardInR .22s ease}
+.card.enter-left{animation:cardInL .22s ease}
+@keyframes cardInR{from{transform:translateX(40px);opacity:0}}
+@keyframes cardInL{from{transform:translateX(-40px);opacity:0}}
 .card-in{position:relative;width:100%;height:100%;min-height:240px;transition:transform .45s;transform-style:preserve-3d}
 .card.flipped .card-in{transform:rotateY(180deg)}
 .face{position:absolute;inset:0;backface-visibility:hidden;border:1px solid var(--line);border-radius:14px;background:var(--sheet);padding:22px;display:flex;flex-direction:column;gap:8px;justify-content:center}
@@ -111,7 +116,7 @@ main{min-width:0}
 .wl-group{margin:14px 0 2px;color:var(--accent)}
 .wl b{font-weight:600}
 .tick{font-size:.75rem;padding:2px 8px;border-radius:99px;background:var(--ok-soft);color:var(--ok)}
-@media (prefers-reduced-motion:reduce){.card-in{transition:none}}
+@media (prefers-reduced-motion:reduce){.card-in,.card{transition:none}.card.enter-right,.card.enter-left{animation:none}}
 
 /* quiz */
 .qhead{font-weight:600;padding:14px 0 4px;border-bottom:1px solid var(--line)}

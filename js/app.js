@@ -278,17 +278,14 @@ function vVocab(u){
   const tip = V.M.tip ? `<p class="muted small" style="margin:-6px 0 14px">${V.M.tip}</p>` : "";
   return modes + tip + tools + editorHTML(u, V) + `<div class="flash-area">
     <div class="stack">
-      <button type="button" class="card ${S.flipped?'flipped':''}" data-act="flip" aria-label="Lật thẻ">
+      <button type="button" class="card ${S.flipped?'flipped':''} ${S.enter?'enter-'+S.enter:''}" data-act="flip" aria-label="Lật thẻ. Quẹt trái hoặc phải, hoặc dùng phím mũi tên, để đổi thẻ">
         <div class="card-in">
-          <div class="face"><span class="pos">${esc(v.p)}</span><span class="word">${esc(v.w)}</span><span class="ipa">${esc(v.ipa)}</span><span class="hint">Bấm để xem nghĩa · thẻ ${S.card+1}/${deck.length}${v.g?" · "+esc(v.g):""}</span></div>
+          <div class="face"><span class="pos">${esc(v.p)}</span><span class="word">${esc(v.w)}</span><span class="ipa">${esc(v.ipa)}</span><span class="hint">Bấm để xem nghĩa · quẹt ← → để đổi thẻ · ${S.card+1}/${deck.length}${v.g?" · "+esc(v.g):""}</span></div>
           <div class="face back"><span class="eyebrow">Nghĩa</span><h2>${esc(v.vi)}</h2><span class="ex">“${esc(v.ex)}”</span><span class="hint">Bấm để lật lại</span></div>
         </div></button>
       <div class="row">
         <button class="btn" type="button" data-act="say" data-text="${esc(v.w)}">🔊 Nghe từ</button>
         <button class="btn" type="button" data-act="say" data-text="${esc(v.ex)}">🔊 Câu ví dụ</button>
-        <span style="flex:1"></span>
-        <button class="btn" type="button" data-act="card" data-d="-1">← Trước</button>
-        <button class="btn" type="button" data-act="card" data-d="1">Sau →</button>
       </div>
       <div class="row">
         <button class="btn ${P.known[k]?'':'primary'}" type="button" data-act="known" data-k="${esc(k)}">${P.known[k]?'Bỏ đánh dấu':`✓ Tôi đã thuộc ${V.M.unit} này`}</button>
@@ -411,8 +408,7 @@ document.addEventListener("click", e => {
   else if(a==="review"){ S.view="review"; S.r=+b.dataset.r; S.rq=null; render(); window.scrollTo(0,0); }
   else if(a==="newrq"){ S.rq=null; render(); }
   else if(a==="tab"){ S.tab=b.dataset.tab; render(); }
-  else if(a==="flip"){ S.flipped=!S.flipped; b.classList.toggle("flipped", S.flipped); }
-  else if(a==="card"){ S.card += +b.dataset.d; S.flipped=false; render(); }
+  else if(a==="flip"){ if(b.dataset.swiped){ delete b.dataset.swiped; return; } S.flipped=!S.flipped; b.classList.toggle("flipped", S.flipped); }
   else if(a==="goto"){ S.onlyNew=false; S.card=+b.dataset.i; S.flipped=false; render(); window.scrollTo({top:0,behavior:"smooth"}); }
   else if(a==="vmode"){ S.vmode=b.dataset.m; S.card=0; S.flipped=false; render(); }
   else if(a==="onlynew"){ S.onlyNew=b.checked; S.card=0; S.flipped=false; render(); }
@@ -440,6 +436,37 @@ document.addEventListener("click", e => {
   else if(a==="spoke"){ P.spoke[u.id]=!P.spoke[u.id]; save(); render(); }
 });
 
+/* Quẹt thẻ: trái = thẻ sau, phải = thẻ trước (chuột, cảm ứng và phím mũi tên) */
+function nextCard(d){ S.card += d; S.flipped = false; S.enter = d > 0 ? "right" : "left"; render(); S.enter = ""; }
+let SW = null;
+document.addEventListener("pointerdown", e => {
+  const c = e.target.closest(".card"); if(!c || e.button > 0) return;
+  SW = {c, id:e.pointerId, x:e.clientX, y:e.clientY, dx:0, drag:false};
+});
+document.addEventListener("pointermove", e => {
+  if(!SW || e.pointerId !== SW.id) return;
+  const dx = e.clientX - SW.x, dy = e.clientY - SW.y;
+  if(!SW.drag && Math.abs(dx) > 10 && Math.abs(dx) > Math.abs(dy)){ SW.drag = true; SW.c.classList.add("dragging"); try{ SW.c.setPointerCapture(e.pointerId); }catch(_){} }
+  if(SW.drag){ SW.dx = dx; SW.c.style.transform = `translateX(${dx}px) rotate(${dx/25}deg)`; }
+});
+function endSwipe(e){
+  if(!SW || e.pointerId !== SW.id) return;
+  const s = SW; SW = null; if(!s.drag) return;
+  s.c.dataset.swiped = "1"; setTimeout(() => delete s.c.dataset.swiped, 50);
+  s.c.classList.remove("dragging");
+  if(Math.abs(s.dx) > Math.min(90, s.c.offsetWidth/4)){
+    const d = s.dx < 0 ? 1 : -1;
+    s.c.style.transform = `translateX(${-d*120}%) rotate(${-d*12}deg)`; s.c.style.opacity = "0";
+    setTimeout(() => nextCard(d), 160);
+  } else s.c.style.transform = "";
+}
+document.addEventListener("pointerup", endSwipe);
+document.addEventListener("pointercancel", endSwipe);
+document.addEventListener("keydown", e => {
+  if(S.view!=="unit" || S.tab!=="vocab" || !$(".card") || /INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)) return;
+  if(e.key==="ArrowRight") nextCard(1); else if(e.key==="ArrowLeft") nextCard(-1); else return;
+  e.preventDefault();
+});
 function focusEditor(){ const f=$("#vedit"); if(f){ f.scrollIntoView({behavior:"smooth", block:"center"}); f.querySelector("input").focus({preventScroll:true}); } }
 function vocabChanged(){ S.edit=null; S.vq=null; S.flipped=false; save(); render(); }
 document.addEventListener("submit", e => {
