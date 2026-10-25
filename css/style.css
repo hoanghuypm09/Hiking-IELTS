@@ -267,3 +267,6 @@ details[open] summary{margin-bottom:8px}
 .cardtype input.right{border-color:var(--ok);background:var(--ok-soft)}
 .cardtype input.wrong{border-color:var(--bad);background:var(--bad-soft)}
 .cardtype #cardmsg{flex-basis:100%}
+.cardinfo{display:flex;flex-direction:column;gap:2px;font-size:.85rem;line-height:1.45;color:var(--muted);margin-bottom:-6px}
+.cardinfo b{color:var(--ink);font-weight:600}
+.cardinfo .ex{font-style:italic}
