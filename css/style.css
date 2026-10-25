@@ -315,3 +315,17 @@ details[open] summary{margin-bottom:8px}
 .wl-search input{width:100%;box-sizing:border-box;font:inherit;font-size:.92rem;padding:8px 12px 8px 34px;border:1px solid var(--line);border-radius:10px;background:var(--paper) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%237a859c' stroke-width='2.2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='m20 20-3.5-3.5'/%3E%3C/svg%3E") no-repeat 11px center;color:var(--ink)}
 .wl-search input:focus{outline:none;border-color:var(--accent);background-color:var(--sheet)}
 .wl[hidden],.wl-group[hidden]{display:none}
+/* Đồng hồ thời gian thực ở header */
+.clock{display:flex;align-items:center;gap:8px;padding:4px 12px 4px 6px;border:1px solid var(--line);border-radius:99px;background:var(--paper);line-height:1.15}
+.clk-ic{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;flex:0 0 28px}
+.clk-ic svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.clk-tx{display:flex;flex-direction:column}
+.clk-tx b{font-variant-numeric:tabular-nums;font-size:.92rem;letter-spacing:.02em}
+.clk-tx span{font-size:.7rem;color:var(--muted)}
+.clock[data-p="dawn"] .clk-ic{background:#FDE7D3;color:#C9792B}
+.clock[data-p="morn"] .clk-ic{background:#FFF1BF;color:#C98A00}
+.clock[data-p="noon"] .clk-ic{background:#FFE47A;color:#A86A00}
+.clock[data-p="aft"] .clk-ic{background:#FCE3C4;color:#C26A1B}
+.clock[data-p="dusk"] .clk-ic{background:#F9D3CC;color:#B24A3A}
+.clock[data-p="night"] .clk-ic{background:#262F4D;color:#C9D4FF}
+@media (max-width:720px){ .top .pill{display:none} .clock{padding-right:10px} }

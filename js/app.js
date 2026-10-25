@@ -892,3 +892,24 @@ document.addEventListener("input", e => {
 });
 
 render();
+
+/* ============ ĐỒNG HỒ Ở HEADER ============ */
+const CLK = {
+  dawn:  ["Bình minh", '<svg viewBox="0 0 24 24"><path d="M12 3v3M4.9 8.9l1.4 1.4M19.1 8.9l-1.4 1.4M2 17h3M19 17h3M7 17a5 5 0 0 1 10 0"/><path d="M2 21h20"/></svg>'],
+  morn:  ["Buổi sáng", '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/></svg>'],
+  noon:  ["Buổi trưa", '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><path d="M12 1.5v3M12 19.5v3M1.5 12h3M19.5 12h3M4.6 4.6l2.1 2.1M17.3 17.3l2.1 2.1M4.6 19.4l2.1-2.1M17.3 6.7l2.1-2.1"/></svg>'],
+  aft:   ["Buổi chiều", '<svg viewBox="0 0 24 24"><circle cx="9" cy="9" r="3.5"/><path d="M9 2.5v1.5M2.5 9H4M4.4 4.4l1 1M13.6 4.4l-1 1"/><path d="M8 20h9.5a3.5 3.5 0 0 0 0-7 5 5 0 0 0-9.6 1.5A2.8 2.8 0 0 0 8 20z"/></svg>'],
+  dusk:  ["Hoàng hôn", '<svg viewBox="0 0 24 24"><path d="M12 10V7M9.5 5.5 12 3l2.5 2.5M4.9 10.9l1.4 1.4M19.1 10.9l-1.4 1.4M2 18h3M19 18h3M7 18a5 5 0 0 1 10 0"/><path d="M2 21.5h20"/></svg>'],
+  night: ["Buổi tối", '<svg viewBox="0 0 24 24"><path d="M20.5 14.5A8.5 8.5 0 1 1 9.5 3.5a7 7 0 0 0 11 11z"/><path d="M17 3.5v3M15.5 5h3"/></svg>']
+};
+function clkPeriod(h, m){ const t = h + m/60; return t < 4.5 ? "night" : t < 6.5 ? "dawn" : t < 11 ? "morn" : t < 13.5 ? "noon" : t < 17.5 ? "aft" : t < 19 ? "dusk" : "night"; }
+function clockTick(){
+  const el = document.getElementById("clock"); if(!el) return;
+  const d = new Date(), h = d.getHours(), m = d.getMinutes(), pad = n => String(n).padStart(2,"0");
+  const per = clkPeriod(h, m), [name, svg] = CLK[per];
+  $("#clktime").textContent = `${pad(h)}:${pad(m)}:${pad(d.getSeconds())}`;
+  $("#clkday").textContent = `${name} · ${["CN","T2","T3","T4","T5","T6","T7"][d.getDay()]}, ${pad(d.getDate())}/${pad(d.getMonth()+1)}`;
+  if(el.dataset.p !== per){ el.dataset.p = per; $("#clkic").innerHTML = svg; el.title = name; }
+  setTimeout(clockTick, 1000 - d.getMilliseconds() + 5);
+}
+clockTick();
