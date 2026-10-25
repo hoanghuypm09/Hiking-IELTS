@@ -441,6 +441,11 @@ function chartText(c){
   if(c.type==="process") return c.title+": "+c.steps.map((x,i)=>`${i+1}. ${x}`).join(" ");
   return c.title||"";
 }
+function modelName(m){
+  if(/^gemini-/.test(m)) return "Gemini " + m.slice(7).replace(/-/g," ").replace(/\b\w/g, c=>c.toUpperCase());
+  if(/llama-3\.3-70b/.test(m)) return "Llama 3.3 70B (Cloudflare)";
+  return m;
+}
 function gradeResultHTML(g){
   const r = g.result, col = b => b>=6.5?"ok":b>=5?"mid":"low";
   return `<div class="grade">
@@ -449,7 +454,7 @@ function gradeResultHTML(g){
     ${r.strengths.length?`<h4>👍 Điểm tốt</h4><ul>${r.strengths.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:""}
     ${r.improvements.length?`<h4>🎯 Cần cải thiện</h4><ul>${r.improvements.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:""}
     ${r.corrections.length?`<h4>✏️ Sửa lỗi</h4><div class="fixes">${r.corrections.map(c=>`<div class="fixrow"><s>${esc(c.original)}</s><span>→ <b>${esc(c.better)}</b></span><span class="muted small">${esc(c.why)}</span></div>`).join("")}</div>`:""}
-    <p class="muted small">Chấm lúc ${new Date(g.at).toLocaleString("vi-VN")} · bài ${g.words} từ${g.words!==g.now?` (bài hiện tại ${g.now} từ, hãy chấm lại nếu đã sửa)`:""}. Đây là điểm do AI ước lượng để tham khảo, không phải điểm thi chính thức.</p></div>`;
+    <p class="muted small">${r.model?`Chấm bởi ${esc(modelName(r.model))} · `:""}${new Date(g.at).toLocaleString("vi-VN")} · bài ${g.words} từ${g.words!==g.now?` (bài hiện tại ${g.now} từ, hãy chấm lại nếu đã sửa)`:""}. Đây là điểm do AI ước lượng để tham khảo, không phải điểm thi chính thức.</p></div>`;
 }
 function aiGradeHTML(u, C, n){
   const url = graderUrl(), key = draftKey(u, C.i), g = P.grades[key];
@@ -457,7 +462,7 @@ function aiGradeHTML(u, C, n){
     <p class="small">Chưa kết nối máy chấm. Làm theo <a href="${GUIDE_URL}" target="_blank" rel="noopener">hướng dẫn cài đặt (khoảng 10 phút, miễn phí)</a>, rồi dán địa chỉ máy chấm vào đây:</p>
     <div class="row"><input id="graderurl" class="urlin" placeholder="https://hiking-ielts-grader.ten-ban.workers.dev" autocomplete="off" spellcheck="false"><button class="btn primary" type="button" data-act="gradersave">Lưu</button></div></div>`;
   return `<div class="sheet stack"><div class="row" style="justify-content:space-between"><span class="eyebrow">🤖 Chấm bài bằng AI</span><button class="btn small" type="button" data-act="graderedit" title="${esc(url)}">Đổi máy chấm</button></div>
-    <p class="muted small">AI đọc bài của bạn và cho band ước lượng theo 4 tiêu chí IELTS, kèm nhận xét và sửa lỗi. Cần ít nhất 50 từ. Gói miễn phí chấm được khoảng vài chục bài mỗi ngày.</p>
+    <p class="muted small">AI đọc bài của bạn và cho band ước lượng theo 4 tiêu chí IELTS, kèm nhận xét và sửa lỗi. Cần ít nhất 50 từ. Máy chấm tự luân phiên giữa Gemini và Cloudflare khi một bên hết lượt miễn phí.</p>
     <div class="row"><button class="btn primary" type="button" data-act="aigrade" ${S.grading?"disabled":""}>${S.grading?"⏳ Đang chấm… (khoảng 10–30 giây)":g?"Chấm lại bài này":"Chấm bài này"}</button></div>
     ${S.gradeErr?`<p class="small" style="color:var(--bad)">${esc(S.gradeErr)}</p>`:""}
     ${g ? gradeResultHTML(Object.assign({}, g, {now:n})) : ""}</div>`;
