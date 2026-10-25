@@ -287,7 +287,19 @@ const FIGS = {
     <line x1="210" y1="192" x2="210" y2="212" stroke="var(--muted)"/><text x="198" y="226">(6)</text>
     <line x1="342" y1="172" x2="375" y2="135" stroke="var(--muted)"/><text x="377" y="132">(7)</text>
     <line x1="132" y1="30" x2="180" y2="16" stroke="var(--muted)"/><text x="183" y="18">(8)</text>
-    <text x="196" y="158" style="font-size:11px">deck</text><text x="296" y="232" style="font-size:11px">back wheel</text><text x="44" y="232" style="font-size:11px">front wheel</text></svg>`; }
+    <text x="196" y="158" style="font-size:11px">deck</text><text x="296" y="232" style="font-size:11px">back wheel</text><text x="44" y="232" style="font-size:11px">front wheel</text></svg>`; },
+  ebus(){ return `<svg viewBox="0 0 460 250" role="img" aria-label="Sơ đồ xe buýt điện">
+    <rect x="300" y="6" width="10" height="36" fill="var(--muted)"/><path d="M305 26 L250 50 L262 61" fill="none" stroke="var(--ink)" stroke-width="4" stroke-linejoin="round"/>
+    <rect x="70" y="62" width="300" height="10" rx="3" fill="var(--accent)"/><rect x="90" y="54" width="120" height="8" rx="2" fill="var(--c3)"/>
+    <rect x="40" y="72" width="360" height="110" rx="16" fill="none" stroke="var(--ink)" stroke-width="5"/>
+    <g fill="var(--accent-soft)" stroke="var(--ink)" stroke-width="2">${[0,1,2,3,4].map(i=>`<rect x="${70+i*58}" y="90" width="46" height="40" rx="4"/>`).join("")}</g>
+    <rect x="330" y="140" width="20" height="14" rx="3" fill="var(--c3)"/><rect x="250" y="150" width="54" height="22" rx="4" fill="var(--accent)"/>
+    <circle cx="110" cy="186" r="24" fill="var(--sheet)" stroke="var(--ink)" stroke-width="5"/><circle cx="330" cy="186" r="24" fill="var(--sheet)" stroke="var(--ink)" stroke-width="5"/>
+    <line x1="150" y1="54" x2="150" y2="26" stroke="var(--muted)"/><text x="138" y="20">(1)</text>
+    <line x1="277" y1="172" x2="250" y2="232" stroke="var(--muted)"/><text x="232" y="246">(2)</text>
+    <line x1="350" y1="147" x2="420" y2="130" stroke="var(--muted)"/><text x="422" y="134">(3)</text>
+    <line x1="278" y1="40" x2="350" y2="22" stroke="var(--muted)"/><text x="352" y="24">(4)</text>
+    <text x="64" y="232" style="font-size:11px">front</text><text x="360" y="232" style="font-size:11px">rear wheel</text></svg>`; }
 };
 const PALETTE = ["var(--accent)","var(--ink)","var(--c3)","var(--mark)","var(--muted)"];
 function legend(names, y){ let s="", x=10; names.forEach((n,j)=>{ s+=`<rect x="${x}" y="${y}" width="12" height="12" fill="${PALETTE[j]}" rx="2"/><text x="${x+17}" y="${y+10}">${esc(n)}</text>`; x += 34 + n.length*7; }); return s; }
