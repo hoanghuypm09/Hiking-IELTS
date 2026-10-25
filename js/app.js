@@ -524,7 +524,36 @@ function vGrammar(u){
     <div class="rule">${g.rules.map(r=>`<div class="sheet"><h3>${esc(r.h)}</h3><ul>${r.use.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>
       <p style="margin-top:10px"><mark>${esc(r.form)}</mark></p><p class="ex" style="margin-top:8px">${esc(r.ex)}</p>
       <p class="muted small" style="margin-top:6px">${esc(r.sig)}</p></div>`).join("")}</div>
-    <div class="sheet"><h3 style="margin-bottom:6px">Bài tập · chọn đáp án đúng</h3>${quizHTML(u.id+":grammar", g.quiz.map(shuffleOpts))}</div></div>`;
+    ${gBankHTML(u)}</div>`;
+}
+
+/* Grammar bank: ~100 câu mỗi unit, chia bộ 10 câu, trộn và lọc theo dạng */
+const GTYPES = [["all","Tất cả"],["c","Chọn đáp án"],["g","Điền từ"],["s","Chọn câu đúng"]], GSIZE = 10;
+const gPool = u => u.grammar.quiz.map(q => Object.assign({k:"c"}, q)).concat((window.GRAMMAR_BANK||{})[u.id] || []);
+function gState(u, reset){
+  S.gq = S.gq || {};
+  let st = S.gq[u.id];
+  if(!st) st = S.gq[u.id] = {type:"all"};
+  if(reset || !st.order){
+    const pool = gPool(u).filter(q => st.type==="all" || q.k===st.type);
+    st.pool = pool; st.order = shuffle(pool.map((_,i)=>i)); st.page = 0; st.items = null;
+  }
+  st.pages = Math.max(1, Math.ceil(st.order.length / GSIZE));
+  if(!st.items) st.items = st.order.slice(st.page*GSIZE, st.page*GSIZE+GSIZE).map(i => st.pool[i]).map(q => q.t==="gap" ? q : shuffleOpts(q));
+  return st;
+}
+function gBankHTML(u){
+  const st = gState(u), all = gPool(u);
+  const cnt = k => k==="all" ? all.length : all.filter(q => q.k===k).length;
+  return `<div class="sheet"><div class="gbar"><h3>Bài tập · ${all.length} câu</h3>
+      <div class="seg" role="tablist" aria-label="Dạng bài">${GTYPES.map(([k,l])=>`<button type="button" role="tab" data-act="gtype" data-k="${k}" aria-selected="${st.type===k}">${l} <span class="muted small">${cnt(k)}</span></button>`).join("")}</div></div>
+    <div class="gnav"><button class="btn small" type="button" data-act="gpage" data-d="-1" ${st.page?"":"disabled"} aria-label="Bộ trước">‹</button>
+      <span class="small">Bộ <b>${st.page+1}</b>/${st.pages}</span>
+      <button class="btn small" type="button" data-act="gpage" data-d="1" aria-label="Bộ sau">›</button>
+      <button class="btn small" type="button" data-act="gshuffle">🔀 Đổi bài</button>
+      <span class="muted small">Câu ${st.page*GSIZE+1}–${Math.min(st.order.length,(st.page+1)*GSIZE)} trong ${st.order.length} câu đã trộn</span></div>
+    ${quizHTML(u.id+":grammar", st.items)}
+    <div class="row" style="margin-top:10px;justify-content:flex-end"><button class="btn small" type="button" data-act="gpage" data-d="1">Bộ tiếp theo ›</button></div></div>`;
 }
 
 function vReading(u){
@@ -793,7 +822,7 @@ function renderReview(){
   const a = UNITS[S.r*2], b = UNITS[S.r*2+1];
   if(!S.rq || S.rq.r !== S.r){
     const vocab = vocabQuestions(a.vocab.concat(b.vocab), 8);
-    const gram = shuffle(a.grammar.quiz).slice(0,4).concat(shuffle(b.grammar.quiz).slice(0,4)).map(shuffleOpts);
+    const gram = shuffle(gPool(a)).slice(0,4).concat(shuffle(gPool(b)).slice(0,4)).map(q => q.t==="gap" ? q : shuffleOpts(q));
     S.rq = {r:S.r, items:[{t:"head",text:"Phần 1: Từ vựng Unit "+(S.r*2+1)+"–"+(S.r*2+2)}, ...vocab, {t:"head",text:"Phần 2: Ngữ pháp · "+a.grammar.title+" / "+b.grammar.title}, ...gram]};
   }
   return `<span class="eyebrow">Vocabulary and grammar review</span><h1>Ôn tập Unit ${S.r*2+1}–${S.r*2+2}</h1>
@@ -823,6 +852,9 @@ document.addEventListener("click", e => {
   else if(a==="onlynew"){ S.onlyNew=b.checked; S.card=0; S.flipped=false; render(); }
   else if(a==="known"){ const k=b.dataset.k; if(P.known[k]) delete P.known[k]; else { P.known[k]=true; if(!S.onlyNew) S.card++; S.flipped=false; } save(); render(); }
   else if(a==="newvq"){ S.vq=null; render(); }
+  else if(a==="gtype"){ gState(u).type=b.dataset.k; gState(u, true); render(); }
+  else if(a==="gshuffle"){ gState(u, true); render(); toast("Đã trộn bộ câu mới."); }
+  else if(a==="gpage"){ const st=gState(u); st.page=(st.page + +b.dataset.d + st.pages) % st.pages; if(st.page===0 && +b.dataset.d>0) st.order=shuffle(st.order); st.items=null; render(); const q=document.querySelector(".gnav"); if(q) q.scrollIntoView({block:"nearest"}); }
   else if(a==="set"){ S.si[b.dataset.k]=+b.dataset.i; S.gradeErr=""; S.myedit=null; render(); }
   else if(a==="mynew"){ S.myedit={id:null}; render(); }
   else if(a==="myedit"){ S.myedit={id:b.dataset.id}; render(); }

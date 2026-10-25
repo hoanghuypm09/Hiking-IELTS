@@ -346,3 +346,10 @@ body,.top,.sheet,.card .face,.player{transition:background-color .25s,color .25s
 .myed input:focus,.myed textarea:focus,#mynote:focus{outline:none;border-color:var(--accent);background:var(--sheet)}
 .myed code{font-size:.8rem;background:var(--accent-soft);padding:0 4px;border-radius:4px}
 .myq{white-space:pre-wrap;font-size:.92rem;line-height:1.6;max-height:55vh;overflow:auto;background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:10px 12px;margin-bottom:12px}
+
+/* grammar bank */
+.gbar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.gbar .seg{margin-bottom:0}
+.gnav{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--line)}
+.gnav button[disabled]{opacity:.4;cursor:default}
+.gbar .seg .muted{color:inherit;opacity:.7}
