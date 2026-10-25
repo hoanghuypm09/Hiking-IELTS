@@ -105,6 +105,7 @@ main{min-width:0}
 .wordlist{display:flex;flex-direction:column;max-height:520px;overflow:auto}
 .wl{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;padding:8px 0;border-bottom:1px solid var(--line);align-items:center}
 .wl:last-child{border-bottom:0}
+.wl-group{margin:14px 0 2px;color:var(--accent)}
 .wl b{font-weight:600}
 .tick{font-size:.75rem;padding:2px 8px;border-radius:99px;background:var(--ok-soft);color:var(--ok)}
 @media (prefers-reduced-motion:reduce){.card-in{transition:none}}

@@ -204,14 +204,35 @@ function vocabQuestions(pool, n){
     return {q:`Từ nào nghĩa là “${t.vi}”?`, o, a:o.indexOf(t.w)};
   });
 }
+function vocabDeck(u){
+  const all = u.vocab.map((_,i)=>i);
+  if(!S.onlyNew) return all;
+  const left = all.filter(i => !P.known[u.id+":"+u.vocab[i].w]);
+  return left.length ? left : all;
+}
+function gapQuestions(pool, n){
+  const re = w => new RegExp("\\b"+w.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")+"\\b","i");
+  return shuffle(pool.filter(t => re(t.w).test(t.ex))).slice(0,n).map(t => {
+    const m = t.ex.match(re(t.w))[0];
+    return {t:"gap", q:t.ex.replace(m,"___")+" ("+t.vi+")", a:[m]};
+  });
+}
 function vVocab(u){
-  const v = u.vocab[S.card % u.vocab.length], k = u.id+":"+v.w;
-  if(!S.vq || S.vq.unit !== u.id) S.vq = {unit:u.id, items: vocabQuestions(u.vocab, 6)};
+  const deck = vocabDeck(u); S.card = ((S.card % deck.length) + deck.length) % deck.length;
+  const v = u.vocab[deck[S.card]], k = u.id+":"+v.w;
+  const nKnown = u.vocab.filter(x=>P.known[u.id+":"+x.w]).length;
+  if(!S.vq || S.vq.unit !== u.id) S.vq = {unit:u.id, items: vocabQuestions(u.vocab, Math.min(10, u.vocab.length)), gaps: gapQuestions(u.vocab, 8)};
+  let lastG = null;
+  const list = u.vocab.map((x,i)=>{
+    const head = x.g && x.g!==lastG ? `<p class="eyebrow wl-group">${esc(x.g)}</p>` : ""; lastG = x.g;
+    return head + `<div class="wl"><span><b>${esc(x.w)}</b> <span class="ipa">${esc(x.ipa)}</span><br><span class="muted small">${esc(x.vi)}</span></span>
+      <span class="row">${P.known[u.id+":"+x.w]?'<span class="tick">đã thuộc</span>':''}<button class="btn small" type="button" data-act="goto" data-i="${i}">Xem</button></span></div>`;
+  }).join("");
   return `<div class="flash-area">
     <div class="stack">
       <button type="button" class="card ${S.flipped?'flipped':''}" data-act="flip" aria-label="Lật thẻ">
         <div class="card-in">
-          <div class="face"><span class="pos">${esc(v.p)}</span><span class="word">${esc(v.w)}</span><span class="ipa">${esc(v.ipa)}</span><span class="hint">Bấm để xem nghĩa · thẻ ${S.card%u.vocab.length+1}/${u.vocab.length}</span></div>
+          <div class="face"><span class="pos">${esc(v.p)}</span><span class="word">${esc(v.w)}</span><span class="ipa">${esc(v.ipa)}</span><span class="hint">Bấm để xem nghĩa · thẻ ${S.card+1}/${deck.length}${v.g?" · "+esc(v.g):""}</span></div>
           <div class="face back"><span class="eyebrow">Nghĩa</span><h2>${esc(v.vi)}</h2><span class="ex">“${esc(v.ex)}”</span><span class="hint">Bấm để lật lại</span></div>
         </div></button>
       <div class="row">
@@ -223,16 +244,15 @@ function vVocab(u){
       </div>
       <div class="row">
         <button class="btn ${P.known[k]?'':'primary'}" type="button" data-act="known" data-k="${esc(k)}">${P.known[k]?'Bỏ đánh dấu':'✓ Tôi đã thuộc từ này'}</button>
-        <span class="muted">${u.vocab.filter(x=>P.known[u.id+":"+x.w]).length}/${u.vocab.length} từ đã thuộc</span>
+        <span class="muted">${nKnown}/${u.vocab.length} từ đã thuộc</span>
       </div>
+      <label class="row small"><input type="checkbox" id="onlynew" data-act="onlynew" ${S.onlyNew?"checked":""}> Chỉ ôn những từ chưa thuộc</label>
     </div>
-    <div class="sheet wordlist"><span class="eyebrow" style="margin-bottom:6px">Từ vựng trọng tâm của unit</span>
-      ${u.vocab.map((x,i)=>`<div class="wl"><span><b>${esc(x.w)}</b> <span class="ipa">${esc(x.ipa)}</span><br><span class="muted small">${esc(x.vi)}</span></span>
-        <span class="row">${P.known[u.id+":"+x.w]?'<span class="tick">đã thuộc</span>':''}<button class="btn small" type="button" data-act="goto" data-i="${i}">Xem</button></span></div>`).join("")}
-    </div>
+    <div class="sheet wordlist"><span class="eyebrow" style="margin-bottom:6px">Từ vựng của unit · ${u.vocab.length} từ</span>${list}</div>
   </div>
   <div class="sheet" style="margin-top:20px"><div class="row" style="justify-content:space-between"><h3>Kiểm tra nhanh</h3><button class="btn small" type="button" data-act="newvq">Đổi câu hỏi</button></div>
-    ${quizHTML(u.id+":vocabquiz", S.vq.items)}</div>`;
+    <p class="qhead">Phần 1: Chọn từ đúng với nghĩa</p>${quizHTML(u.id+":vocabquiz", S.vq.items)}
+    ${S.vq.gaps.length?`<p class="qhead" style="margin-top:18px">Phần 2: Điền từ vào câu (gợi ý nghĩa trong ngoặc)</p>${quizHTML(u.id+":vocabgap", S.vq.gaps)}`:""}</div>`;
 }
 
 function vGrammar(u){
@@ -344,9 +364,10 @@ document.addEventListener("click", e => {
   else if(a==="newrq"){ S.rq=null; render(); }
   else if(a==="tab"){ S.tab=b.dataset.tab; render(); }
   else if(a==="flip"){ S.flipped=!S.flipped; b.classList.toggle("flipped", S.flipped); }
-  else if(a==="card"){ S.card=(S.card+ +b.dataset.d+u.vocab.length)%u.vocab.length; S.flipped=false; render(); }
-  else if(a==="goto"){ S.card=+b.dataset.i; S.flipped=false; render(); window.scrollTo({top:0,behavior:"smooth"}); }
-  else if(a==="known"){ const k=b.dataset.k; if(P.known[k]) delete P.known[k]; else { P.known[k]=true; S.card=(S.card+1)%u.vocab.length; S.flipped=false; } save(); render(); }
+  else if(a==="card"){ S.card += +b.dataset.d; S.flipped=false; render(); }
+  else if(a==="goto"){ S.onlyNew=false; S.card=+b.dataset.i; S.flipped=false; render(); window.scrollTo({top:0,behavior:"smooth"}); }
+  else if(a==="onlynew"){ S.onlyNew=b.checked; S.card=0; S.flipped=false; render(); }
+  else if(a==="known"){ const k=b.dataset.k; if(P.known[k]) delete P.known[k]; else { P.known[k]=true; if(!S.onlyNew) S.card++; S.flipped=false; } save(); render(); }
   else if(a==="newvq"){ S.vq=null; render(); }
   else if(a==="say"){ stopSpeech(); speak(b.dataset.text); }
   else if(a==="play"){ playDialogue(); }
@@ -361,7 +382,7 @@ document.addEventListener("submit", e => {
   const f = e.target.closest("form.quiz"); if(!f) return; e.preventDefault();
   const [got, total] = gradeQuiz(f);
   f.querySelector(".qscore").innerHTML = scoreHTML(got, total);
-  if(!f.dataset.id.endsWith("vocabquiz")) recordScore(f.dataset.id, got/total);
+  if(!/vocab(quiz|gap)$/.test(f.dataset.id)) recordScore(f.dataset.id, got/total);
 });
 document.addEventListener("reset", e => { const f=e.target.closest("form.quiz"); if(!f) return;
   setTimeout(()=>{ f.querySelectorAll(".opt").forEach(o=>o.classList.remove("right","wrong")); f.querySelectorAll(".gap,.pick-sel").forEach(o=>o.classList.remove("right","wrong"));
