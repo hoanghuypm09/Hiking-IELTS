@@ -308,10 +308,12 @@ function vocabPool(u){
   return {list: userList(u, m), key: u.id + M.key, qid: u.id + M.qid, np: m!=="word", M, mode: m};
 }
 /* Ôn tập gõ từ: hiện nghĩa, người học gõ lại từ tiếng Anh */
+// Chuẩn hoá khi so câu gõ: bỏ hoa/thường, khoảng trắng thừa, dấu ngoặc kép, dấu câu cuối
+const normT = x => norm(String(x).replace(/["“”]/g,"")).replace(/\s+/g," ").trim();
 function typAnswers(w){
   const out = new Set([w, w.replace(/\s*\([^)]*\)\s*/g," "), w.replace(/[()]/g,"")]);
   w.split(/\s*\/\s*/).forEach(x => x!==w && out.add(x));
-  return [...out].map(x => norm(x).replace(/\s+/g," "));
+  return [...out].map(normT);
 }
 function typStart(u, mode, scope, items){
   const list = items || (scope==="all" ? UNITS.flatMap((uu,ui) => userList(uu, mode).map(x => Object.assign({}, x, {_u:ui}))) : userList(u, mode).map(x => Object.assign({}, x, {_u:S.u})));
@@ -347,7 +349,7 @@ function typHTML(V){
   </div>`;
 }
 function typCheck(val){
-  const T = S.typ, x = T.list[T.i], v = norm(val).replace(/\s+/g," ");
+  const T = S.typ, x = T.list[T.i], v = normT(val);
   const ok = T.list.some(y => (y===x || norm(y.vi)===norm(x.vi)) && typAnswers(y.w).includes(v)); // chấp nhận cả từ khác có cùng nghĩa
   T.res = {ok, val}; if(ok) T.ok++;
   if(!ok) T.wrong.push(Object.assign({}, x, {_ans:val}));
@@ -659,7 +661,7 @@ document.addEventListener("click", e => {
 /* Gõ lại từ trên thẻ: đúng thì tự qua thẻ mới */
 let cardTypeLock = false;
 function cardTypeCheck(input){
-  const f = input.form, w = f.dataset.w, v = norm(input.value).replace(/\s+/g," ");
+  const f = input.form, w = f.dataset.w, v = normT(input.value);
   if(cardTypeLock || !v) return;
   if(typAnswers(w).includes(v)){
     cardTypeLock = true; input.classList.remove("wrong"); input.classList.add("right"); input.readOnly = true;
