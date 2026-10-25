@@ -261,3 +261,9 @@ details[open] summary{margin-bottom:8px}
 .voicepanel .seg{margin-bottom:0}
 .voicepanel ul{padding-left:18px;margin:6px 0 0}
 .voicepanel li{margin-bottom:6px}
+.cardtype{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.cardtype input{flex:1 1 200px;min-width:0;font:inherit;font-size:1.05rem;padding:9px 12px;border:2px solid var(--line);border-radius:10px;background:var(--paper);color:var(--ink)}
+.cardtype input:focus{outline:none;border-color:var(--accent)}
+.cardtype input.right{border-color:var(--ok);background:var(--ok-soft)}
+.cardtype input.wrong{border-color:var(--bad);background:var(--bad-soft)}
+.cardtype #cardmsg{flex-basis:100%}
