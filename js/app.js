@@ -93,7 +93,7 @@ function speak(text, opt={}){
     u.lang = v ? v.lang : (P.accent==="US" ? "en-US" : "en-GB"); u.rate = rate;
     if(v) u.voice = v;
     if(opt.pitch && v === pickVoice(0)) u.pitch = opt.pitch; // chỉ đổi cao độ khi hai người nói phải dùng chung một giọng
-    if(k === list.length-1 && opt.onend) u.onend = () => { if(id === speakId) opt.onend(); };
+    if(k === list.length-1 && opt.onend) u.onend = u.onerror = () => { if(id === speakId) opt.onend(); };
     speechSynthesis.speak(u); last = u;
   });
   return last;
@@ -664,8 +664,12 @@ function cardTypeCheck(input){
   if(typAnswers(w).includes(v)){
     cardTypeLock = true; input.classList.remove("wrong"); input.classList.add("right"); input.readOnly = true;
     S.typedOk = (S.typedOk||0) + 1; $("#cardmsg").textContent = "✓ Chính xác! Sang thẻ mới…";
-    stopSpeech(); speak(w);
-    setTimeout(() => { cardTypeLock = false; nextCard(1); const i = $("#cardin"); if(i) i.focus({preventScroll:true}); }, 900);
+    // Đợi đọc xong từ rồi mới qua thẻ; nếu máy không đọc được thì vẫn qua sau vài giây
+    let moved = false;
+    const go = () => { if(moved) return; moved = true; clearTimeout(t); cardTypeLock = false; nextCard(1); const i = $("#cardin"); if(i) i.focus({preventScroll:true}); };
+    const t = setTimeout(go, Math.min(5000, 1500 + w.length * 100));
+    stopSpeech();
+    if(!speak(w, {onend: () => setTimeout(go, 300)})) setTimeout(go, 900);
   } else {
     S.typedOk = 0; input.classList.add("wrong");
     const msg = $("#cardmsg"); msg.textContent = S.flipped ? "Chưa đúng, nhìn mặt trước của thẻ và thử lại." : "Chưa đúng, thử lại nhé. Bấm vào thẻ để xem nghĩa nếu cần.";
