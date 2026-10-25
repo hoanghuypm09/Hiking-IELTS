@@ -531,6 +531,32 @@ function gapQuestions(pool, n){
     return {t:"gap", q:t.ex.replace(m,"___")+" ("+t.vi+")", a:[m]};
   });
 }
+/* Đồng nghĩa / trái nghĩa (data/syn-ant.js) */
+let SA_ANY = null;
+function synAnt(u, w){
+  const SA = window.SYNANT || {};
+  if(SA[u.id+":"+w]) return SA[u.id+":"+w];
+  if(!SA_ANY){ SA_ANY = {}; Object.keys(SA).forEach(k => { const x = k.slice(k.indexOf(":")+1).toLowerCase(); if(!SA_ANY[x]) SA_ANY[x] = SA[k]; }); }
+  return SA_ANY[String(w).toLowerCase()] || null;
+}
+function saHTML(e, cls){
+  if(!e) return "";
+  return `<span class="sa ${cls||""}">${e.s?`<span class="sa-s" title="Từ đồng nghĩa"><i>≈</i> ${e.s.map(esc).join(", ")}</span>`:""}${e.a?`<span class="sa-a" title="Từ trái nghĩa"><i>≠</i> ${e.a.map(esc).join(", ")}</span>`:""}</span>`;
+}
+function synQuestions(u, pool, n){
+  const withSA = pool.map(x => [x, synAnt(u, x.w)]).filter(([,e]) => e);
+  const allS = [...new Set(withSA.flatMap(([,e]) => (e.s||[]).concat(e.a||[])))];
+  return shuffle(withSA).slice(0, n).map(([x, e]) => {
+    const useAnt = e.a && (!e.s || Math.random() < 0.4), right = shuffle(useAnt ? e.a : e.s)[0];
+    const mine = new Set([x.w].concat(e.s||[], e.a||[]).map(t => t.toLowerCase())), bad = new Set(mine);
+    withSA.forEach(([y, f]) => { const terms = [y.w].concat(f.s||[], f.a||[]).map(t => t.toLowerCase()); if(terms.some(t => mine.has(t))) terms.forEach(t => bad.add(t)); });
+    const opts = shuffle(allS.filter(t => !bad.has(t.toLowerCase()))).slice(0, 3).concat(right);
+    const o = shuffle(opts);
+    return {q:`Từ nào ${useAnt?"TRÁI NGHĨA":"ĐỒNG NGHĨA"} với “${x.w}”?`, o, a:o.indexOf(right),
+      e:`${x.w}: ${x.vi}.${e.s?" Đồng nghĩa: "+e.s.join(", ")+".":""}${e.a?" Trái nghĩa: "+e.a.join(", ")+".":""}`};
+  });
+}
+
 function vVocab(u){
   const V = vocabPool(u), pool = V.list;
   const nHidden = Object.keys(P.hidden).filter(k => k.startsWith(u.id+":"+V.mode+":")).length;
@@ -546,11 +572,11 @@ function vVocab(u){
   const deck = vocabDeck(u); S.card = ((S.card % deck.length) + deck.length) % deck.length;
   const v = pool[deck[S.card]], k = V.key+v.w;
   const nKnown = pool.filter(x=>P.known[V.key+x.w]).length;
-  if(!S.vq || S.vq.id !== V.qid) S.vq = {id:V.qid, items: vocabQuestions(pool, Math.min(10, pool.length), V.M.Unit), gaps: gapQuestions(pool, 8)};
+  if(!S.vq || S.vq.id !== V.qid) S.vq = {id:V.qid, items: vocabQuestions(pool, Math.min(10, pool.length), V.M.Unit), gaps: gapQuestions(pool, 8), syn: synQuestions(u, pool, 6)};
   let lastG = null;
   const list = pool.map((x,i)=>{
     const head = x.g && x.g!==lastG ? `<p class="eyebrow wl-group">${esc(x.g)}</p>` : ""; lastG = x.g;
-    return head + `<div class="wl" data-s="${esc(fold([x.w, x.vi, x.ex].join(" ")))}"><span><b>${esc(x.w)}</b> <span class="ipa">${esc(x.ipa)}</span><br><span class="muted small">${esc(x.vi)}</span></span>
+    return head + `<div class="wl" data-s="${esc(fold([x.w, x.vi, x.ex].join(" ")))}"><span><b>${esc(x.w)}</b> <span class="ipa">${esc(x.ipa)}</span><br><span class="muted small">${esc(x.vi)}</span>${saHTML(synAnt(u, x.w), "small")}</span>
       <span class="row">${P.known[V.key+x.w]?'<span class="tick">đã thuộc</span>':''}${x._custom?'<span class="tick mine">của tôi</span>':x._edited?'<span class="tick mine">đã sửa</span>':''}<button class="btn small" type="button" data-act="goto" data-i="${i}">Xem</button><button class="btn small" type="button" data-act="vedit" data-id="${esc(x._id)}" aria-label="Sửa ${esc(x.w)}">✎</button></span></div>`;
   }).join("");
   const modes = modesHTML(u, V);
@@ -560,13 +586,13 @@ function vVocab(u){
       <button type="button" class="card ${S.flipped?'flipped':''} ${S.enter?'enter-'+S.enter:''}" data-act="flip" aria-label="Lật thẻ. Quẹt trái hoặc phải, hoặc dùng phím mũi tên, để đổi thẻ">
         <div class="card-in">
           <div class="face"><span class="pos">${esc(v.p)}</span><span class="word">${esc(v.w)}</span><span class="ipa">${esc(v.ipa)}</span><span class="hint">Bấm để xem nghĩa · quẹt ← → để đổi thẻ · ${S.card+1}/${deck.length}${v.g?" · "+esc(v.g):""}</span></div>
-          <div class="face back"><span class="eyebrow">Nghĩa</span><h2>${esc(v.vi)}</h2><span class="ex">“${esc(v.ex)}”</span><span class="hint">Bấm để lật lại</span></div>
+          <div class="face back"><span class="eyebrow">Nghĩa</span><h2>${esc(v.vi)}</h2><span class="ex">“${esc(v.ex)}”</span>${saHTML(synAnt(u, v.w), "oncard")}<span class="hint">Bấm để lật lại</span></div>
         </div></button>
       <div class="row">
         <button class="btn" type="button" data-act="say" data-text="${esc(v.w)}">🔊 Nghe từ</button>
         <button class="btn" type="button" data-act="say" data-text="${esc(v.ex)}">🔊 Câu ví dụ</button>
       </div>
-      <div class="cardinfo"><span><b>Nghĩa:</b> ${esc(v.vi)}</span>${v.ex?`<span class="ex">“${esc(v.ex)}”</span>`:""}</div>
+      <div class="cardinfo"><span><b>Nghĩa:</b> ${esc(v.vi)}</span>${v.ex?`<span class="ex">“${esc(v.ex)}”</span>`:""}${saHTML(synAnt(u, v.w))}</div>
       <form id="cardtype" class="cardtype" autocomplete="off" data-w="${esc(v.w)}">
         <input id="cardin" placeholder="Gõ lại ${V.M.unit} này rồi nhấn Enter" spellcheck="false" autocapitalize="off" aria-label="Gõ lại ${V.M.unit} trên thẻ">
         <button class="btn" type="submit">Kiểm tra</button>
@@ -580,11 +606,13 @@ function vVocab(u){
     </div>
     <div class="sheet wordlist"><div class="wl-head"><span class="eyebrow">${V.M.name} của unit · <span id="wlcount">${pool.length}</span> ${V.M.unit}</span>
       <div class="wl-search"><input id="vsearch" type="search" placeholder="Tìm ${V.M.unit}, nghĩa hoặc ví dụ…" value="${esc(S.vsearch||"")}" autocomplete="off" spellcheck="false" aria-label="Tìm trong danh sách ${V.M.unit}"></div></div>
+      ${V.mode==="word"?`<p class="muted small sa-legend"><span class="sa-s"><b>≈</b> đồng nghĩa</span> · <span class="sa-a"><b>≠</b> trái nghĩa</span></p>`:""}
       ${list}<p id="wlnone" class="muted small" hidden>Không tìm thấy ${V.M.unit} nào khớp.</p></div>
   </div>
   <div class="sheet" style="margin-top:20px"><div class="row" style="justify-content:space-between"><h3>Kiểm tra nhanh</h3><button class="btn small" type="button" data-act="newvq">Đổi câu hỏi</button></div>
     <p class="qhead">Phần 1: Chọn ${V.M.unit} đúng với nghĩa</p>${quizHTML(V.qid+"quiz", S.vq.items)}
-    ${S.vq.gaps.length?`<p class="qhead" style="margin-top:18px">Phần 2: Điền ${V.M.gapName} vào câu (gợi ý nghĩa trong ngoặc)</p>${quizHTML(V.qid+"gap", S.vq.gaps)}`:""}</div>`;
+    ${S.vq.gaps.length?`<p class="qhead" style="margin-top:18px">Phần 2: Điền ${V.M.gapName} vào câu (gợi ý nghĩa trong ngoặc)</p>${quizHTML(V.qid+"gap", S.vq.gaps)}`:""}
+    ${(S.vq.syn||[]).length?`<p class="qhead" style="margin-top:18px">Phần 3: Từ đồng nghĩa / trái nghĩa (rất hay gặp khi IELTS paraphrase câu hỏi)</p>${quizHTML(V.qid+"syn", S.vq.syn)}`:""}</div>`;
 }
 
 function vGrammar(u){
@@ -1090,7 +1118,7 @@ document.addEventListener("submit", e => {
   const f = e.target.closest("form.quiz"); if(!f) return; e.preventDefault();
   const [got, total] = gradeQuiz(f);
   f.querySelector(".qscore").innerHTML = scoreHTML(got, total);
-  if(!/:(vocab|np|col)(quiz|gap)$/.test(f.dataset.id)) recordScore(f.dataset.id, got/total);
+  if(!/:(vocab|np|col)(quiz|gap|syn)$/.test(f.dataset.id)) recordScore(f.dataset.id, got/total);
 });
 document.addEventListener("reset", e => { const f=e.target.closest("form.quiz"); if(!f) return;
   setTimeout(()=>{ f.querySelectorAll(".opt").forEach(o=>o.classList.remove("right","wrong")); f.querySelectorAll(".gap,.pick-sel").forEach(o=>o.classList.remove("right","wrong"));
