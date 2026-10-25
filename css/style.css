@@ -160,7 +160,7 @@ main{min-width:0}
 /* listening */
 .script{font-size:.92rem;display:flex;flex-direction:column;gap:6px}
 .script .sp{font-weight:700;color:var(--accent);margin-right:6px}
-.script .now{background:var(--mark);color:var(--mark-ink);border-radius:4px}
+.plsrc .now{background:var(--mark);color:var(--mark-ink);border-radius:4px}
 select.rate{border:1px solid var(--line);border-radius:8px;padding:6px 8px;background:var(--sheet)}
 
 /* writing */
@@ -336,3 +336,8 @@ body,.top,.sheet,.card .face,.player{transition:background-color .25s,color .25s
 .th-ic{display:inline-grid;place-items:center;width:18px;height:18px}
 .th-ic svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 @media (max-width:720px){ .themebtn .th-tx{display:none} }
+/* Đọc bài Reading: câu bấm được, câu đang đọc được tô sáng */
+.passage .rs{cursor:pointer;border-radius:4px;transition:background-color .15s}
+.passage .rs:hover{background:var(--accent-soft)}
+.passage .rs.now{background:var(--mark);color:var(--mark-ink);box-shadow:0 0 0 2px var(--mark)}
+.setbar + .player,.player + .reading{margin-top:16px}

@@ -100,7 +100,7 @@ function speak(text, opt={}){
   });
   return last;
 }
-function stopSpeech(){ speakId++; try{ speechSynthesis.cancel(); }catch(e){} document.querySelectorAll(".script .now").forEach(e=>e.classList.remove("now")); }
+function stopSpeech(){ speakId++; try{ speechSynthesis.cancel(); }catch(e){} document.querySelectorAll(".plsrc .now").forEach(e=>e.classList.remove("now")); }
 
 /* Bảng chọn giọng đọc */
 function voiceLabel(v){ const sc = voiceScore(v); return (sc>=70?"⭐ ":"") + v.name.replace(/^Microsoft /,"").replace(/ - English.*$/,"") + " · " + v.lang; }
@@ -467,9 +467,11 @@ function vGrammar(u){
 
 function vReading(u){
   const C = curSet(u, "reading"), r = C.x;
-  return setPicker(u, "reading") + `<div class="reading">
-    <article class="sheet passage"><span class="eyebrow">Đọc hiểu · ${esc(r.est)}</span><h2 style="margin:6px 0 14px">${esc(r.title)}</h2>
-      ${r.paras.map((p,i)=>`<p><span class="pn">${"ABCDEFG"[i]}</span>${esc(p)}</p>`).join("")}
+  if(PL.key !== C.id){ PL.key = C.id; PL.i = 0; PL.at = 0; }
+  let k = 0;
+  return setPicker(u, "reading") + playerHTML(u, C) + `<div class="reading">
+    <article class="sheet passage plsrc" id="scriptbox"><span class="eyebrow">Đọc hiểu · ${esc(r.est)}</span><h2 style="margin:6px 0 14px">${esc(r.title)}</h2>
+      ${r.paras.map((p,i)=>`<p><span class="pn">${"ABCDEFG"[i]}</span>${splitSent(p).map(t=>`<span class="rs" data-line="${k}" data-act="plline" data-i="${k++}">${esc(t)}</span>`).join(" ")}</p>`).join("")}
       ${r.note?`<p class="muted small">${esc(r.note)}</p>`:""}</article>
     <div class="sheet sticky">${quizHTML(C.id, r.quiz)}</div></div>`;
 }
@@ -482,7 +484,7 @@ function vListening(u){
       <p class="muted small">Dùng thanh phát bên dưới: ▶ phát/tạm dừng, ⏮ ⏭ lùi/tới một câu, bấm vào thanh tiến trình hoặc vào một câu trong transcript để nghe từ chỗ đó. Phím tắt: Space, ← →. Bài nghe do giọng máy của trình duyệt đọc; chọn giọng hay hơn ở nút 🔊 Giọng đọc.</p></div>
     ${playerHTML(u, C)}
     <div class="sheet">${quizHTML(C.id, l.quiz)}</div>
-    <details class="sheet" id="scriptbox"><summary>Xem transcript</summary><div class="script">
+    <details class="sheet" id="scriptbox"><summary>Xem transcript</summary><div class="script plsrc">
       ${l.script.map(([s,t],i)=>`<p data-line="${i}" data-act="plline" data-i="${i}" title="Nghe từ câu này"><span class="sp">${s==="A"?"Speaker 1":"Speaker 2"}</span>${esc(t)}</p>`).join("")}</div></details></div>`;
 }
 
@@ -501,14 +503,33 @@ const ICON = {
   rep1:'<svg viewBox="0 0 24 24"><path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4zm-4-2V9h-1l-2 1v1h1.5v4H13z"/></svg>',
   up:'<svg viewBox="0 0 24 24"><path d="M7 14l5-5 5 5z"/></svg>'
 };
-function plScript(){ return curSet(UNITS[S.u], "listening").x.script; }
+// Tách đoạn văn thành câu: chỉ ngắt sau . ! ? khi câu sau bắt đầu bằng chữ hoa/ngoặc kép (nên "8 a.m. to 2 p.m." không bị cắt)
+function splitSent(p){
+  const out = [], re = /[.!?]+["”’')]*(?=\s+["“‘']?[A-Z0-9]|\s*$)/g, abbr = /\b(?:Mr|Mrs|Ms|Dr|St|No|vs|e\.g|i\.e)\.$/;
+  let start = 0, m;
+  p = String(p);
+  while((m = re.exec(p))){
+    const end = m.index + m[0].length;
+    if(abbr.test(p.slice(start, end))) continue;
+    out.push(p.slice(start, end).trim()); start = end;
+  }
+  if(p.slice(start).trim()) out.push(p.slice(start).trim());
+  return out.length ? out : [p];
+}
+const RS_CACHE = {};
+function plScript(){
+  const u = UNITS[S.u];
+  if(S.tab !== "reading") return curSet(u, "listening").x.script;
+  const C = curSet(u, "reading");
+  return RS_CACHE[C.id] || (RS_CACHE[C.id] = C.x.paras.flatMap(p => splitSent(p).map(t => ["A", t])));
+}
 function plRate(){ return Number(($("#rate")||{}).value || P.rate || 0.9); }
 function plDurs(){ const r = plRate(); return plScript().map(([,t]) => Math.max(1.5, t.length / 14) / r + 0.35); }
 const fmt = sec => Math.floor(sec/60) + ":" + String(Math.floor(sec%60)).padStart(2,"0");
 function playerHTML(u, C){
-  const n = C.x.script.length, rates = [["0.75","0.75×"],["0.9","0.9×"],["1","1×"],["1.1","1.1×"]];
+  const n = plScript().length, rates = [["0.75","0.75×"],["0.9","0.9×"],["1","1×"],["1.1","1.1×"]];
   const cur = String(P.rate>=1.05?1.1:P.rate>=0.95?1:P.rate>=0.82?0.9:0.75);
-  return `<div class="player" id="player" role="region" aria-label="Trình phát bài nghe">
+  return `<div class="player" id="player" role="region" aria-label="${S.tab==="reading"?"Trình đọc bài Reading":"Trình phát bài nghe"}">
     <div class="pl-prog" id="plprog" role="slider" aria-label="Tiến trình" aria-valuemin="1" aria-valuemax="${n}" aria-valuenow="${PL.i+1}" tabindex="0">
       <div class="pl-track"></div><div class="pl-fill" id="plfill"></div><div class="pl-knob" id="plknob"></div><div class="pl-tip" id="pltip"></div></div>
     <div class="pl-row">
@@ -526,7 +547,7 @@ function playerHTML(u, C){
         <select id="rate" class="pl-rate" aria-label="Tốc độ">${rates.map(([v,l])=>`<option value="${v}" ${v===cur?"selected":""}>${l}</option>`).join("")}</select>
         <button type="button" class="pl-btn pl-sm" data-act="plmute" id="plmute" aria-label="Tắt tiếng">${P.mute?ICON.mute:ICON.vol}</button>
         <button type="button" class="pl-btn pl-sm" data-act="plrepeat" id="plrep" aria-label="Lặp lại">${ICON.rep}</button>
-        <button type="button" class="pl-btn pl-sm" data-act="plscript" aria-label="Mở transcript">${ICON.up}</button>
+        <button type="button" class="pl-btn pl-sm" data-act="plscript" aria-label="${S.tab==="reading"?"Tới bài đọc":"Mở transcript"}">${ICON.up}</button>
       </div>
     </div></div>`;
 }
@@ -544,8 +565,8 @@ function plUI(){
   if(btn.dataset.st !== st){ btn.dataset.st = st; btn.innerHTML = ICON[st]; btn.setAttribute("aria-label", PL.playing ? "Tạm dừng" : "Phát"); }
   const rep = $("#plrep"); if(rep.dataset.st !== PL.repeat){ rep.dataset.st = PL.repeat; rep.innerHTML = PL.repeat==="one" ? ICON.rep1 : ICON.rep; } rep.classList.toggle("on", PL.repeat!=="off");
   rep.setAttribute("aria-label", {off:"Lặp lại: tắt", all:"Lặp lại cả bài", one:"Lặp lại câu này"}[PL.repeat]); rep.title = rep.getAttribute("aria-label");
-  document.querySelectorAll(".script .now").forEach(e => e.classList.remove("now"));
-  const line = document.querySelector(`.script [data-line="${PL.i}"]`); if(line && (PL.playing || PL.i)) line.classList.add("now");
+  document.querySelectorAll(".plsrc .now").forEach(e => e.classList.remove("now"));
+  const line = document.querySelector(`.plsrc [data-line="${PL.i}"]`); if(line && (PL.playing || PL.i || PL.at)) line.classList.add("now");
 }
 function plTick(){ cancelAnimationFrame(PL.raf); if(!PL.playing) return; plUI(); PL.raf = requestAnimationFrame(plTick); }
 function plFrac(){ const t = (plScript()[PL.i] || [,""])[1]; return t.length ? PL.at / t.length : 0; }
@@ -567,6 +588,8 @@ function plPlay(i, from = 0){
   speak(text.slice(from), {voice: sp==="A"?0:1, pitch: sp==="A"?1:1.2, volume: P.mute?0:1,
     onboundary: c => { PL.ch = from + c; }, onend: () => setTimeout(plEnded, 350)});
   plTick();
+  const el = S.tab === "reading" && document.querySelector(`.passage [data-line="${i}"]`);
+  if(el){ const r = el.getBoundingClientRect(); if(r.top < 110 || r.bottom > innerHeight - 20) el.scrollIntoView({behavior:"smooth", block:"center"}); }
 }
 function plResume(){ plPlay(PL.i, PL.at); }
 function plRestartHere(){ if(PL.playing) plPlay(PL.i, plHere()); else plUI(); }
