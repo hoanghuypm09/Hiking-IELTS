@@ -421,7 +421,7 @@ function vVocab(u){
         <button class="btn" type="button" data-act="say" data-text="${esc(v.ex)}">🔊 Câu ví dụ</button>
       </div>
       <form id="cardtype" class="cardtype" autocomplete="off" data-w="${esc(v.w)}">
-        <input id="cardin" placeholder="Gõ lại ${V.M.unit} này, đúng sẽ qua thẻ mới" spellcheck="false" autocapitalize="off" aria-label="Gõ lại ${V.M.unit} trên thẻ">
+        <input id="cardin" placeholder="Gõ lại ${V.M.unit} này rồi nhấn Enter" spellcheck="false" autocapitalize="off" aria-label="Gõ lại ${V.M.unit} trên thẻ">
         <button class="btn" type="submit">Kiểm tra</button>
         <span id="cardmsg" class="small muted" role="status">${S.typedOk?`✓ Đã gõ đúng ${S.typedOk} ${V.M.unit} liên tiếp`:""}</span>
       </form>
@@ -658,7 +658,7 @@ document.addEventListener("click", e => {
 /* Quẹt thẻ: trái = thẻ sau, phải = thẻ trước (chuột, cảm ứng và phím mũi tên) */
 /* Gõ lại từ trên thẻ: đúng thì tự qua thẻ mới */
 let cardTypeLock = false;
-function cardTypeCheck(input, submitted){
+function cardTypeCheck(input){
   const f = input.form, w = f.dataset.w, v = norm(input.value).replace(/\s+/g," ");
   if(cardTypeLock || !v) return;
   if(typAnswers(w).includes(v)){
@@ -666,7 +666,7 @@ function cardTypeCheck(input, submitted){
     S.typedOk = (S.typedOk||0) + 1; $("#cardmsg").textContent = "✓ Chính xác! Sang thẻ mới…";
     stopSpeech(); speak(w);
     setTimeout(() => { cardTypeLock = false; nextCard(1); const i = $("#cardin"); if(i) i.focus({preventScroll:true}); }, 900);
-  } else if(submitted){
+  } else {
     S.typedOk = 0; input.classList.add("wrong");
     const msg = $("#cardmsg"); msg.textContent = S.flipped ? "Chưa đúng, nhìn mặt trước của thẻ và thử lại." : "Chưa đúng, thử lại nhé. Bấm vào thẻ để xem nghĩa nếu cần.";
   }
@@ -704,7 +704,7 @@ document.addEventListener("keydown", e => {
 function focusEditor(){ const f=$("#vedit"); if(f){ f.scrollIntoView({behavior:"smooth", block:"center"}); f.querySelector("input").focus({preventScroll:true}); } }
 function vocabChanged(){ S.edit=null; S.vq=null; S.flipped=false; save(); render(); }
 document.addEventListener("submit", e => {
-  if(e.target.id === "cardtype"){ e.preventDefault(); cardTypeCheck($("#cardin"), true); return; }
+  if(e.target.id === "cardtype"){ e.preventDefault(); cardTypeCheck($("#cardin")); return; }
   if(e.target.id === "typ"){ e.preventDefault();
     if(S.typ.res) return typNext();
     const v = $("#typin").value; if(!v.trim()) return;
@@ -742,7 +742,7 @@ document.addEventListener("change", e => {
 
 let draftT;
 document.addEventListener("input", e => {
-  if(e.target.id === "cardin"){ e.target.classList.remove("wrong"); cardTypeCheck(e.target, false); return; }
+  if(e.target.id === "cardin"){ e.target.classList.remove("wrong"); return; }
   if(e.target.id === "raterange"){ const v=$("#ratev"); if(v) v.textContent = e.target.value; return; }
   if(e.target.id !== "draft") return;
   const u = UNITS[S.u], n = wordCount(e.target.value), wc = $("#wc");
