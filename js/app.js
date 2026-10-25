@@ -4,7 +4,7 @@ const EXTRA = window.EXTRA || {};
 /* ============ STATE & STORAGE ============ */
 const KEY = "ielts45-progress-v2";
 function load(){ try{ return JSON.parse(localStorage.getItem(KEY)) || {}; }catch(e){ return {}; } }
-const P = Object.assign({known:{},scores:{},drafts:{},spoke:{},custom:{},edits:{},hidden:{},grades:{},graderUrl:""}, load());
+const P = Object.assign({known:{},scores:{},drafts:{},spoke:{},custom:{},edits:{},hidden:{},grades:{},graderUrl:"",voice:"",accent:"GB",rate:0.9}, load());
 function save(){ try{ localStorage.setItem(KEY, JSON.stringify(P)); }catch(e){} }
 
 const TABS = [["vocab","Từ vựng"],["grammar","Ngữ pháp"],["reading","Reading"],["listening","Listening"],["writing","Writing"],["speaking","Speaking"]];
@@ -46,23 +46,86 @@ function done(u, tab){
 function unitPct(u){ return TABS.filter(t => done(u,t[0])).length / TABS.length; }
 
 /* ============ SPEECH ============ */
+// Chấm điểm giọng có sẵn trên máy: ưu tiên giọng "Natural/Neural" (Edge), Google (Chrome), Enhanced/Premium (Safari)
+const NOVELTY = /\b(Albert|Bad News|Bahh|Bells|Boing|Bubbles|Cellos|Good News|Jester|Organ|Superstar|Trinoids|Whisper|Wobble|Zarvox|Fred|Junior|Ralph|Kathy|Grandma|Grandpa|Rocko|Shelley|Sandy|Flo|Eddy|Reed)\b/i;
 let voices = [];
-function loadVoices(){ try{ voices = speechSynthesis.getVoices().filter(v => /^en/i.test(v.lang)); }catch(e){} }
-if("speechSynthesis" in window){ loadVoices(); speechSynthesis.onvoiceschanged = loadVoices; }
-function pickVoice(i){
-  const gb = voices.filter(v => /en-GB/i.test(v.lang)); const pool = gb.length ? gb : voices;
-  return pool.length ? pool[i % pool.length] : null;
+function voiceScore(v){
+  let s = 0;
+  if(/natural|neural/i.test(v.name)) s += 100;
+  else if(/online/i.test(v.name)) s += 90;
+  else if(/google/i.test(v.name)) s += 80;
+  else if(/enhanced|premium|siri/i.test(v.name)) s += 70;
+  if(/espeak/i.test(v.name)) s -= 50;
+  if(NOVELTY.test(v.name)) s -= 200;
+  const acc = P.accent==="US" ? /en[-_]US/i : P.accent==="GB" ? /en[-_]GB/i : null;
+  if(acc && acc.test(v.lang)) s += 30;
+  if(/en[-_](GB|US|AU|IE)/i.test(v.lang)) s += 5;
+  return s;
 }
+function loadVoices(){
+  try{ voices = speechSynthesis.getVoices().filter(v => /^en/i.test(v.lang)).sort((a,b) => voiceScore(b) - voiceScore(a)); }catch(e){}
+  if(document.getElementById("voicepanel")) renderVoicePanel();
+}
+if("speechSynthesis" in window){ loadVoices(); speechSynthesis.onvoiceschanged = loadVoices; }
+// i = 0: người nói 1 (giọng bạn chọn hoặc giọng tốt nhất), i = 1: người nói 2 (giọng tốt khác tên)
+function pickVoice(i){
+  if(!voices.length) return null;
+  const main = voices.find(v => v.voiceURI === P.voice) || voices[0];
+  if(!i) return main;
+  const good = voices.filter(v => v !== main && voiceScore(v) >= voiceScore(main) - 40);
+  return good[0] || voices.find(v => v !== main) || main;
+}
+// Chrome hay tự dừng khi đọc câu dài, nên chia văn bản thành từng câu rồi đọc nối tiếp
+function chunks(text){
+  const parts = String(text).match(/[^.!?;:]+[.!?;:]*["”’)]?\s*/g) || [String(text)], out = [];
+  parts.forEach(p => { p = p.trim(); if(!p) return;
+    if(out.length && (out[out.length-1] + " " + p).length < 160) out[out.length-1] += " " + p; else out.push(p); });
+  return out;
+}
+let speakId = 0;
 function speak(text, opt={}){
   if(!("speechSynthesis" in window)){ toast("Trình duyệt này không hỗ trợ đọc giọng nói."); return null; }
-  const u = new SpeechSynthesisUtterance(text);
-  u.lang = "en-GB"; u.rate = opt.rate || Number(($("#rate")||{}).value || 0.9);
-  const v = pickVoice(opt.voice||0); if(v) u.voice = v;
-  if(opt.pitch) u.pitch = opt.pitch;
-  if(opt.onend) u.onend = opt.onend;
-  speechSynthesis.speak(u); return u;
+  const id = ++speakId, list = chunks(text), v = pickVoice(opt.voice||0);
+  const rate = opt.rate || Number(($("#rate")||{}).value || P.rate || 0.9);
+  let last = null;
+  list.forEach((t, k) => {
+    const u = new SpeechSynthesisUtterance(t);
+    u.lang = v ? v.lang : (P.accent==="US" ? "en-US" : "en-GB"); u.rate = rate;
+    if(v) u.voice = v;
+    if(opt.pitch && v === pickVoice(0)) u.pitch = opt.pitch; // chỉ đổi cao độ khi hai người nói phải dùng chung một giọng
+    if(k === list.length-1 && opt.onend) u.onend = () => { if(id === speakId) opt.onend(); };
+    speechSynthesis.speak(u); last = u;
+  });
+  return last;
 }
-function stopSpeech(){ try{ speechSynthesis.cancel(); }catch(e){} document.querySelectorAll(".script .now").forEach(e=>e.classList.remove("now")); }
+function stopSpeech(){ speakId++; try{ speechSynthesis.cancel(); }catch(e){} document.querySelectorAll(".script .now").forEach(e=>e.classList.remove("now")); }
+
+/* Bảng chọn giọng đọc */
+function voiceLabel(v){ const sc = voiceScore(v); return (sc>=70?"⭐ ":"") + v.name.replace(/^Microsoft /,"").replace(/ - English.*$/,"") + " · " + v.lang; }
+function renderVoicePanel(){
+  const el = document.getElementById("voicepanel"); if(!el) return;
+  const cur = pickVoice(0), best = voices[0];
+  const hint = !voices.length ? "Trình duyệt chưa cung cấp giọng tiếng Anh nào."
+    : voiceScore(best) >= 70 ? "Giọng có dấu ⭐ là giọng tự nhiên (AI), nên chọn những giọng này."
+    : "Máy bạn chưa có giọng tự nhiên. Xem cách cải thiện bên dưới.";
+  el.innerHTML = `<div class="vp-head"><h3>🔊 Giọng đọc</h3><button class="btn small" type="button" data-act="voiceclose" aria-label="Đóng">✕</button></div>
+    <div class="seg" role="radiogroup" aria-label="Giọng">${[["GB","Anh – Anh"],["US","Anh – Mỹ"],["any","Bất kỳ"]].map(([k,l])=>`<button type="button" role="radio" data-act="accent" data-a="${k}" aria-checked="${P.accent===k}" aria-selected="${P.accent===k}">${l}</button>`).join("")}</div>
+    <label class="vp-f"><span class="small muted">Giọng (${voices.length} giọng tiếng Anh trên máy)</span>
+      <select id="voicesel">${voices.map(v=>`<option value="${esc(v.voiceURI)}" ${cur===v?"selected":""}>${esc(voiceLabel(v))}</option>`).join("")}</select></label>
+    <label class="vp-f"><span class="small muted">Tốc độ mặc định: <b id="ratev">${P.rate}</b></span><input type="range" id="raterange" min="0.6" max="1.2" step="0.05" value="${P.rate}"></label>
+    <div class="row"><button class="btn primary" type="button" data-act="voicetest">▶ Nghe thử</button><button class="btn" type="button" data-act="voiceauto">Tự chọn giọng tốt nhất</button></div>
+    <p class="small muted">${hint}</p>
+    <details class="small"><summary>Cách có giọng đọc hay hơn</summary><ul>
+      <li><b>Máy tính:</b> mở trang bằng <b>Microsoft Edge</b>, có sẵn các giọng “Natural” (Sonia, Ryan, Libby…) rất giống người thật. Chrome có giọng “Google UK English”.</li>
+      <li><b>iPhone/iPad:</b> Cài đặt → Trợ năng → Nội dung được đọc → Giọng nói → Tiếng Anh → tải giọng có chữ <i>Nâng cao</i> hoặc <i>Cao cấp</i> (ví dụ Serena, Daniel), rồi mở lại trang.</li>
+      <li><b>Android:</b> Cài đặt → Hỗ trợ tiếp cận → Chuyển văn bản thành giọng nói → chọn “Dịch vụ Google” và tải giọng English (United Kingdom).</li></ul></details>`;
+}
+function toggleVoicePanel(open){
+  let el = document.getElementById("voicepanel");
+  if(open === false || (el && open !== true)){ if(el) el.remove(); return; }
+  el = document.createElement("div"); el.id = "voicepanel"; el.className = "voicepanel sheet"; el.setAttribute("role","dialog"); el.setAttribute("aria-label","Chọn giọng đọc");
+  document.body.appendChild(el); loadVoices(); renderVoicePanel();
+}
 
 /* ============ RENDER: shell ============ */
 function renderRail(){
@@ -577,6 +640,11 @@ document.addEventListener("click", e => {
   else if(a==="talk"){ runTimer(120); }
   else if(a==="tstop"){ clearInterval(S.timer); }
   else if(a==="spoke"){ P.spoke[u.id]=!P.spoke[u.id]; save(); render(); }
+  else if(a==="voice"){ toggleVoicePanel(); }
+  else if(a==="voiceclose"){ toggleVoicePanel(false); }
+  else if(a==="accent"){ P.accent=b.dataset.a; P.voice=""; save(); loadVoices(); }
+  else if(a==="voiceauto"){ P.voice=""; save(); loadVoices(); stopSpeech(); speak("Hello! This is the voice that will read your lessons."); }
+  else if(a==="voicetest"){ stopSpeech(); speak("Hello! This is the voice that will read your lessons. I hope it sounds natural.", {rate:P.rate}); }
   else if(a==="aigrade"){ if(!S.grading) aiGrade(); }
   else if(a==="gradersave"){ const v=$("#graderurl").value.trim(); if(!/^https:\/\/\S+$/.test(v)){ toast("Địa chỉ phải bắt đầu bằng https://"); return; } P.graderUrl=v; save(); render(); }
   else if(a==="graderedit"){ P.graderUrl=""; if(window.HIKING_CONFIG) window.HIKING_CONFIG.graderUrl=""; save(); render(); }
@@ -641,6 +709,8 @@ document.addEventListener("reset", e => { const f=e.target.closest("form.quiz");
     f.querySelectorAll(".fix").forEach(x=>{x.textContent="";x.className="fix";}); f.querySelectorAll(".explain").forEach(x=>x.hidden=true); f.querySelector(".qscore").innerHTML=""; }); });
 
 document.addEventListener("change", e => {
+  if(e.target.id === "voicesel"){ P.voice = e.target.value; save(); stopSpeech(); speak("Hello! This is the voice that will read your lessons.", {rate:P.rate}); return; }
+  if(e.target.id === "raterange"){ P.rate = +e.target.value; save(); return; }
   if(e.target.id !== "vimport" || !e.target.files[0]) return;
   e.target.files[0].text().then(t => { const d = JSON.parse(t);
     if(d.app !== "hiking-ielts") throw 0;
@@ -651,6 +721,7 @@ document.addEventListener("change", e => {
 
 let draftT;
 document.addEventListener("input", e => {
+  if(e.target.id === "raterange"){ const v=$("#ratev"); if(v) v.textContent = e.target.value; return; }
   if(e.target.id !== "draft") return;
   const u = UNITS[S.u], n = wordCount(e.target.value), wc = $("#wc");
   const min = curSet(u, "writing").x.min;
