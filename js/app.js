@@ -465,11 +465,11 @@ function vListening(u){
   if(PL.key !== C.id){ PL.key = C.id; PL.i = 0; }
   return setPicker(u, "listening") + `<div class="stack">
     <div class="sheet stack"><span class="eyebrow">${esc(l.title)}</span><p>${esc(l.intro)}</p>
-      <p class="muted small">Dùng thanh phát ở cuối trang: ▶ phát/tạm dừng, ⏮ ⏭ lùi/tới một câu, bấm vào thanh tiến trình hoặc vào một câu trong transcript để nghe từ chỗ đó. Phím tắt: Space, ← →. Bài nghe do giọng máy của trình duyệt đọc; chọn giọng hay hơn ở nút 🔊 Giọng đọc.</p></div>
+      <p class="muted small">Dùng thanh phát bên dưới: ▶ phát/tạm dừng, ⏮ ⏭ lùi/tới một câu, bấm vào thanh tiến trình hoặc vào một câu trong transcript để nghe từ chỗ đó. Phím tắt: Space, ← →. Bài nghe do giọng máy của trình duyệt đọc; chọn giọng hay hơn ở nút 🔊 Giọng đọc.</p></div>
+    ${playerHTML(u, C)}
     <div class="sheet">${quizHTML(C.id, l.quiz)}</div>
     <details class="sheet" id="scriptbox"><summary>Xem transcript</summary><div class="script">
-      ${l.script.map(([s,t],i)=>`<p data-line="${i}" data-act="plline" data-i="${i}" title="Nghe từ câu này"><span class="sp">${s==="A"?"Speaker 1":"Speaker 2"}</span>${esc(t)}</p>`).join("")}</div></details></div>
-    ${playerHTML(u, C)}`;
+      ${l.script.map(([s,t],i)=>`<p data-line="${i}" data-act="plline" data-i="${i}" title="Nghe từ câu này"><span class="sp">${s==="A"?"Speaker 1":"Speaker 2"}</span>${esc(t)}</p>`).join("")}</div></details></div>`;
 }
 
 /* ============ THANH PHÁT BÀI NGHE (kiểu YouTube Music) ============
@@ -526,8 +526,9 @@ function plUI(){
   $("#pltime").textContent = fmt(t) + " / " + fmt(total);
   $("#plline").textContent = `Câu ${Math.min(PL.i+1, n)}/${n}`;
   $("#plprog").setAttribute("aria-valuenow", PL.i+1);
-  const btn = $("#plplay"); btn.innerHTML = PL.playing ? ICON.pause : ICON.play; btn.setAttribute("aria-label", PL.playing ? "Tạm dừng" : "Phát");
-  const rep = $("#plrep"); rep.innerHTML = PL.repeat==="one" ? ICON.rep1 : ICON.rep; rep.classList.toggle("on", PL.repeat!=="off");
+  const btn = $("#plplay"), st = PL.playing ? "pause" : "play";
+  if(btn.dataset.st !== st){ btn.dataset.st = st; btn.innerHTML = ICON[st]; btn.setAttribute("aria-label", PL.playing ? "Tạm dừng" : "Phát"); }
+  const rep = $("#plrep"); if(rep.dataset.st !== PL.repeat){ rep.dataset.st = PL.repeat; rep.innerHTML = PL.repeat==="one" ? ICON.rep1 : ICON.rep; } rep.classList.toggle("on", PL.repeat!=="off");
   rep.setAttribute("aria-label", {off:"Lặp lại: tắt", all:"Lặp lại cả bài", one:"Lặp lại câu này"}[PL.repeat]); rep.title = rep.getAttribute("aria-label");
   document.querySelectorAll(".script .now").forEach(e => e.classList.remove("now"));
   const line = document.querySelector(`.script [data-line="${PL.i}"]`); if(line && (PL.playing || PL.i)) line.classList.add("now");
@@ -685,7 +686,7 @@ function render(){
   stopSpeech(); clearInterval(S.timer); renderRail();
   PL.playing = false; cancelAnimationFrame(PL.raf);
   $("#main").innerHTML = S.view==="home" ? renderHome() : S.view==="review" ? renderReview() : renderUnit();
-  document.body.classList.toggle("has-player", !!$("#player")); plUI();
+  plUI();
 }
 
 document.addEventListener("click", e => {
