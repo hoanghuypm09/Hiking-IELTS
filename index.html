@@ -9,6 +9,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap">
 <link rel="stylesheet" href="css/style.css">
+<script>try{var t=localStorage.getItem("ielts45-theme");if(t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>
 </head>
 <body>
 <header class="top">
@@ -17,6 +18,7 @@
     <div class="spacer"></div>
     <span class="pill">Theo lộ trình Complete IELTS Bands 4–5</span>
     <div class="clock" id="clock" role="timer" aria-live="off"><span class="clk-ic" id="clkic" aria-hidden="true"></span><span class="clk-tx"><b id="clktime">--:--</b><span id="clkday"></span></span></div>
+    <button class="btn small themebtn" type="button" data-act="theme" id="themebtn" aria-label="Chuyển chế độ sáng/tối"><span class="th-ic" aria-hidden="true"></span><span class="th-tx">Tối</span></button>
     <button class="btn small" type="button" data-act="voice" aria-label="Chọn giọng đọc">🔊 Giọng đọc</button>
   </div>
 </header>

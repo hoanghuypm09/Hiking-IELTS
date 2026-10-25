@@ -913,3 +913,26 @@ function clockTick(){
   setTimeout(clockTick, 1000 - d.getMilliseconds() + 5);
 }
 clockTick();
+
+/* ============ CHẾ ĐỘ SÁNG / TỐI ============ */
+const TH_KEY = "ielts45-theme", darkMQ = window.matchMedia ? matchMedia("(prefers-color-scheme: dark)") : null;
+const TH_ICON = {
+  light: '<svg viewBox="0 0 24 24"><path d="M20.5 14.5A8.5 8.5 0 1 1 9.5 3.5a7 7 0 0 0 11 11z"/></svg>',
+  dark: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/></svg>'
+};
+function curTheme(){ return document.documentElement.getAttribute("data-theme") || (darkMQ && darkMQ.matches ? "dark" : "light"); }
+function themeUI(){
+  const b = document.getElementById("themebtn"); if(!b) return;
+  const t = curTheme(); // nút hiện chế độ sẽ chuyển sang
+  b.querySelector(".th-ic").innerHTML = TH_ICON[t];
+  b.querySelector(".th-tx").textContent = t === "dark" ? "Sáng" : "Tối";
+  b.setAttribute("aria-pressed", t === "dark"); b.title = t === "dark" ? "Chuyển sang chế độ sáng" : "Chuyển sang chế độ tối";
+}
+function setTheme(t){
+  document.documentElement.setAttribute("data-theme", t);
+  try{ localStorage.setItem(TH_KEY, t); }catch(e){}
+  themeUI();
+}
+if(darkMQ && darkMQ.addEventListener) darkMQ.addEventListener("change", themeUI);
+document.addEventListener("click", e => { if(e.target.closest('[data-act="theme"]')) setTheme(curTheme() === "dark" ? "light" : "dark"); });
+themeUI();
