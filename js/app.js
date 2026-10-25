@@ -1,4 +1,5 @@
 const UNITS = window.UNITS || [];
+const EXTRA = window.EXTRA || {};
 
 /* ============ STATE & STORAGE ============ */
 const KEY = "ielts45-progress-v2";
@@ -8,7 +9,7 @@ function save(){ try{ localStorage.setItem(KEY, JSON.stringify(P)); }catch(e){} 
 
 const TABS = [["vocab","Từ vựng"],["grammar","Ngữ pháp"],["reading","Reading"],["listening","Listening"],["writing","Writing"],["speaking","Speaking"]];
 const FOCUS = {vocab:"vocab", grammar:null, reading:"reading", listening:"listening", writing:"writing", speaking:"speaking"};
-const S = {view:"home", u:0, r:0, tab:"vocab", card:0, flipped:false, vq:null, rq:null, timer:null};
+const S = {view:"home", u:0, r:0, tab:"vocab", card:0, flipped:false, vq:null, rq:null, timer:null, si:{}};
 const QUIZ = {};
 
 const $ = s => document.querySelector(s);
@@ -18,12 +19,29 @@ const shuffleOpts = q => { const idx = shuffle(q.o.map((_,i)=>i)); return Object
 function toast(msg){ const t=$("#toast"); t.textContent=msg; t.hidden=false; clearTimeout(t._h); t._h=setTimeout(()=>t.hidden=true,2600); }
 function wordCount(t){ return (t.trim().match(/\S+/g)||[]).length; }
 
+/* Mỗi kỹ năng có nhiều bài: bài 1 nằm trong UNITS, các bài thêm nằm trong window.EXTRA */
+function sets(u, k){ return [u[k], ...((EXTRA[u.id]||{})[k]||[])]; }
+function setId(u, k, i){ return i ? `${u.id}:${k}:${i+1}` : `${u.id}:${k}`; }
+function draftKey(u, i){ return i ? `${u.id}:w${i+1}` : u.id; }
+function curSet(u, k){ const a = sets(u, k), i = Math.min(S.si[k]||0, a.length-1); return {x:a[i], i, n:a.length, id:setId(u, k, i)}; }
+function setDone(u, k, i){
+  if(k==="writing") return wordCount(P.drafts[draftKey(u, i)]||"") >= sets(u, k)[i].min;
+  const sc = P.scores[setId(u, k, i)]; return sc != null && sc >= 0.7;
+}
+function setTitle(k, x){ return k==="writing" ? x.type+": "+x.prompt : k==="speaking" ? x.cue.t : x.title; }
+function setPicker(u, k){
+  const a = sets(u, k); if(a.length < 2) return "";
+  const cur = curSet(u, k).i;
+  return `<div class="setbar"><div class="seg" role="tablist" aria-label="Chọn bài">${a.map((x,i)=>
+      `<button type="button" role="tab" data-act="set" data-k="${k}" data-i="${i}" aria-selected="${i===cur}" title="${esc(setTitle(k, x))}">Bài ${i+1}${setDone(u, k, i)?' <span class="done">✓</span>':''}</button>`).join("")}</div>
+    <button class="btn small" type="button" data-act="setrand" data-k="${k}">🔀 Bài khác</button>
+    <span class="muted small setname">${esc(setTitle(k, a[cur]).slice(0, 90))}${setTitle(k, a[cur]).length>90?"…":""}</span></div>`;
+}
 function done(u, tab){
   const unit = UNITS[u], id = unit.id;
   if(tab==="vocab") return unit.vocab.every(v => P.known[id+":"+v.w]);
-  if(tab==="writing") return wordCount(P.drafts[id]||"") >= unit.writing.min;
   if(tab==="speaking") return !!P.spoke[id];
-  const sc = P.scores[id+":"+tab]; return sc != null && sc >= 0.7;
+  return sets(unit, tab).some((_, i) => setDone(unit, tab, i));
 }
 function unitPct(u){ return TABS.filter(t => done(u,t[0])).length / TABS.length; }
 
@@ -362,27 +380,27 @@ function vGrammar(u){
 }
 
 function vReading(u){
-  const r = u.reading;
-  return `<div class="reading">
+  const C = curSet(u, "reading"), r = C.x;
+  return setPicker(u, "reading") + `<div class="reading">
     <article class="sheet passage"><span class="eyebrow">Đọc hiểu · ${esc(r.est)}</span><h2 style="margin:6px 0 14px">${esc(r.title)}</h2>
       ${r.paras.map((p,i)=>`<p><span class="pn">${"ABCDEFG"[i]}</span>${esc(p)}</p>`).join("")}
       ${r.note?`<p class="muted small">${esc(r.note)}</p>`:""}</article>
-    <div class="sheet sticky">${quizHTML(u.id+":reading", r.quiz)}</div></div>`;
+    <div class="sheet sticky">${quizHTML(C.id, r.quiz)}</div></div>`;
 }
 
 function vListening(u){
-  const l = u.listening;
-  return `<div class="stack">
+  const C = curSet(u, "listening"), l = C.x;
+  return setPicker(u, "listening") + `<div class="stack">
     <div class="sheet stack"><span class="eyebrow">${esc(l.title)}</span><p>${esc(l.intro)}</p>
       <div class="row"><button class="btn primary" type="button" data-act="play">▶ Phát bài nghe</button><button class="btn" type="button" data-act="stop">■ Dừng</button>
         <label class="row" style="gap:6px">Tốc độ <select id="rate" class="rate"><option value="0.75">Chậm</option><option value="0.9" selected>Vừa</option><option value="1">Bình thường</option></select></label></div>
       <p class="muted small">Bài nghe do giọng máy của trình duyệt đọc, chỉ để luyện thêm. Hãy nghe audio của sách để quen giọng thật. Nên dùng Chrome hoặc Safari.</p></div>
-    <div class="sheet">${quizHTML(u.id+":listening", l.quiz)}</div>
+    <div class="sheet">${quizHTML(C.id, l.quiz)}</div>
     <details class="sheet"><summary>Xem transcript</summary><div class="script">
       ${l.script.map(([s,t],i)=>`<p data-line="${i}"><span class="sp">${s==="A"?"Speaker 1":"Speaker 2"}</span>${esc(t)}</p>`).join("")}</div></details></div>`;
 }
 function playDialogue(){
-  const l = UNITS[S.u].listening; stopSpeech(); let i = 0;
+  const l = curSet(UNITS[S.u], "listening").x; stopSpeech(); let i = 0;
   const next = () => {
     document.querySelectorAll(".script .now").forEach(e=>e.classList.remove("now"));
     if(i >= l.script.length) return;
@@ -393,11 +411,11 @@ function playDialogue(){
 }
 
 function vWriting(u){
-  const w = u.writing, txt = P.drafts[u.id]||"", n = wordCount(txt);
+  const C = curSet(u, "writing"), w = C.x, txt = P.drafts[draftKey(u, C.i)]||"", n = wordCount(txt);
   const checks = w.type==="Task 1"
     ? ["Có câu mở bài paraphrase đề","Có đoạn Overview nêu xu hướng/điểm chính (không nêu số)","Số liệu chính xác, có so sánh","Dùng đúng thì (năm đã qua → past simple)","Đủ 150 từ"]
     : ["Trả lời đúng và đủ mọi phần của câu hỏi","Mở bài nêu rõ quan điểm hoặc nội dung bài","Mỗi đoạn thân bài có 1 ý chính + ví dụ","Dùng từ nối: Firstly, However, In addition, In conclusion","Đọc lại sửa chính tả, chia động từ, dấu câu","Đủ 250 từ"];
-  return `<div class="stack">
+  return setPicker(u, "writing") + `<div class="stack">
     <div class="sheet stack"><span class="eyebrow">Writing ${esc(w.type)} · ${esc(w.time)} · tối thiểu ${w.min} từ</span>
       <p class="task">${esc(w.prompt)}</p>
       ${w.charts?`<div class="charts">${w.charts.map(chartHTML).join("")}</div>`:""}
@@ -407,16 +425,17 @@ function vWriting(u){
       <span class="wc ${n>=w.min?'ok':'low'}" id="wc">${n} / ${w.min} từ</span></div>
       <textarea id="draft" placeholder="Bắt đầu viết ở đây. Bài được tự động lưu trên trình duyệt này.">${esc(txt)}</textarea>
       <div class="check"><span class="eyebrow">Tự kiểm tra trước khi nộp</span>
-        ${checks.map((c,i)=>`<label><input type="checkbox" id="ck${u.id}${i}"> ${c}</label>`).join("")}</div></div>
+        ${checks.map((c,i)=>`<label><input type="checkbox" id="ck${u.id}-${C.i}-${i}"> ${c}</label>`).join("")}</div></div>
     <details class="sheet"><summary>Xem bài mẫu (khoảng band 6)</summary><div class="model">${esc(w.model)}</div>
       <p class="muted small" style="margin-top:8px">${wordCount(w.model)} từ. Hãy viết bài của bạn trước, sau đó so sánh cách chia đoạn và từ nối.</p></details></div>`;
 }
 
 function vSpeaking(u){
-  const s = u.speaking, line = q => `<div class="qline"><span>${esc(q)}</span><button class="btn small" type="button" data-act="say" data-text="${esc(q)}" aria-label="Nghe câu hỏi">🔊</button></div>`;
+  const C = curSet(u, "speaking"), s = C.x, line = q => `<div class="qline"><span>${esc(q)}</span><button class="btn small" type="button" data-act="say" data-text="${esc(q)}" aria-label="Nghe câu hỏi">🔊</button></div>`;
   const sample = (q,a) => `<details><summary>Câu trả lời mẫu: “${esc(q)}”</summary><p>${esc(a)}</p><button class="btn small" type="button" data-act="say" data-text="${esc(a)}" style="margin-top:8px">🔊 Nghe mẫu</button></details>`;
-  return `<div class="stack">
-    <div class="sheet"><span class="eyebrow">Mẹo của unit</span><p style="margin-top:6px">${esc(s.tip)}</p></div>
+  const tip = s.tip || u.speaking.tip, phr = s.phrases || u.speaking.phrases;
+  return setPicker(u, "speaking") + `<div class="stack">
+    <div class="sheet"><span class="eyebrow">Mẹo của unit</span><p style="margin-top:6px">${esc(tip)}</p></div>
     <div class="sheet part"><span class="eyebrow">Part 1 · 4–5 phút · câu hỏi về bản thân</span>${s.p1.map(line).join("")}${sample(s.p1sample.q, s.p1sample.a)}</div>
     <div class="sheet part"><span class="eyebrow">Part 2 · 1 phút chuẩn bị · nói 1–2 phút</span>
       <div class="cue"><h3>${esc(s.cue.t)}</h3><p>You should say:</p><ul>${s.cue.pts.map(x=>`<li>${esc(x)}</li>`).join("")}</ul><p>${esc(s.cue.end)}</p></div>
@@ -424,7 +443,10 @@ function vSpeaking(u){
       ${s.notes?`<details><summary>Ghi chú mẫu trong 1 phút</summary><p class="notes">${esc(s.notes)}</p></details>`:""}
       <details><summary>Bài nói mẫu</summary><p>${esc(s.p2sample)}</p><button class="btn small" type="button" data-act="say" data-text="${esc(s.p2sample)}" style="margin-top:8px">🔊 Nghe mẫu</button></details></div>
     <div class="sheet part"><span class="eyebrow">Part 3 · 4–5 phút · thảo luận</span>${s.p3.map(line).join("")}${s.p3sample?sample(s.p3sample.q, s.p3sample.a):""}</div>
-    <div class="sheet part"><span class="eyebrow">Cụm từ hữu ích</span><div class="phr">${s.phrases.map(p=>`<span>${esc(p)}</span>`).join("")}</div></div>
+    <div class="sheet part"><span class="eyebrow">Cụm từ hữu ích</span><div class="phr">${phr.map(p=>`<span>${esc(p)}</span>`).join("")}</div></div>
+    <div class="sheet part"><div class="row" style="justify-content:space-between"><span class="eyebrow">🎲 Luyện câu hỏi ngẫu nhiên</span><span class="muted small">từ tất cả các unit</span></div>
+      ${S.randq ? `<div class="qline"><span><span class="tick mine">${esc(S.randq.tag)}</span> ${esc(S.randq.q)}</span><button class="btn small" type="button" data-act="say" data-text="${esc(S.randq.q)}" aria-label="Nghe câu hỏi">🔊</button></div>` : `<p class="muted small">Bấm nút để nhận một câu hỏi Part 1 hoặc Part 3 bất kỳ, rồi trả lời to trong khoảng 30 giây đến 1 phút.</p>`}
+      <div class="row"><button class="btn primary" type="button" data-act="randq" data-p="1">Câu Part 1</button><button class="btn" type="button" data-act="randq" data-p="3">Câu Part 3</button><button class="btn" type="button" data-act="randq" data-p="2">Đề Part 2</button></div></div>
     <div class="row"><button class="btn ${P.spoke[u.id]?'':'primary'}" type="button" data-act="spoke">${P.spoke[u.id]?'Bỏ đánh dấu':'✓ Tôi đã luyện nói xong unit này'}</button></div></div>`;
 }
 function runTimer(sec){
@@ -456,7 +478,7 @@ document.addEventListener("click", e => {
   const b = e.target.closest("[data-act]"); if(!b) return;
   const a = b.dataset.act, u = UNITS[S.u];
   if(a==="home"){ S.view="home"; render(); }
-  else if(a==="unit"){ S.typ=null; S.view="unit"; S.u=+b.dataset.u; S.tab="vocab"; S.vmode="word"; S.card=0; S.flipped=false; S.vq=null; render(); window.scrollTo(0,0); }
+  else if(a==="unit"){ S.typ=null; S.si={}; S.randq=null; S.view="unit"; S.u=+b.dataset.u; S.tab="vocab"; S.vmode="word"; S.card=0; S.flipped=false; S.vq=null; render(); window.scrollTo(0,0); }
   else if(a==="review"){ S.view="review"; S.r=+b.dataset.r; S.rq=null; render(); window.scrollTo(0,0); }
   else if(a==="newrq"){ S.rq=null; render(); }
   else if(a==="tab"){ S.tab=b.dataset.tab; render(); }
@@ -466,6 +488,14 @@ document.addEventListener("click", e => {
   else if(a==="onlynew"){ S.onlyNew=b.checked; S.card=0; S.flipped=false; render(); }
   else if(a==="known"){ const k=b.dataset.k; if(P.known[k]) delete P.known[k]; else { P.known[k]=true; if(!S.onlyNew) S.card++; S.flipped=false; } save(); render(); }
   else if(a==="newvq"){ S.vq=null; render(); }
+  else if(a==="set"){ S.si[b.dataset.k]=+b.dataset.i; render(); }
+  else if(a==="setrand"){ const k=b.dataset.k, n=sets(u,k).length, c=curSet(u,k).i; S.si[k]=(c+1+Math.floor(Math.random()*(n-1)))%n; render(); }
+  else if(a==="randq"){ const pt=b.dataset.p, pool=[];
+    UNITS.forEach((uu,ui)=>sets(uu,"speaking").forEach(sp=>{
+      if(pt==="2") pool.push({q:sp.cue.t+" You should say: "+sp.cue.pts.join("; ")+"; "+sp.cue.end, tag:"Part 2 · Unit "+(ui+1)});
+      else (pt==="1"?sp.p1:sp.p3).forEach(q=>pool.push({q, tag:"Part "+pt+" · Unit "+(ui+1)})); }));
+    let q; do{ q=pool[Math.floor(Math.random()*pool.length)]; }while(pool.length>1 && S.randq && q.q===S.randq.q);
+    S.randq=q; render(); stopSpeech(); speak(q.q); }
   else if(a==="typstart"){ typStart(u, vocabPool(u).mode, b.dataset.scope); render(); const i=$("#typin"); if(i) i.focus(); }
   else if(a==="typretry"){ const T=S.typ; typStart(u, T.mode, T.scope, T.wrong.map(x=>{ const y=Object.assign({},x); delete y._ans; return y; })); render(); $("#typin").focus(); }
   else if(a==="typquit"){ S.typ=null; render(); }
@@ -564,8 +594,10 @@ let draftT;
 document.addEventListener("input", e => {
   if(e.target.id !== "draft") return;
   const u = UNITS[S.u], n = wordCount(e.target.value), wc = $("#wc");
-  wc.textContent = `${n} / ${u.writing.min} từ`; wc.className = "wc " + (n>=u.writing.min?"ok":"low");
-  clearTimeout(draftT); draftT = setTimeout(()=>{ P.drafts[u.id]=e.target.value; save(); renderRail(); }, 500);
+  const min = curSet(u, "writing").x.min;
+  wc.textContent = `${n} / ${min} từ`; wc.className = "wc " + (n>=min?"ok":"low");
+  const key = draftKey(u, curSet(u, "writing").i);
+  clearTimeout(draftT); draftT = setTimeout(()=>{ P.drafts[key]=e.target.value; save(); renderRail(); }, 500);
 });
 
 render();

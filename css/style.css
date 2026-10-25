@@ -231,3 +231,7 @@ details[open] summary{margin-bottom:8px}
 .typ-res .muted{color:var(--muted)}
 .typ-hint{font-family:ui-monospace,monospace;letter-spacing:.08em;color:var(--accent)}
 .typ-wrong{margin-top:10px;max-height:360px;overflow:auto}
+.setbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+.setbar .seg{margin-bottom:0}
+.setbar .setname{flex:1 1 200px;min-width:0}
+.seg .done{color:inherit;opacity:.85}
