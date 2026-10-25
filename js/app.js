@@ -311,6 +311,17 @@ function vocabPool(u){
 }
 /* Ôn tập gõ từ: hiện nghĩa, người học gõ lại từ tiếng Anh */
 // Chuẩn hoá khi so câu gõ: bỏ hoa/thường, khoảng trắng thừa, dấu ngoặc kép, dấu câu cuối
+// Bỏ dấu tiếng Việt để tìm "co hoi" vẫn ra "cơ hội"
+const fold = x => String(x||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/đ/g,"d").replace(/Đ/g,"d").toLowerCase().replace(/\s+/g," ").trim();
+function wlFilter(){
+  const box = document.querySelector(".wordlist"); if(!box) return;
+  const q = fold(S.vsearch), rows = box.querySelectorAll(".wl"); let n = 0;
+  rows.forEach(r => { const ok = !q || r.dataset.s.includes(q); r.hidden = !ok; if(ok) n++; });
+  box.querySelectorAll(".wl-group").forEach(g => { let e = g.nextElementSibling, any = false;
+    while(e && e.classList.contains("wl")){ if(!e.hidden){ any = true; break; } e = e.nextElementSibling; } g.hidden = !any; });
+  $("#wlcount").textContent = q ? `${n}/${rows.length}` : rows.length;
+  $("#wlnone").hidden = n > 0;
+}
 const normT = x => norm(String(x).replace(/["“”]/g,"")).replace(/\s+/g," ").trim();
 function typAnswers(w){
   const out = new Set([w, w.replace(/\s*\([^)]*\)\s*/g," "), w.replace(/[()]/g,"")]);
@@ -408,7 +419,7 @@ function vVocab(u){
   let lastG = null;
   const list = pool.map((x,i)=>{
     const head = x.g && x.g!==lastG ? `<p class="eyebrow wl-group">${esc(x.g)}</p>` : ""; lastG = x.g;
-    return head + `<div class="wl"><span><b>${esc(x.w)}</b> <span class="ipa">${esc(x.ipa)}</span><br><span class="muted small">${esc(x.vi)}</span></span>
+    return head + `<div class="wl" data-s="${esc(fold([x.w, x.vi, x.ex].join(" ")))}"><span><b>${esc(x.w)}</b> <span class="ipa">${esc(x.ipa)}</span><br><span class="muted small">${esc(x.vi)}</span></span>
       <span class="row">${P.known[V.key+x.w]?'<span class="tick">đã thuộc</span>':''}${x._custom?'<span class="tick mine">của tôi</span>':x._edited?'<span class="tick mine">đã sửa</span>':''}<button class="btn small" type="button" data-act="goto" data-i="${i}">Xem</button><button class="btn small" type="button" data-act="vedit" data-id="${esc(x._id)}" aria-label="Sửa ${esc(x.w)}">✎</button></span></div>`;
   }).join("");
   const modes = modesHTML(u, V);
@@ -436,7 +447,9 @@ function vVocab(u){
       </div>
       <label class="row small"><input type="checkbox" id="onlynew" data-act="onlynew" ${S.onlyNew?"checked":""}> Chỉ ôn những ${V.M.unit} chưa thuộc</label>
     </div>
-    <div class="sheet wordlist"><span class="eyebrow" style="margin-bottom:6px">${V.M.name} của unit · ${pool.length} ${V.M.unit}</span>${list}</div>
+    <div class="sheet wordlist"><div class="wl-head"><span class="eyebrow">${V.M.name} của unit · <span id="wlcount">${pool.length}</span> ${V.M.unit}</span>
+      <div class="wl-search"><input id="vsearch" type="search" placeholder="Tìm ${V.M.unit}, nghĩa hoặc ví dụ…" value="${esc(S.vsearch||"")}" autocomplete="off" spellcheck="false" aria-label="Tìm trong danh sách ${V.M.unit}"></div></div>
+      ${list}<p id="wlnone" class="muted small" hidden>Không tìm thấy ${V.M.unit} nào khớp.</p></div>
   </div>
   <div class="sheet" style="margin-top:20px"><div class="row" style="justify-content:space-between"><h3>Kiểm tra nhanh</h3><button class="btn small" type="button" data-act="newvq">Đổi câu hỏi</button></div>
     <p class="qhead">Phần 1: Chọn ${V.M.unit} đúng với nghĩa</p>${quizHTML(V.qid+"quiz", S.vq.items)}
@@ -701,14 +714,14 @@ function render(){
   stopSpeech(); clearInterval(S.timer); renderRail();
   PL.playing = false; cancelAnimationFrame(PL.raf);
   $("#main").innerHTML = S.view==="home" ? renderHome() : S.view==="review" ? renderReview() : renderUnit();
-  plUI();
+  plUI(); wlFilter();
 }
 
 document.addEventListener("click", e => {
   const b = e.target.closest("[data-act]"); if(!b) return;
   const a = b.dataset.act, u = UNITS[S.u];
   if(a==="home"){ S.view="home"; render(); }
-  else if(a==="unit"){ S.typ=null; S.typedOk=0; S.si={}; S.randq=null; S.view="unit"; S.u=+b.dataset.u; S.tab="vocab"; S.vmode="word"; S.card=0; S.flipped=false; S.vq=null; render(); window.scrollTo(0,0); }
+  else if(a==="unit"){ S.vsearch=""; S.typ=null; S.typedOk=0; S.si={}; S.randq=null; S.view="unit"; S.u=+b.dataset.u; S.tab="vocab"; S.vmode="word"; S.card=0; S.flipped=false; S.vq=null; render(); window.scrollTo(0,0); }
   else if(a==="review"){ S.view="review"; S.r=+b.dataset.r; S.rq=null; render(); window.scrollTo(0,0); }
   else if(a==="newrq"){ S.rq=null; render(); }
   else if(a==="tab"){ S.tab=b.dataset.tab; S.gradeErr=""; render(); }
@@ -867,6 +880,7 @@ document.addEventListener("change", e => {
 let draftT;
 document.addEventListener("input", e => {
   if(e.target.id === "cardin"){ e.target.classList.remove("wrong"); return; }
+  if(e.target.id === "vsearch"){ S.vsearch = e.target.value; wlFilter(); return; }
   if(e.target.id === "raterange"){ const v=$("#ratev"); if(v) v.textContent = e.target.value; return; }
   if(e.target.id === "rate"){ plRestartHere(); return; }
   if(e.target.id !== "draft") return;

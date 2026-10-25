@@ -310,3 +310,8 @@ details[open] summary{margin-bottom:8px}
   .pl-btn.pl-main{width:42px;height:42px}
   .pl-thumb{flex-basis:36px;height:36px}
 }
+/* Ô tìm trong danh sách từ vựng */
+.wl-head{position:sticky;top:-1px;z-index:2;background:var(--sheet);display:flex;flex-direction:column;gap:8px;padding:2px 0 10px;margin-bottom:4px;border-bottom:1px solid var(--line)}
+.wl-search input{width:100%;box-sizing:border-box;font:inherit;font-size:.92rem;padding:8px 12px 8px 34px;border:1px solid var(--line);border-radius:10px;background:var(--paper) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%237a859c' stroke-width='2.2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='m20 20-3.5-3.5'/%3E%3C/svg%3E") no-repeat 11px center;color:var(--ink)}
+.wl-search input:focus{outline:none;border-color:var(--accent);background-color:var(--sheet)}
+.wl[hidden],.wl-group[hidden]{display:none}
