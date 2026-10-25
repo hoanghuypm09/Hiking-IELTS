@@ -198,16 +198,20 @@ function chartHTML(c){
 }
 
 /* ============ TABS ============ */
-function vocabQuestions(pool, n){
+function vocabQuestions(pool, n, label="Từ"){
   return shuffle(pool).slice(0,n).map(t => {
     const o = shuffle([t.w, ...shuffle(pool.filter(x=>x!==t)).slice(0,3).map(x=>x.w)]);
-    return {q:`Từ nào nghĩa là “${t.vi}”?`, o, a:o.indexOf(t.w)};
+    return {q:`${label} nào nghĩa là “${t.vi}”?`, o, a:o.indexOf(t.w)};
   });
 }
+function vocabPool(u){
+  const np = !!(S.vmode==="phrase" && u.phrases && u.phrases.length);
+  return {list: np ? u.phrases : u.vocab, key: u.id + (np ? ":np:" : ":"), qid: u.id + (np ? ":np" : ":vocab"), np};
+}
 function vocabDeck(u){
-  const all = u.vocab.map((_,i)=>i);
+  const V = vocabPool(u), all = V.list.map((_,i)=>i);
   if(!S.onlyNew) return all;
-  const left = all.filter(i => !P.known[u.id+":"+u.vocab[i].w]);
+  const left = all.filter(i => !P.known[V.key+V.list[i].w]);
   return left.length ? left : all;
 }
 function gapQuestions(pool, n){
@@ -218,17 +222,22 @@ function gapQuestions(pool, n){
   });
 }
 function vVocab(u){
+  const V = vocabPool(u), pool = V.list;
   const deck = vocabDeck(u); S.card = ((S.card % deck.length) + deck.length) % deck.length;
-  const v = u.vocab[deck[S.card]], k = u.id+":"+v.w;
-  const nKnown = u.vocab.filter(x=>P.known[u.id+":"+x.w]).length;
-  if(!S.vq || S.vq.unit !== u.id) S.vq = {unit:u.id, items: vocabQuestions(u.vocab, Math.min(10, u.vocab.length)), gaps: gapQuestions(u.vocab, 8)};
+  const v = pool[deck[S.card]], k = V.key+v.w;
+  const nKnown = pool.filter(x=>P.known[V.key+x.w]).length;
+  if(!S.vq || S.vq.id !== V.qid) S.vq = {id:V.qid, items: vocabQuestions(pool, Math.min(10, pool.length), V.np?"Cụm":"Từ"), gaps: gapQuestions(pool, 8)};
   let lastG = null;
-  const list = u.vocab.map((x,i)=>{
+  const list = pool.map((x,i)=>{
     const head = x.g && x.g!==lastG ? `<p class="eyebrow wl-group">${esc(x.g)}</p>` : ""; lastG = x.g;
     return head + `<div class="wl"><span><b>${esc(x.w)}</b> <span class="ipa">${esc(x.ipa)}</span><br><span class="muted small">${esc(x.vi)}</span></span>
-      <span class="row">${P.known[u.id+":"+x.w]?'<span class="tick">đã thuộc</span>':''}<button class="btn small" type="button" data-act="goto" data-i="${i}">Xem</button></span></div>`;
+      <span class="row">${P.known[V.key+x.w]?'<span class="tick">đã thuộc</span>':''}<button class="btn small" type="button" data-act="goto" data-i="${i}">Xem</button></span></div>`;
   }).join("");
-  return `<div class="flash-area">
+  const modes = u.phrases && u.phrases.length ? `<div class="seg" role="tablist" aria-label="Loại từ vựng">
+      <button type="button" role="tab" data-act="vmode" data-m="word" aria-selected="${!V.np}">Từ vựng · ${u.vocab.length}</button>
+      <button type="button" role="tab" data-act="vmode" data-m="phrase" aria-selected="${V.np}">Cụm danh từ · ${u.phrases.length}</button></div>` : "";
+  const tip = V.np ? `<p class="muted small" style="margin:-6px 0 14px">Học cả cụm thay vì từng từ riêng lẻ giúp bài Writing và Speaking tự nhiên hơn. Mỗi thẻ ghi cấu trúc của cụm (ví dụ: tính từ + danh từ).</p>` : "";
+  return modes + tip + `<div class="flash-area">
     <div class="stack">
       <button type="button" class="card ${S.flipped?'flipped':''}" data-act="flip" aria-label="Lật thẻ">
         <div class="card-in">
@@ -243,16 +252,16 @@ function vVocab(u){
         <button class="btn" type="button" data-act="card" data-d="1">Sau →</button>
       </div>
       <div class="row">
-        <button class="btn ${P.known[k]?'':'primary'}" type="button" data-act="known" data-k="${esc(k)}">${P.known[k]?'Bỏ đánh dấu':'✓ Tôi đã thuộc từ này'}</button>
-        <span class="muted">${nKnown}/${u.vocab.length} từ đã thuộc</span>
+        <button class="btn ${P.known[k]?'':'primary'}" type="button" data-act="known" data-k="${esc(k)}">${P.known[k]?'Bỏ đánh dấu':V.np?'✓ Tôi đã thuộc cụm này':'✓ Tôi đã thuộc từ này'}</button>
+        <span class="muted">${nKnown}/${pool.length} ${V.np?"cụm":"từ"} đã thuộc</span>
       </div>
-      <label class="row small"><input type="checkbox" id="onlynew" data-act="onlynew" ${S.onlyNew?"checked":""}> Chỉ ôn những từ chưa thuộc</label>
+      <label class="row small"><input type="checkbox" id="onlynew" data-act="onlynew" ${S.onlyNew?"checked":""}> Chỉ ôn những ${V.np?"cụm":"từ"} chưa thuộc</label>
     </div>
-    <div class="sheet wordlist"><span class="eyebrow" style="margin-bottom:6px">Từ vựng của unit · ${u.vocab.length} từ</span>${list}</div>
+    <div class="sheet wordlist"><span class="eyebrow" style="margin-bottom:6px">${V.np?"Cụm danh từ":"Từ vựng"} của unit · ${pool.length} ${V.np?"cụm":"từ"}</span>${list}</div>
   </div>
   <div class="sheet" style="margin-top:20px"><div class="row" style="justify-content:space-between"><h3>Kiểm tra nhanh</h3><button class="btn small" type="button" data-act="newvq">Đổi câu hỏi</button></div>
-    <p class="qhead">Phần 1: Chọn từ đúng với nghĩa</p>${quizHTML(u.id+":vocabquiz", S.vq.items)}
-    ${S.vq.gaps.length?`<p class="qhead" style="margin-top:18px">Phần 2: Điền từ vào câu (gợi ý nghĩa trong ngoặc)</p>${quizHTML(u.id+":vocabgap", S.vq.gaps)}`:""}</div>`;
+    <p class="qhead">Phần 1: Chọn ${V.np?"cụm":"từ"} đúng với nghĩa</p>${quizHTML(V.qid+"quiz", S.vq.items)}
+    ${S.vq.gaps.length?`<p class="qhead" style="margin-top:18px">Phần 2: Điền ${V.np?"cụm danh từ":"từ"} vào câu (gợi ý nghĩa trong ngoặc)</p>${quizHTML(V.qid+"gap", S.vq.gaps)}`:""}</div>`;
 }
 
 function vGrammar(u){
@@ -359,13 +368,14 @@ document.addEventListener("click", e => {
   const b = e.target.closest("[data-act]"); if(!b) return;
   const a = b.dataset.act, u = UNITS[S.u];
   if(a==="home"){ S.view="home"; render(); }
-  else if(a==="unit"){ S.view="unit"; S.u=+b.dataset.u; S.tab="vocab"; S.card=0; S.flipped=false; S.vq=null; render(); window.scrollTo(0,0); }
+  else if(a==="unit"){ S.view="unit"; S.u=+b.dataset.u; S.tab="vocab"; S.vmode="word"; S.card=0; S.flipped=false; S.vq=null; render(); window.scrollTo(0,0); }
   else if(a==="review"){ S.view="review"; S.r=+b.dataset.r; S.rq=null; render(); window.scrollTo(0,0); }
   else if(a==="newrq"){ S.rq=null; render(); }
   else if(a==="tab"){ S.tab=b.dataset.tab; render(); }
   else if(a==="flip"){ S.flipped=!S.flipped; b.classList.toggle("flipped", S.flipped); }
   else if(a==="card"){ S.card += +b.dataset.d; S.flipped=false; render(); }
   else if(a==="goto"){ S.onlyNew=false; S.card=+b.dataset.i; S.flipped=false; render(); window.scrollTo({top:0,behavior:"smooth"}); }
+  else if(a==="vmode"){ S.vmode=b.dataset.m; S.card=0; S.flipped=false; render(); }
   else if(a==="onlynew"){ S.onlyNew=b.checked; S.card=0; S.flipped=false; render(); }
   else if(a==="known"){ const k=b.dataset.k; if(P.known[k]) delete P.known[k]; else { P.known[k]=true; if(!S.onlyNew) S.card++; S.flipped=false; } save(); render(); }
   else if(a==="newvq"){ S.vq=null; render(); }
@@ -382,7 +392,7 @@ document.addEventListener("submit", e => {
   const f = e.target.closest("form.quiz"); if(!f) return; e.preventDefault();
   const [got, total] = gradeQuiz(f);
   f.querySelector(".qscore").innerHTML = scoreHTML(got, total);
-  if(!/vocab(quiz|gap)$/.test(f.dataset.id)) recordScore(f.dataset.id, got/total);
+  if(!/:(vocab|np)(quiz|gap)$/.test(f.dataset.id)) recordScore(f.dataset.id, got/total);
 });
 document.addEventListener("reset", e => { const f=e.target.closest("form.quiz"); if(!f) return;
   setTimeout(()=>{ f.querySelectorAll(".opt").forEach(o=>o.classList.remove("right","wrong")); f.querySelectorAll(".gap,.pick-sel").forEach(o=>o.classList.remove("right","wrong"));

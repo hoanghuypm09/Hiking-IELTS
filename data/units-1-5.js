@@ -55,6 +55,32 @@ window.UNITS = (window.UNITS || []).concat([
     {g:"Cụm giới từ (prepositional phrases)",w:"on the coast",p:"phrase",ipa:"/ɒn ðə kəʊst/",vi:"ở ven biển",ex:"Nha Trang is a city on the coast."},
     {g:"Cụm giới từ (prepositional phrases)",w:"in the centre of",p:"phrase",ipa:"/ɪn ðə ˈsentə əv/",vi:"ở trung tâm của",ex:"Our hotel is in the centre of the old town."}
   ],
+  phrases:[
+    {g:"Tính từ + danh từ",w:"a high standard of living",p:"noun phrase",ipa:"/ə haɪ ˈstændəd əv ˈlɪvɪŋ/",vi:"mức sống cao",ex:"Most people in Norway enjoy a high standard of living."},
+    {g:"Tính từ + danh từ",w:"a low crime rate",p:"noun phrase",ipa:"/ə ləʊ kraɪm reɪt/",vi:"tỉ lệ tội phạm thấp",ex:"Families choose this town because of its low crime rate."},
+    {g:"Tính từ + danh từ",w:"green spaces",p:"noun phrase",ipa:"/ɡriːn ˈspeɪsɪz/",vi:"không gian xanh (công viên, vườn cây)",ex:"Big cities need more green spaces for children to play."},
+    {g:"Tính từ + danh từ",w:"local residents",p:"noun phrase",ipa:"/ˈləʊkl ˈrezɪdənts/",vi:"cư dân địa phương",ex:"Local residents complained about the noise."},
+    {g:"Tính từ + danh từ",w:"a busy lifestyle",p:"noun phrase",ipa:"/ə ˈbɪzi ˈlaɪfstaɪl/",vi:"lối sống bận rộn",ex:"People with a busy lifestyle often eat fast food."},
+    {g:"Tính từ + danh từ",w:"natural resources",p:"noun phrase",ipa:"/ˈnætʃrəl rɪˈzɔːsɪz/",vi:"tài nguyên thiên nhiên",ex:"The region is rich in natural resources such as coal."},
+    {g:"Tính từ + danh từ",w:"average income",p:"noun phrase",ipa:"/ˈævərɪdʒ ˈɪnkʌm/",vi:"thu nhập trung bình",ex:"Average income in the city is higher than in rural areas."},
+    {g:"Tính từ + danh từ",w:"historic buildings",p:"noun phrase",ipa:"/hɪˈstɒrɪk ˈbɪldɪŋz/",vi:"các công trình lịch sử",ex:"The old quarter is full of historic buildings."},
+    {g:"Tính từ + danh từ",w:"a friendly atmosphere",p:"noun phrase",ipa:"/ə ˈfrendli ˈætməsfɪə/",vi:"bầu không khí thân thiện",ex:"The market has a friendly atmosphere."},
+    {g:"Danh từ + danh từ",w:"public transport system",p:"noun phrase",ipa:"/ˈpʌblɪk ˈtrænspɔːt ˈsɪstəm/",vi:"hệ thống giao thông công cộng",ex:"The city is building a new public transport system."},
+    {g:"Danh từ + danh từ",w:"city dwellers",p:"noun phrase",ipa:"/ˈsɪti ˈdweləz/",vi:"cư dân thành phố",ex:"Many city dwellers spend hours in traffic every day."},
+    {g:"Danh từ + danh từ",w:"traffic congestion",p:"noun phrase",ipa:"/ˈtræfɪk kənˈdʒestʃən/",vi:"tắc nghẽn giao thông",ex:"Traffic congestion is worst between 5 and 7 p.m."},
+    {g:"Danh từ + danh từ",w:"air pollution",p:"noun phrase",ipa:"/eə pəˈluːʃn/",vi:"ô nhiễm không khí",ex:"Air pollution can cause breathing problems."},
+    {g:"Danh từ + danh từ",w:"job opportunities",p:"noun phrase",ipa:"/dʒɒb ˌɒpəˈtjuːnətiz/",vi:"cơ hội việc làm",ex:"Young people move to cities for better job opportunities."},
+    {g:"Danh từ + danh từ",w:"a tourist destination",p:"noun phrase",ipa:"/ə ˈtʊərɪst ˌdestɪˈneɪʃn/",vi:"điểm đến du lịch",ex:"Phu Quoc has become a popular tourist destination."},
+    {g:"Danh từ + danh từ",w:"leisure facilities",p:"noun phrase",ipa:"/ˈleʒə fəˈsɪlətiz/",vi:"cơ sở vui chơi giải trí",ex:"The new district has cinemas, pools and other leisure facilities."},
+    {g:"Danh từ + of + danh từ",w:"the cost of living",p:"noun phrase",ipa:"/ðə kɒst əv ˈlɪvɪŋ/",vi:"chi phí sinh hoạt",ex:"The cost of living in Hanoi has risen quickly."},
+    {g:"Danh từ + of + danh từ",w:"quality of life",p:"noun phrase",ipa:"/ˈkwɒləti əv laɪf/",vi:"chất lượng cuộc sống",ex:"Parks and clean air improve people's quality of life."},
+    {g:"Danh từ + of + danh từ",w:"a sense of community",p:"noun phrase",ipa:"/ə sens əv kəˈmjuːnəti/",vi:"tinh thần cộng đồng, sự gắn kết",ex:"Small villages often have a strong sense of community."},
+    {g:"Danh từ + of + danh từ",w:"a slow pace of life",p:"noun phrase",ipa:"/ə sləʊ peɪs əv laɪf/",vi:"nhịp sống chậm",ex:"I love the slow pace of life in Hoi An."},
+    {g:"Dùng trong Writing Task 1",w:"the majority of residents",p:"noun phrase",ipa:"/ðə məˈdʒɒrəti əv ˈrezɪdənts/",vi:"phần lớn cư dân",ex:"The majority of residents are satisfied with healthcare."},
+    {g:"Dùng trong Writing Task 1",w:"a significant percentage",p:"noun phrase",ipa:"/ə sɪɡˈnɪfɪkənt pəˈsentɪdʒ/",vi:"một tỉ lệ đáng kể",ex:"A significant percentage of people chose friendly locals."},
+    {g:"Dùng trong Writing Task 1",w:"the remaining 8 percent",p:"noun phrase",ipa:"/ðə rɪˈmeɪnɪŋ eɪt pəˈsent/",vi:"8% còn lại",ex:"The remaining 8 percent gave other reasons."},
+    {g:"Dùng trong Writing Task 1",w:"public services",p:"noun phrase",ipa:"/ˈpʌblɪk ˈsɜːvɪsɪz/",vi:"dịch vụ công",ex:"The bar chart compares satisfaction with four public services."}
+  ],
   grammar:{
     title:"Present simple & Present continuous",
     rules:[
