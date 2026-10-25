@@ -216,9 +216,39 @@ async function aiTest(){
   renderAIPanel();
 }
 
+/* ============ GIÁO TRÌNH (chọn sách ở logo; sau này thêm sách mới vào BOOKS) ============ */
+const BOOKS = [
+  {id:"c45", title:"Complete IELTS Bands 4–5", short:"Complete IELTS 4–5", band:"Band 4.0 – 5.0", cover:"4–5", units:() => window.UNITS},
+  {id:"c565", title:"Complete IELTS Bands 5–6.5", short:"Complete IELTS 5–6.5", band:"Band 5.0 – 6.5", cover:"5–6.5", soon:true},
+  {id:"c6575", title:"Complete IELTS Bands 6.5–7.5", short:"Complete IELTS 6.5–7.5", band:"Band 6.5 – 7.5", cover:"6.5+", soon:true}
+];
+const curBook = () => BOOKS.find(b => b.id === P.book && !b.soon) || BOOKS[0];
+function bookUI(){
+  const b = curBook(), band = document.getElementById("brandband"), pill = document.getElementById("bookpill");
+  if(band) band.textContent = b.band;
+  if(pill) pill.textContent = "Theo lộ trình " + b.title;
+}
+function toggleBooks(open){
+  const btn = document.getElementById("brandbtn"); if(!btn) return;
+  let el = document.getElementById("booklist");
+  if(open === false || (el && open !== true)){ if(el) el.remove(); btn.setAttribute("aria-expanded","false"); return; }
+  toggleVoicePanel(false); toggleAIPanel(false);
+  const cur = curBook();
+  el = document.createElement("div"); el.id = "booklist"; el.className = "booklist sheet"; el.setAttribute("role","menu");
+  el.innerHTML = `<div class="bl-label">Chọn giáo trình</div>` + BOOKS.map(b => {
+    const n = b.units ? b.units().length : 0;
+    return `<button class="bookitem" type="button" role="menuitem" data-act="book" data-b="${b.id}" ${b.soon?"disabled":""} aria-current="${b.id===cur.id}">
+      <span class="bk-cover">${esc(b.cover)}</span><span class="bk-tx"><b>${esc(b.title)}</b><small>${b.soon?esc(b.band):`${esc(b.band)} · ${n} unit`}</small></span>
+      ${b.soon?'<span class="tag">Sắp có</span>':b.id===cur.id?'<span class="tag">Đang học</span>':""}</button>`;
+  }).join("");
+  btn.parentNode.appendChild(el); btn.setAttribute("aria-expanded","true");
+}
+document.addEventListener("click", e => { if(!e.target.closest(".bookmenu")) toggleBooks(false); });
+document.addEventListener("keydown", e => { if(e.key === "Escape") toggleBooks(false); });
+
 /* ============ RENDER: shell ============ */
 function renderRail(){
-  let h = '<div class="label">10 unit · Complete IELTS 4–5</div>';
+  let h = `<div class="label">${UNITS.length} unit · ${esc(curBook().short)}</div>`;
   UNITS.forEach((u,i) => {
     h += `<button class="unit-btn" type="button" data-act="unit" data-u="${i}" aria-current="${S.view==='unit'&&S.u===i}">
       <span><b>${i+1}</b> · ${esc(u.title)}</span><small>${esc(u.vi)}</small>
@@ -881,6 +911,8 @@ document.addEventListener("click", e => {
   const b = e.target.closest("[data-act]"); if(!b) return;
   const a = b.dataset.act, u = UNITS[S.u];
   if(a==="home"){ S.view="home"; render(); }
+  else if(a==="books"){ toggleBooks(); }
+  else if(a==="book"){ P.book=b.dataset.b; save(); toggleBooks(false); bookUI(); S.view="home"; render(); window.scrollTo(0,0); toast("Đang học: " + curBook().title); }
   else if(a==="unit"){ S.vsearch=""; S.myedit=null; S.typ=null; S.typedOk=0; S.si={}; S.randq=null; S.view="unit"; S.u=+b.dataset.u; S.tab="vocab"; S.vmode="word"; S.card=0; S.flipped=false; S.vq=null; render(); window.scrollTo(0,0); }
   else if(a==="review"){ S.view="review"; S.r=+b.dataset.r; S.rq=null; render(); window.scrollTo(0,0); }
   else if(a==="newrq"){ S.rq=null; render(); }
@@ -1109,3 +1141,4 @@ if(darkMQ && darkMQ.addEventListener) darkMQ.addEventListener("change", themeUI)
 document.addEventListener("click", e => { if(e.target.closest('[data-act="theme"]')) setTheme(curTheme() === "dark" ? "light" : "dark"); });
 themeUI();
 aiUI();
+bookUI();
