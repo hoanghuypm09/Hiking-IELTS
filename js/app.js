@@ -4,7 +4,7 @@ const EXTRA = window.EXTRA || {};
 /* ============ STATE & STORAGE ============ */
 const KEY = "ielts45-progress-v2";
 function load(){ try{ return JSON.parse(localStorage.getItem(KEY)) || {}; }catch(e){ return {}; } }
-const P = Object.assign({known:{},scores:{},drafts:{},spoke:{},custom:{},edits:{},hidden:{}}, load());
+const P = Object.assign({known:{},scores:{},drafts:{},spoke:{},custom:{},edits:{},hidden:{},grades:{},graderUrl:""}, load());
 function save(){ try{ localStorage.setItem(KEY, JSON.stringify(P)); }catch(e){} }
 
 const TABS = [["vocab","Từ vựng"],["grammar","Ngữ pháp"],["reading","Reading"],["listening","Listening"],["writing","Writing"],["speaking","Speaking"]];
@@ -426,8 +426,59 @@ function vWriting(u){
       <textarea id="draft" placeholder="Bắt đầu viết ở đây. Bài được tự động lưu trên trình duyệt này.">${esc(txt)}</textarea>
       <div class="check"><span class="eyebrow">Tự kiểm tra trước khi nộp</span>
         ${checks.map((c,i)=>`<label><input type="checkbox" id="ck${u.id}-${C.i}-${i}"> ${c}</label>`).join("")}</div></div>
+    ${aiGradeHTML(u, C, n)}
     <details class="sheet"><summary>Xem bài mẫu (khoảng band 6)</summary><div class="model">${esc(w.model)}</div>
       <p class="muted small" style="margin-top:8px">${wordCount(w.model)} từ. Hãy viết bài của bạn trước, sau đó so sánh cách chia đoạn và từ nối.</p></details></div>`;
+}
+
+/* ============ CHẤM WRITING BẰNG AI (Cloudflare Worker, xem worker/README.md) ============ */
+const GUIDE_URL = "https://github.com/hoanghuypm09/Hiking-IELTS/blob/main/worker/README.md";
+function graderUrl(){ return (P.graderUrl || (window.HIKING_CONFIG||{}).graderUrl || "").trim(); }
+function chartText(c){
+  if(c.type==="pie") return c.title+": "+c.data.map(([k,v])=>`${k} ${v}%`).join(", ");
+  if(c.type==="bar"||c.type==="line") return c.title+" ("+c.cats.join(", ")+"): "+c.series.map(([k,v])=>`${k} = ${v.join(", ")}`).join("; ");
+  if(c.type==="table") return c.title+"\n"+[c.head, ...c.rows].map(r=>r.join(" | ")).join("\n");
+  if(c.type==="process") return c.title+": "+c.steps.map((x,i)=>`${i+1}. ${x}`).join(" ");
+  return c.title||"";
+}
+function gradeResultHTML(g){
+  const r = g.result, col = b => b>=6.5?"ok":b>=5?"mid":"low";
+  return `<div class="grade">
+    <div class="grade-top"><div class="grade-overall ${col(r.overall)}"><span>${r.overall.toFixed(1)}</span><small>Band ước lượng</small></div>
+      <div class="grade-crit">${r.criteria.map(c=>`<div><div class="row" style="justify-content:space-between"><b>${esc(c.name)}</b><span class="gband ${col(c.band)}">${c.band.toFixed(1)}</span></div><p class="small">${esc(c.comment)}</p></div>`).join("")}</div></div>
+    ${r.strengths.length?`<h4>👍 Điểm tốt</h4><ul>${r.strengths.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:""}
+    ${r.improvements.length?`<h4>🎯 Cần cải thiện</h4><ul>${r.improvements.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:""}
+    ${r.corrections.length?`<h4>✏️ Sửa lỗi</h4><div class="fixes">${r.corrections.map(c=>`<div class="fixrow"><s>${esc(c.original)}</s><span>→ <b>${esc(c.better)}</b></span><span class="muted small">${esc(c.why)}</span></div>`).join("")}</div>`:""}
+    <p class="muted small">Chấm lúc ${new Date(g.at).toLocaleString("vi-VN")} · bài ${g.words} từ${g.words!==g.now?` (bài hiện tại ${g.now} từ, hãy chấm lại nếu đã sửa)`:""}. Đây là điểm do AI ước lượng để tham khảo, không phải điểm thi chính thức.</p></div>`;
+}
+function aiGradeHTML(u, C, n){
+  const url = graderUrl(), key = draftKey(u, C.i), g = P.grades[key];
+  if(!url) return `<div class="sheet stack"><span class="eyebrow">🤖 Chấm bài bằng AI</span>
+    <p class="small">Chưa kết nối máy chấm. Làm theo <a href="${GUIDE_URL}" target="_blank" rel="noopener">hướng dẫn cài đặt (khoảng 10 phút, miễn phí)</a>, rồi dán địa chỉ máy chấm vào đây:</p>
+    <div class="row"><input id="graderurl" class="urlin" placeholder="https://hiking-ielts-grader.ten-ban.workers.dev" autocomplete="off" spellcheck="false"><button class="btn primary" type="button" data-act="gradersave">Lưu</button></div></div>`;
+  return `<div class="sheet stack"><div class="row" style="justify-content:space-between"><span class="eyebrow">🤖 Chấm bài bằng AI</span><button class="btn small" type="button" data-act="graderedit" title="${esc(url)}">Đổi máy chấm</button></div>
+    <p class="muted small">AI đọc bài của bạn và cho band ước lượng theo 4 tiêu chí IELTS, kèm nhận xét và sửa lỗi. Cần ít nhất 50 từ. Gói miễn phí chấm được khoảng vài chục bài mỗi ngày.</p>
+    <div class="row"><button class="btn primary" type="button" data-act="aigrade" ${S.grading?"disabled":""}>${S.grading?"⏳ Đang chấm… (khoảng 10–30 giây)":g?"Chấm lại bài này":"Chấm bài này"}</button></div>
+    ${S.gradeErr?`<p class="small" style="color:var(--bad)">${esc(S.gradeErr)}</p>`:""}
+    ${g ? gradeResultHTML(Object.assign({}, g, {now:n})) : ""}</div>`;
+}
+async function aiGrade(){
+  const u = UNITS[S.u], C = curSet(u, "writing"), w = C.x, key = draftKey(u, C.i);
+  const essay = ($("#draft") ? $("#draft").value : P.drafts[key]) || "", words = wordCount(essay);
+  if(words < 50){ toast("Hãy viết ít nhất 50 từ trước khi chấm."); return; }
+  P.drafts[key] = essay; save();
+  S.grading = true; S.gradeErr = ""; render();
+  try{
+    const res = await fetch(graderUrl(), {method:"POST", headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({task:w.type, prompt:w.prompt, data:(w.charts||[]).map(chartText).join("\n"), essay})});
+    const d = await res.json().catch(()=>({error:"Máy chấm trả về dữ liệu không đọc được."}));
+    if(!res.ok || d.error) throw new Error(d.error || ("Lỗi " + res.status));
+    P.grades[key] = {at: Date.now(), words, result: d}; save();
+  }catch(e){
+    S.gradeErr = /Failed to fetch|NetworkError|Load failed/i.test(e.message) ? "Không kết nối được máy chấm. Kiểm tra lại địa chỉ hoặc mạng." : e.message;
+  }
+  S.grading = false;
+  if(S.view==="unit" && S.tab==="writing") render();
 }
 
 function vSpeaking(u){
@@ -481,14 +532,14 @@ document.addEventListener("click", e => {
   else if(a==="unit"){ S.typ=null; S.si={}; S.randq=null; S.view="unit"; S.u=+b.dataset.u; S.tab="vocab"; S.vmode="word"; S.card=0; S.flipped=false; S.vq=null; render(); window.scrollTo(0,0); }
   else if(a==="review"){ S.view="review"; S.r=+b.dataset.r; S.rq=null; render(); window.scrollTo(0,0); }
   else if(a==="newrq"){ S.rq=null; render(); }
-  else if(a==="tab"){ S.tab=b.dataset.tab; render(); }
+  else if(a==="tab"){ S.tab=b.dataset.tab; S.gradeErr=""; render(); }
   else if(a==="flip"){ if(b.dataset.swiped){ delete b.dataset.swiped; return; } S.flipped=!S.flipped; b.classList.toggle("flipped", S.flipped); }
   else if(a==="goto"){ S.onlyNew=false; S.card=+b.dataset.i; S.flipped=false; render(); window.scrollTo({top:0,behavior:"smooth"}); }
   else if(a==="vmode"){ S.typ=null; S.vmode=b.dataset.m; S.card=0; S.flipped=false; render(); }
   else if(a==="onlynew"){ S.onlyNew=b.checked; S.card=0; S.flipped=false; render(); }
   else if(a==="known"){ const k=b.dataset.k; if(P.known[k]) delete P.known[k]; else { P.known[k]=true; if(!S.onlyNew) S.card++; S.flipped=false; } save(); render(); }
   else if(a==="newvq"){ S.vq=null; render(); }
-  else if(a==="set"){ S.si[b.dataset.k]=+b.dataset.i; render(); }
+  else if(a==="set"){ S.si[b.dataset.k]=+b.dataset.i; S.gradeErr=""; render(); }
   else if(a==="setrand"){ const k=b.dataset.k, n=sets(u,k).length, c=curSet(u,k).i; S.si[k]=(c+1+Math.floor(Math.random()*(n-1)))%n; render(); }
   else if(a==="randq"){ const pt=b.dataset.p, pool=[];
     UNITS.forEach((uu,ui)=>sets(uu,"speaking").forEach(sp=>{
@@ -521,6 +572,9 @@ document.addEventListener("click", e => {
   else if(a==="talk"){ runTimer(120); }
   else if(a==="tstop"){ clearInterval(S.timer); }
   else if(a==="spoke"){ P.spoke[u.id]=!P.spoke[u.id]; save(); render(); }
+  else if(a==="aigrade"){ if(!S.grading) aiGrade(); }
+  else if(a==="gradersave"){ const v=$("#graderurl").value.trim(); if(!/^https:\/\/\S+$/.test(v)){ toast("Địa chỉ phải bắt đầu bằng https://"); return; } P.graderUrl=v; save(); render(); }
+  else if(a==="graderedit"){ P.graderUrl=""; if(window.HIKING_CONFIG) window.HIKING_CONFIG.graderUrl=""; save(); render(); }
 });
 
 /* Quẹt thẻ: trái = thẻ sau, phải = thẻ trước (chuột, cảm ứng và phím mũi tên) */

@@ -1,0 +1,12 @@
+# Dùng khi triển khai bằng dòng lệnh: npx wrangler deploy
+name = "hiking-ielts-grader"
+main = "worker.js"
+compatibility_date = "2025-01-01"
+
+[ai]
+binding = "AI"
+
+[vars]
+# Đổi thành địa chỉ trang web của bạn để chỉ trang đó được dùng máy chấm, ví dụ:
+# ALLOWED_ORIGINS = "https://hoanghuypm09.github.io"
+ALLOWED_ORIGINS = "*"
