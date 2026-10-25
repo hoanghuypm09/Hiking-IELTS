@@ -226,6 +226,57 @@ function vocabPool(u){
   const m = VMODES[S.vmode] && hasMode(u, S.vmode) ? S.vmode : "word", M = VMODES[m];
   return {list: userList(u, m), key: u.id + M.key, qid: u.id + M.qid, np: m!=="word", M, mode: m};
 }
+/* Ôn tập gõ từ: hiện nghĩa, người học gõ lại từ tiếng Anh */
+function typAnswers(w){
+  const out = new Set([w, w.replace(/\s*\([^)]*\)\s*/g," "), w.replace(/[()]/g,"")]);
+  w.split(/\s*\/\s*/).forEach(x => x!==w && out.add(x));
+  return [...out].map(x => norm(x).replace(/\s+/g," "));
+}
+function typStart(u, mode, scope, items){
+  const list = items || (scope==="all" ? UNITS.flatMap((uu,ui) => userList(uu, mode).map(x => Object.assign({}, x, {_u:ui}))) : userList(u, mode).map(x => Object.assign({}, x, {_u:S.u})));
+  S.typ = {u:u.id, mode, scope, list:shuffle(list), i:0, ok:0, wrong:[], res:null, hint:0};
+}
+function typHTML(V){
+  const T = S.typ, n = T.list.length;
+  if(T.i >= n){
+    const pct = Math.round(T.ok/n*100);
+    return `<div class="sheet typ"><span class="eyebrow">Kết quả ôn tập · ${V.M.name}</span>
+      <h2 style="margin:6px 0 4px">${T.ok}/${n} đúng · ${pct}%</h2>
+      <p class="muted">${pct===100?"Tuyệt vời, bạn nhớ hết rồi!":pct>=70?"Tốt lắm! Ôn lại vài ${V.M.unit} sai bên dưới nhé.":"Cần ôn thêm. Hãy luyện lại các ${V.M.unit} sai."}</p>
+      ${T.wrong.length?`<div class="typ-wrong">${T.wrong.map(x=>`<div class="wl"><span><b>${esc(x.w)}</b> <span class="ipa">${esc(x.ipa||"")}</span><br><span class="muted small">${esc(x.vi)}${x._ans?` · bạn gõ: <s>${esc(x._ans)}</s>`:""}</span></span><button class="btn small" type="button" data-act="say" data-text="${esc(x.w)}">🔊</button></div>`).join("")}</div>`:""}
+      <div class="row" style="margin-top:14px">${T.wrong.length?`<button class="btn primary" type="button" data-act="typretry">Luyện lại ${T.wrong.length} ${V.M.unit} sai</button>`:""}
+        <button class="btn" type="button" data-act="typstart" data-scope="${T.scope}">Làm lại từ đầu</button><button class="btn" type="button" data-act="typquit">Về thẻ từ</button></div></div>`;
+  }
+  const x = T.list[T.i], R = T.res, ans = x.w;
+  const hint = T.hint===0 ? "" : T.hint===1 ? `${ans.length} ký tự · bắt đầu bằng “${esc(ans[0])}”` : esc(ans.replace(/[A-Za-z]/g,(c,i)=>i===0||ans[i-1]===" "?c:"_"));
+  return `<div class="sheet typ">
+    <div class="row" style="justify-content:space-between"><span class="eyebrow">Ôn tập · ${T.scope==="all"?"tất cả unit":"unit này"} · ${V.M.name}</span><span class="muted small">${T.i+1}/${n} · đúng ${T.ok}</span></div>
+    <div class="typ-bar"><span style="width:${T.i/n*100}%"></span></div>
+    <p class="muted small" style="margin-top:14px">Gõ ${V.M.unit} tiếng Anh có nghĩa là${T.scope==="all"?` <span class="tick mine">Unit ${x._u+1}</span>`:""}</p>
+    <h2 class="typ-q">${esc(x.vi)}</h2>
+    <p class="muted small">${x.p?esc(x.p):""}${x.g?" · "+esc(x.g):""}</p>
+    <form id="typ" class="typ-form" autocomplete="off">
+      <input id="typin" class="${R?(R.ok?"right":"wrong"):""}" ${R?"readonly":""} value="${R?esc(R.val):""}" placeholder="Gõ câu trả lời rồi nhấn Enter" spellcheck="false" autocapitalize="off" aria-label="Câu trả lời">
+      <button class="btn primary" type="submit">${R?"Tiếp →":"Kiểm tra"}</button>
+    </form>
+    ${R ? `<div class="typ-res ${R.ok?"ok":"bad"}">${R.ok?"✓ Chính xác!":"✗ Chưa đúng. Đáp án:"} <b>${esc(ans)}</b> <span class="ipa">${esc(x.ipa||"")}</span>
+        <button class="btn small" type="button" data-act="say" data-text="${esc(ans)}">🔊</button>${x.ex?`<br><span class="muted small">“${esc(x.ex)}”</span>`:""}</div>`
+      : `<div class="row" style="margin-top:10px"><button class="btn small" type="button" data-act="typhint" ${T.hint>=2?"disabled":""}>💡 Gợi ý</button><button class="btn small" type="button" data-act="typskip">Bỏ qua</button>${hint?`<span class="typ-hint">${hint}</span>`:""}</div>`}
+    <div class="row" style="margin-top:14px;justify-content:flex-end"><button class="btn small" type="button" data-act="typquit">Kết thúc ôn tập</button></div>
+  </div>`;
+}
+function typCheck(val){
+  const T = S.typ, x = T.list[T.i], v = norm(val).replace(/\s+/g," ");
+  const ok = T.list.some(y => (y===x || norm(y.vi)===norm(x.vi)) && typAnswers(y.w).includes(v)); // chấp nhận cả từ khác có cùng nghĩa
+  T.res = {ok, val}; if(ok) T.ok++;
+  if(!ok) T.wrong.push(Object.assign({}, x, {_ans:val}));
+}
+function typNext(){ const T=S.typ; T.i++; T.res=null; T.hint=0; render(); const i=$("#typin"); if(i) i.focus(); }
+function modesHTML(u, V){
+  const avail = Object.keys(VMODES).filter(m => hasMode(u, m));
+  return avail.length > 1 ? `<div class="seg" role="tablist" aria-label="Loại từ vựng">${avail.map(m=>
+      `<button type="button" role="tab" data-act="vmode" data-m="${m}" aria-selected="${V.mode===m}">${VMODES[m].name} · ${userList(u, m).length}</button>`).join("")}</div>` : "";
+}
 function editorHTML(u, V){
   if(!S.edit || S.edit.u !== u.id || S.edit.m !== V.mode) return "";
   const x = S.edit.id === "new" ? {g:"Từ của tôi"} : V.list.find(y => y._id === S.edit.id);
@@ -257,11 +308,14 @@ function vVocab(u){
   const V = vocabPool(u), pool = V.list;
   const nHidden = Object.keys(P.hidden).filter(k => k.startsWith(u.id+":"+V.mode+":")).length;
   const tools = `<div class="row ve-tools"><button class="btn small primary" type="button" data-act="vnew">＋ Thêm ${V.M.unit}</button>
+    <button class="btn small" type="button" data-act="typstart" data-scope="unit">✍ Ôn tập unit này</button>
+    <button class="btn small" type="button" data-act="typstart" data-scope="all">✍ Ôn tất cả unit</button>
     ${nHidden?`<button class="btn small" type="button" data-act="vunhide">Hiện lại ${nHidden} ${V.M.unit} đã ẩn</button>`:""}
     <span style="flex:1"></span><button class="btn small" type="button" data-act="vexport">⬇ Sao lưu</button>
     <label class="btn small">⬆ Khôi phục<input type="file" id="vimport" accept=".json,application/json" hidden></label></div>
     ${S.note?`<p class="small muted" role="status" style="margin:-6px 0 12px">${esc(S.note)}</p>`:""}`; S.note = "";
   if(!pool.length) return tools + editorHTML(u, V) + `<div class="sheet"><p class="muted">Chưa có ${V.M.unit} nào. Bấm “Thêm ${V.M.unit}” để bắt đầu.</p></div>`;
+  if(S.typ && S.typ.u===u.id && S.typ.mode===V.mode) return (modesHTML(u, V)) + typHTML(V);
   const deck = vocabDeck(u); S.card = ((S.card % deck.length) + deck.length) % deck.length;
   const v = pool[deck[S.card]], k = V.key+v.w;
   const nKnown = pool.filter(x=>P.known[V.key+x.w]).length;
@@ -272,9 +326,7 @@ function vVocab(u){
     return head + `<div class="wl"><span><b>${esc(x.w)}</b> <span class="ipa">${esc(x.ipa)}</span><br><span class="muted small">${esc(x.vi)}</span></span>
       <span class="row">${P.known[V.key+x.w]?'<span class="tick">đã thuộc</span>':''}${x._custom?'<span class="tick mine">của tôi</span>':x._edited?'<span class="tick mine">đã sửa</span>':''}<button class="btn small" type="button" data-act="goto" data-i="${i}">Xem</button><button class="btn small" type="button" data-act="vedit" data-id="${esc(x._id)}" aria-label="Sửa ${esc(x.w)}">✎</button></span></div>`;
   }).join("");
-  const avail = Object.keys(VMODES).filter(m => hasMode(u, m));
-  const modes = avail.length > 1 ? `<div class="seg" role="tablist" aria-label="Loại từ vựng">${avail.map(m=>
-      `<button type="button" role="tab" data-act="vmode" data-m="${m}" aria-selected="${V.mode===m}">${VMODES[m].name} · ${userList(u, m).length}</button>`).join("")}</div>` : "";
+  const modes = modesHTML(u, V);
   const tip = V.M.tip ? `<p class="muted small" style="margin:-6px 0 14px">${V.M.tip}</p>` : "";
   return modes + tip + tools + editorHTML(u, V) + `<div class="flash-area">
     <div class="stack">
@@ -404,16 +456,21 @@ document.addEventListener("click", e => {
   const b = e.target.closest("[data-act]"); if(!b) return;
   const a = b.dataset.act, u = UNITS[S.u];
   if(a==="home"){ S.view="home"; render(); }
-  else if(a==="unit"){ S.view="unit"; S.u=+b.dataset.u; S.tab="vocab"; S.vmode="word"; S.card=0; S.flipped=false; S.vq=null; render(); window.scrollTo(0,0); }
+  else if(a==="unit"){ S.typ=null; S.view="unit"; S.u=+b.dataset.u; S.tab="vocab"; S.vmode="word"; S.card=0; S.flipped=false; S.vq=null; render(); window.scrollTo(0,0); }
   else if(a==="review"){ S.view="review"; S.r=+b.dataset.r; S.rq=null; render(); window.scrollTo(0,0); }
   else if(a==="newrq"){ S.rq=null; render(); }
   else if(a==="tab"){ S.tab=b.dataset.tab; render(); }
   else if(a==="flip"){ if(b.dataset.swiped){ delete b.dataset.swiped; return; } S.flipped=!S.flipped; b.classList.toggle("flipped", S.flipped); }
   else if(a==="goto"){ S.onlyNew=false; S.card=+b.dataset.i; S.flipped=false; render(); window.scrollTo({top:0,behavior:"smooth"}); }
-  else if(a==="vmode"){ S.vmode=b.dataset.m; S.card=0; S.flipped=false; render(); }
+  else if(a==="vmode"){ S.typ=null; S.vmode=b.dataset.m; S.card=0; S.flipped=false; render(); }
   else if(a==="onlynew"){ S.onlyNew=b.checked; S.card=0; S.flipped=false; render(); }
   else if(a==="known"){ const k=b.dataset.k; if(P.known[k]) delete P.known[k]; else { P.known[k]=true; if(!S.onlyNew) S.card++; S.flipped=false; } save(); render(); }
   else if(a==="newvq"){ S.vq=null; render(); }
+  else if(a==="typstart"){ typStart(u, vocabPool(u).mode, b.dataset.scope); render(); const i=$("#typin"); if(i) i.focus(); }
+  else if(a==="typretry"){ const T=S.typ; typStart(u, T.mode, T.scope, T.wrong.map(x=>{ const y=Object.assign({},x); delete y._ans; return y; })); render(); $("#typin").focus(); }
+  else if(a==="typquit"){ S.typ=null; render(); }
+  else if(a==="typhint"){ S.typ.hint++; render(); $("#typin").focus(); }
+  else if(a==="typskip"){ typCheck(""); render(); }
   else if(a==="vnew"){ S.edit={u:u.id, m:vocabPool(u).mode, id:"new"}; render(); focusEditor(); }
   else if(a==="vedit"){ S.edit={u:u.id, m:vocabPool(u).mode, id:b.dataset.id}; render(); focusEditor(); }
   else if(a==="vcancel"){ S.edit=null; render(); }
@@ -470,6 +527,11 @@ document.addEventListener("keydown", e => {
 function focusEditor(){ const f=$("#vedit"); if(f){ f.scrollIntoView({behavior:"smooth", block:"center"}); f.querySelector("input").focus({preventScroll:true}); } }
 function vocabChanged(){ S.edit=null; S.vq=null; S.flipped=false; save(); render(); }
 document.addEventListener("submit", e => {
+  if(e.target.id === "typ"){ e.preventDefault();
+    if(S.typ.res) return typNext();
+    const v = $("#typin").value; if(!v.trim()) return;
+    typCheck(v); render(); const btn=$("#typ button"); if(btn) btn.focus(); return;
+  }
   if(e.target.id === "vedit"){ e.preventDefault();
     const u = UNITS[S.u], m = S.edit.m, d = {}, fd = new FormData(e.target);
     ["w","vi","p","ipa","ex","g"].forEach(k => d[k] = (fd.get(k)||"").trim());
