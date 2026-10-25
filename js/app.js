@@ -639,9 +639,36 @@ function vReading(u){
   return setPicker(u, "reading") + playerHTML(u, C) + `<div class="reading">
     <article class="sheet passage plsrc" id="scriptbox"><span class="eyebrow">Đọc hiểu · ${esc(r.est)}</span><h2 style="margin:6px 0 14px">${esc(r.title)}</h2>
       ${r.paras.map((p,i)=>`<p><span class="pn">${String.fromCharCode(65+i)}</span>${splitSent(p).map(t=>`<span class="rs" data-line="${k}" data-act="plline" data-i="${k++}">${esc(t)}</span>`).join(" ")}</p>`).join("")}
-      ${r.note?`<p class="muted small">${esc(r.note)}</p>`:""}</article>
+      ${r.note?`<p class="muted small">${esc(r.note)}</p>`:""}
+      ${rwHTML(u, r)}</article>
     <div class="sheet sticky">${side}</div></div>`;
 }
+
+/* Từ mới của bài đọc: bài có sẵn lấy từ READ_WORDS; bài tự dán thì tự tìm từ của unit có trong bài */
+function unitEntries(u){ return ["vocab","phrases","collocs","lesson"].flatMap(f => u[f] || []); }
+function rwList(u, r){
+  const all = unitEntries(u), byW = {};
+  all.forEach(x => { const k = x.w.toLowerCase(); if(!byW[k]) byW[k] = x; });
+  const hand = (window.READ_WORDS || {})[u.id + "|" + r.title];
+  if(hand && !r.mine) return {auto:false, items: hand.map(([w,p,vi]) => ({w, p, vi, ipa:(byW[w.toLowerCase()]||{}).ipa||""}))};
+  const text = " " + r.paras.join(" ").toLowerCase().replace(/[’]/g,"'").replace(/[^a-z0-9' -]+/g," ") + " ", seen = {};
+  const items = all.filter(x => {
+    const k = x.w.toLowerCase(); if(seen[k]) return false;
+    const re = new RegExp("\\b" + k.replace(/[.*+?^${}()|[\]\\]/g,"\\$&").replace(/ /g,"\\s+") + "(s|es|ed|d|ing)?\\b");
+    return re.test(text) && (seen[k] = true);
+  }).slice(0, 40);
+  return {auto:true, items};
+}
+function rwHTML(u, r){
+  const {auto, items} = rwList(u, r);
+  const open = !P.rwClosed;
+  return `<details class="rwords" ${open?"open":""}><summary><span>📖 Từ mới trong bài</span><span class="muted small">${items.length} từ${auto?" của unit có trong bài":""}</span></summary>
+    ${items.length ? `<ul class="rw-list">${items.map(x=>`<li><button class="rw-say" type="button" data-act="say" data-text="${esc(x.w)}" aria-label="Nghe ${esc(x.w)}">🔊</button>
+      <div><b>${esc(x.w)}</b> <span class="muted small">${esc(x.p||"")}${x.ipa?" · "+esc(x.ipa):""}</span><div class="small">${esc(x.vi)}</div></div></li>`).join("")}</ul>`
+      : `<p class="muted small">Chưa tìm thấy từ nào của unit này trong bài. Bạn có thể thêm từ mới ở tab Từ vựng (＋ Thêm từ).</p>`}
+  </details>`;
+}
+document.addEventListener("toggle", e => { if(e.target.classList && e.target.classList.contains("rwords")){ const c = !e.target.open; if(!!P.rwClosed !== c){ P.rwClosed = c; save(); } } }, true);
 
 function vListening(u){
   const C = curSet(u, "listening"), l = C.x;

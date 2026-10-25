@@ -178,99 +178,99 @@
     ]
   });
 
-  /* Unit 7 · sát Reading (đọc nhanh) – bài thứ hai cùng dạng · Matching information + Table completion */
+  /* Unit 7 · sát Reading (kỹ năng đọc) – bài thứ hai cùng dạng · Matching information + Table completion */
   add("u7", {
-    title: "Paper or Screen?",
+    title: "Libraries on the Move",
     est: "Sát sách · Reading (bài 2) · khoảng 330 từ · 13 phút",
     paras: [
-      "More and more of what we read now appears on a screen. Students download textbooks, office workers read reports on laptops and many people read the news on their phones. But does reading on a screen affect how well we understand and remember?",
-      "In a study at Harwell University, 120 students read two texts, one on paper and one on a tablet. Afterwards, they answered questions about what they had read. For short, simple texts there was almost no difference. For longer texts with complex arguments, however, students who read on paper scored about ten percent higher.",
-      "The researchers suggest several reasons. On screen, people tend to skim, jumping from line to line in search of key words. They also scroll, which makes it harder to remember where on the page a piece of information appeared. With a printed book, readers can feel how far through the text they are, and this seems to help them build a 'map' of it in their mind.",
-      "Interestingly, the students themselves did not notice the difference. Most said that they had understood the screen text just as well, and many said they preferred it because it was lighter to carry and cheaper to buy. This confidence may be part of the problem: readers who think they have understood are less likely to slow down and check.",
-      "Screens do have real advantages. They allow readers to change the size of the letters, which helps people with poor eyesight, and they make it easy to look up the meaning of a word instantly. Audio and video can also be added, which is useful when learning languages.",
-      "The researchers do not recommend giving up screens. Instead, they suggest that readers choose the format to suit the task. For quick news or messages, a phone is fine. For a difficult text that must be studied carefully, it may be better to print it out, or at least to read slowly and take notes by hand."
+      "For people who live far from a town, visiting a library can be almost impossible. In many rural areas there is no bus, and the nearest library may be a day's journey away. To solve this problem, libraries in many parts of the world have found a simple answer: if readers cannot come to the books, the books must go to the readers.",
+      "The most familiar example is the library bus. In the fictional region of Westmoor, two large buses, each carrying around 3,000 books, visit forty villages every fortnight. Each bus also has free internet and a small corner where children can sit and read. The service began in 1985, and today it lends more than 100,000 books a year.",
+      "In other places, the transport is more unusual. In a dry northern area of one African country, a library travels on the backs of camels, because the sandy tracks are impossible for cars. Each camel can carry boxes holding about 400 books, and the librarians set up a tent under a tree when they arrive.",
+      "Rivers can be roads too. On a wide river in South America, a boat library stops at small communities along the banks. Because many of the readers are farmers who work in the day, the boat often stays until late in the evening, and it lends torches as well as books.",
+      "These services do much more than lend books. Librarians often teach adults to use computers, help them to fill in official forms and run reading clubs for children. In Westmoor, a survey found that children who used the library bus read twice as many books a year as children who did not.",
+      "However, mobile libraries are expensive to run. Fuel, repairs and staff all cost money, and in difficult times they are often the first services to be cut. Supporters argue that this is a mistake, because for many families a mobile library is the only way to borrow a book."
     ],
-    note: "Bài tự viết, cùng chủ đề kỹ năng đọc và cùng dạng câu hỏi với bài Reading của Unit 7. Đại học Harwell và nghiên cứu là hư cấu.",
+    note: "Bài tự viết, cùng chủ đề kỹ năng đọc và cùng dạng câu hỏi với bài Reading của Unit 7. Vùng Westmoor và các số liệu là hư cấu.",
     quiz: (() => {
       const L = ["A","B","C","D","E","F"];
       return [
         {t:"head", text:"Câu 1–5: Đoạn nào (A–F) chứa thông tin sau?"},
-        {q:"a description of how the study was carried out", o:L, a:1, e:"Đoạn B: 120 sinh viên đọc hai bài, một trên giấy, một trên máy tính bảng."},
-        {q:"a reason why readers may not check their understanding", o:L, a:3, e:"Đoạn D: người nghĩ mình đã hiểu thì ít khi đọc chậm lại để kiểm tra."},
-        {q:"advice about choosing between paper and screen", o:L, a:5, e:"Đoạn F."},
-        {q:"a benefit of screens for people who cannot see well", o:L, a:4, e:"Đoạn E: đổi cỡ chữ giúp người mắt kém."},
-        {q:"examples of different people who read on screens", o:L, a:0, e:"Đoạn A: sinh viên, nhân viên văn phòng, người đọc tin."},
+        {q:"a reason why mobile libraries may lose their money", o:L, a:5, e:"Đoạn F: khi khó khăn, đây thường là dịch vụ bị cắt đầu tiên."},
+        {q:"the year when one service started", o:L, a:1, e:"Đoạn B: 'The service began in 1985'."},
+        {q:"the problem that mobile libraries are designed to solve", o:L, a:0, e:"Đoạn A: thư viện gần nhất có thể cách cả ngày đường."},
+        {q:"a comparison of how much two groups of children read", o:L, a:4, e:"Đoạn E: trẻ dùng xe thư viện đọc gấp đôi."},
+        {q:"a service that adapts its hours to readers' working day", o:L, a:3, e:"Đoạn D: thuyền ở lại đến tối vì người đọc làm nông ban ngày."},
         {t:"head", text:"Câu 6–10: Hoàn thành bảng. Điền MỘT TỪ VÀ/HOẶC MỘT CON SỐ trong bài."},
-        {t:"gap", q:"Paper – on long texts, students scored about ___ percent higher", a:["ten","10"], e:"Đoạn B."},
-        {t:"gap", q:"Paper – feeling how far through the text you are helps build a mental ___", a:["map"], e:"Đoạn C."},
-        {t:"gap", q:"Screen – readers tend to ___ and scroll", a:["skim"], e:"Đoạn C."},
-        {t:"gap", q:"Screen – students liked it because it was lighter and ___", a:["cheaper"], e:"Đoạn D."},
-        {t:"gap", q:"Screen – audio and video are useful for learning ___", a:["languages"], e:"Đoạn E."}
+        {t:"gap", q:"Bus – each bus carries around ___ books", a:["3,000","3000","3 000"], e:"Đoạn B."},
+        {t:"gap", q:"Bus – visits forty villages every ___", a:["fortnight"], e:"Đoạn B."},
+        {t:"gap", q:"Camel – used because the sandy ___ are impossible for cars", a:["tracks"], e:"Đoạn C."},
+        {t:"gap", q:"Camel – librarians set up a ___ under a tree", a:["tent"], e:"Đoạn C."},
+        {t:"gap", q:"Boat – lends ___ as well as books", a:["torches"], e:"Đoạn D."}
       ];
     })()
   });
 
-  /* Unit 8 · sát Reading (những nơi sắp biến mất) – bài thứ hai cùng dạng · Summary completion + Matching features */
+  /* Unit 8 · sát Reading (điểm du lịch) – bài thứ hai cùng dạng · Summary completion + Matching features */
   add("u8", {
-    title: "Before the Ice Is Gone",
-    est: "Sát sách · Reading (bài 2) · khoảng 360 từ · 14 phút",
+    title: "A Night at the Museum",
+    est: "Sát sách · Reading (bài 2) · khoảng 310 từ · 13 phút",
     paras: [
-      "Every summer, thousands of visitors travel to the Valder Glacier in the mountains of the north. They walk across the ice with guides, take photos at the edge of deep blue cracks and listen to the sound of melting water. Many of them say the same thing: they want to see the glacier 'before it is gone'.",
-      "The glacier is shrinking fast. Since 1980 it has lost almost half of its length, and scientists expect most of the ice to disappear by the end of the century. 'The changes are visible from one year to the next,' says Dr Lena Ortiz, a climate scientist who has measured the glacier for twenty years. 'A path that was on the ice when I started is now on bare rock.'",
-      "This type of travel is sometimes called 'last-chance tourism', and it is growing. Coral reefs, Arctic sea ice and some small islands attract visitors for the same reason. For local businesses, it brings welcome income. Tom Reyes, who runs a guiding company in the valley, employs fifteen people in summer, compared with three a decade ago. 'People come because they are worried about the glacier,' he says. 'We try to make sure they go home understanding why it is melting.'",
-      "However, there is an obvious problem. Most visitors arrive by plane and car, and the fuel they use adds to the climate change that is destroying the ice. Mia Chen, a tourism researcher, calls this 'a paradox'. 'The more popular these places become, the faster they may disappear,' she says. She believes that visitors should stay longer and travel less often, rather than taking many short trips.",
-      "Some changes are already happening. The valley now has an electric bus from the nearest railway station, and guiding companies have agreed to limit the number of groups on the ice each day. A visitor centre, opened last year, uses photographs from the past hundred years to show how far the glacier has retreated.",
-      "Dr Ortiz is cautiously hopeful. 'Tourism alone won't save the glacier,' she says. 'But if people leave here feeling that their own choices matter, the visit may do more good than harm.'"
+      "For many years, visitor numbers at the National History Museum in the city of Harbourne were falling. Families came during the school holidays, but on ordinary days the large halls were almost empty. In 2018, the museum decided to try something different: it would stay open until midnight on the last Friday of every month.",
+      "The first 'Late Friday' was a surprise success. More than 4,000 people came, most of them aged between twenty and thirty-five, a group that the museum had rarely attracted before. Visitors could listen to live music among the dinosaur skeletons, take part in short talks by scientists and buy food from stalls in the main hall.",
+      "'We realised that many young adults were not bored by museums,' says the director, Helen Shaw. 'They were simply at work when we were open.' She believes that museums must change their opening hours to fit modern lifestyles, and the museum now also opens late on several Wednesdays in summer.",
+      "Not everyone was enthusiastic at first. Some staff worried that noisy crowds might damage the exhibits. Paul Grant, who is responsible for protecting the collection, admits that he was against the idea. 'In the end, we put the most delicate objects behind glass and increased the number of guards,' he says. 'There has not been a single accident.'",
+      "Researchers have also been studying the events. Dr Sara Lind, who studies how people behave in museums, found that night visitors stay twice as long as daytime visitors. However, she warns that some people come mainly for the music and food. 'The challenge is to make sure they also learn something,' she says.",
+      "Today, more than thirty museums in the country hold similar events. Ticket money from the late openings now pays for free school visits during the day, so the museum's new night-time visitors are helping its youngest ones."
     ],
-    note: "Bài tự viết, cùng chủ đề 'những nơi sắp biến mất' và cùng dạng câu hỏi với bài Reading của Unit 8. Sông băng Valder và các nhân vật là hư cấu.",
+    note: "Bài tự viết, cùng chủ đề điểm tham quan và cùng dạng câu hỏi với bài Reading của Unit 8. Bảo tàng Harbourne và các nhân vật là hư cấu.",
     quiz: (() => {
-      const F = ["A Dr Lena Ortiz","B Tom Reyes","C Mia Chen"];
+      const F = ["A Helen Shaw","B Paul Grant","C Dr Sara Lind"];
       return [
         {t:"head", text:"Câu 1–6: Hoàn thành tóm tắt. Điền KHÔNG QUÁ HAI TỪ HOẶC MỘT CON SỐ trong bài."},
-        {t:"gap", q:"Since 1980, the Valder Glacier has lost almost ___ of its length.", a:["half"], e:"Đoạn B."},
-        {t:"gap", q:"Travel to places that may soon disappear is called ___ tourism.", a:["last-chance","last chance"], e:"Đoạn C."},
-        {t:"gap", q:"One guiding company now employs ___ people in summer.", a:["fifteen","15"], e:"Đoạn C."},
-        {t:"gap", q:"Most visitors arrive by plane and ___.", a:["car"], e:"Đoạn D."},
-        {t:"gap", q:"Visitors can now take an electric ___ from the railway station.", a:["bus"], e:"Đoạn E."},
-        {t:"gap", q:"The visitor centre uses old ___ to show how the glacier has changed.", a:["photographs","photos"], e:"Đoạn E."},
-        {t:"head", text:"Câu 7–11: Nối mỗi ý kiến với đúng người (A, B hoặc C). Một người có thể được chọn nhiều lần."},
-        {q:"Tourists should make fewer but longer trips.", o:F, a:2, e:"Đoạn D: Mia Chen."},
-        {q:"Changes to the glacier can be seen every year.", o:F, a:0, e:"Đoạn B: Dr Ortiz."},
-        {q:"Visitors should learn why the ice is melting.", o:F, a:1, e:"Đoạn C: Tom Reyes."},
-        {q:"Popularity may make these places disappear faster.", o:F, a:2, e:"Đoạn D: Mia Chen."},
-        {q:"A visit could have a positive effect overall.", o:F, a:0, e:"Đoạn F: Dr Ortiz."}
+        {t:"gap", q:"Since 2018, the museum has stayed open until ___ once a month.", a:["midnight"], e:"Đoạn A."},
+        {t:"gap", q:"More than ___ people came to the first event.", a:["4,000","4000","4 000"], e:"Đoạn B."},
+        {t:"gap", q:"Visitors could hear live music among the dinosaur ___.", a:["skeletons"], e:"Đoạn B."},
+        {t:"gap", q:"In summer, the museum also opens late on some ___.", a:["Wednesdays"], e:"Đoạn C."},
+        {t:"gap", q:"The most delicate objects were put behind ___.", a:["glass"], e:"Đoạn D."},
+        {t:"gap", q:"Money from the late events pays for free ___ during the day.", a:["school visits"], e:"Đoạn F."},
+        {t:"head", text:"Câu 7–11: Nối mỗi ý với đúng người (A, B hoặc C). Một người có thể được chọn nhiều lần."},
+        {q:"Night visitors spend more time in the museum.", o:F, a:2, e:"Đoạn E: Dr Lind."},
+        {q:"Opening hours should match the way people live today.", o:F, a:0, e:"Đoạn C: Helen Shaw."},
+        {q:"The late events have caused no damage.", o:F, a:1, e:"Đoạn D: Paul Grant."},
+        {q:"Some visitors may not learn very much.", o:F, a:2, e:"Đoạn E: Dr Lind."},
+        {q:"Young adults were not visiting because of their jobs.", o:F, a:0, e:"Đoạn C: Helen Shaw."}
       ];
     })()
   });
 
   /* Unit 9 · sát Reading (nước) – bài thứ hai cùng dạng · Matching headings + Sentence completion + Pick from a list */
   add("u9", {
-    title: "Catching Water from the Air",
-    est: "Sát sách · Reading (bài 2) · khoảng 290 từ · 12 phút",
+    title: "The Water We Cannot See",
+    est: "Sát sách · Reading (bài 2) · khoảng 300 từ · 12 phút",
     paras: [
-      "In some of the driest places on Earth, it almost never rains, yet the air is full of water. Along certain desert coasts, thick fog rolls in from the ocean on many mornings of the year. For centuries, plants and insects there have survived by collecting tiny drops of water from this fog. Now people are doing the same.",
-      "The idea is simple. A large net made of fine plastic mesh is stretched between two posts on a hillside facing the sea. As the fog blows through, water drops stick to the mesh, join together and run down into a pipe at the bottom. From there, the water flows into a storage tank.",
-      "In the coastal village of Punta Seca, a project with thirty nets was started in 2012. On a good day, each net can collect up to two hundred litres of water. Before the nets were built, all drinking water had to be brought by lorry from a town sixty kilometres away, and it was expensive.",
-      "The results have changed daily life. Families now have water for drinking and cooking, and a small community garden grows vegetables and herbs. Some residents have even started making beer from fog water and selling it to tourists, which brings extra income to the village.",
-      "Fog nets are not a solution everywhere. They only work in places where fog is frequent and the wind blows it towards the hills. Strong winds can damage the nets, and they must be cleaned regularly, because dust and bird droppings block the mesh.",
-      "Scientists are now testing new materials that collect more water from the same amount of fog. If they succeed, the technology could help many more communities in dry regions to find water above their heads."
+      "When people think about saving water, they usually think about taking shorter showers or turning off the tap while brushing their teeth. These are good habits, but they deal with only a small part of the water we use. Most of our water use is hidden in the things we eat, wear and buy.",
+      "Experts call this hidden water our 'water footprint'. It includes all the water needed to produce something, from growing the crops to washing and packaging the product. For example, it takes around 140 litres of water to produce the coffee beans for one cup of coffee, mostly to grow the coffee plants.",
+      "Food produced from animals usually has the largest footprint. A kilogram of beef is often said to need around 15,000 litres, because cattle eat large amounts of grain and grass that must be grown first. A kilogram of rice needs about 2,500 litres, while most vegetables need far less.",
+      "Clothes are also thirsty. Cotton plants need a lot of water, especially in hot, dry regions where farmers must use irrigation. One cotton T-shirt can use more than 2,000 litres, about as much as one person drinks in three years.",
+      "Understanding water footprints can help us make better choices. Eating less meat, buying fewer clothes and wasting less food can save far more water than any change in the bathroom. A third of all food produced in the world is never eaten, which means that the water used to grow it is wasted too.",
+      "Some companies now print the water footprint of their products on labels, and several countries use the idea to decide which crops to grow. Experts warn, however, that the numbers are only estimates and can change greatly depending on where and how a product is made."
     ],
-    note: "Bài tự viết, cùng chủ đề nước sạch và cùng dạng câu hỏi với bài Reading của Unit 9. Làng Punta Seca là hư cấu.",
+    note: "Bài tự viết, cùng chủ đề tiết kiệm nước và cùng dạng câu hỏi với bài Reading của Unit 9. Các con số là ước tính thường được trích dẫn, có thể khác nhau tuỳ nguồn.",
     quiz: (() => {
-      const H = ["i How a fog net works","ii The first nets in one village","iii New opportunities for residents","iv Limitations of the method","v The history of desert farming","vi Why it rains less than before"];
+      const H = ["i A definition and an example","ii The biggest users of water","iii Water in what we wear","iv Small changes, big savings","v How rain is collected","vi A history of farming"];
       return [
         {t:"head", text:"Câu 1–4: Chọn tiêu đề đúng cho các đoạn B–E. (Có 2 tiêu đề thừa.)"},
-        {q:"Paragraph B", o:H, a:0, e:"Đoạn B mô tả cách lưới hứng sương hoạt động."},
-        {q:"Paragraph C", o:H, a:1, e:"Đoạn C: dự án 30 lưới đầu tiên ở Punta Seca."},
-        {q:"Paragraph D", o:H, a:2, e:"Đoạn D: vườn rau, làm bia bán cho khách."},
-        {q:"Paragraph E", o:H, a:3, e:"Đoạn E: chỉ dùng được ở một số nơi, dễ hỏng, phải làm sạch."},
+        {q:"Paragraph B", o:H, a:0, e:"Đoạn B giải thích 'water footprint' và ví dụ tách cà phê."},
+        {q:"Paragraph C", o:H, a:1, e:"Đoạn C: thực phẩm từ động vật dùng nhiều nước nhất."},
+        {q:"Paragraph D", o:H, a:2, e:"Đoạn D: quần áo, áo phông cotton."},
+        {q:"Paragraph E", o:H, a:3, e:"Đoạn E: ăn ít thịt, mua ít quần áo tiết kiệm được nhiều nước."},
         {t:"head", text:"Câu 5–8: Hoàn thành câu. Điền KHÔNG QUÁ HAI TỪ HOẶC MỘT CON SỐ trong bài."},
-        {t:"gap", q:"The nets are made of fine plastic ___.", a:["mesh"], e:"Đoạn B."},
-        {t:"gap", q:"On a good day, one net can collect up to ___ litres.", a:["two hundred","200"], e:"Đoạn C."},
-        {t:"gap", q:"Before the project, drinking water was brought by ___.", a:["lorry","truck"], e:"Đoạn C."},
-        {t:"gap", q:"The nets must be cleaned because dust and bird ___ block the mesh.", a:["droppings"], e:"Đoạn E."},
+        {t:"gap", q:"Producing the coffee for one cup takes around ___ litres of water.", a:["140","one hundred and forty"], e:"Đoạn B."},
+        {t:"gap", q:"One kilogram of rice needs about ___ litres.", a:["2,500","2500","2 500"], e:"Đoạn C."},
+        {t:"gap", q:"In hot, dry regions, cotton farmers must use ___.", a:["irrigation"], e:"Đoạn D."},
+        {t:"gap", q:"A ___ of all food produced in the world is never eaten.", a:["third"], e:"Đoạn E."},
         {t:"head", text:"Câu 9–10: Chọn HAI đáp án."},
-        {t:"pick", q:"Which TWO uses of fog water in Punta Seca are mentioned?", o:["A growing vegetables","B making beer","C washing cars","D cooling buildings","E filling a swimming pool"], a:[0,1], e:"Đoạn D."}
+        {t:"pick", q:"Which TWO ways of saving a lot of water does the writer mention?", o:["A eating less meat","B taking shorter showers","C buying fewer clothes","D drinking less coffee","E washing clothes by hand"], a:[0,2], e:"Đoạn E: ăn ít thịt và mua ít quần áo tiết kiệm hơn mọi thay đổi trong phòng tắm."}
       ];
     })()
   });

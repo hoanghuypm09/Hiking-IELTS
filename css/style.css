@@ -383,3 +383,14 @@ body,.top,.sheet,.card .face,.player{transition:background-color .25s,color .25s
 .bookitem .bk-tx small{color:var(--muted);font-size:.78rem}
 .bookitem .tag{margin-left:auto;font-size:.72rem;padding:2px 8px;border-radius:99px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
 .bookitem .bk-cover{width:44px;font-size:.66rem;white-space:nowrap}
+
+/* reading new words */
+.rwords{margin-top:18px;border-top:1px solid var(--line);padding-top:12px}
+.rwords summary{display:flex;align-items:baseline;justify-content:space-between;gap:10px;cursor:pointer;font-weight:600;list-style:none;padding:4px 0}
+.rwords summary::-webkit-details-marker{display:none}
+.rwords summary span:first-child::after{content:" ▾";color:var(--muted);font-weight:400}
+.rwords:not([open]) summary span:first-child::after{content:" ▸"}
+.rw-list{list-style:none;padding:0;margin:10px 0 0;display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:8px 18px}
+.rw-list li{display:flex;gap:8px;align-items:flex-start;padding:6px 0;border-bottom:1px dashed var(--line);line-height:1.35}
+.rw-say{flex:none;border:1px solid var(--line);background:var(--paper);border-radius:8px;width:30px;height:30px;cursor:pointer;font-size:.8rem}
+.rw-say:hover{border-color:var(--accent)}
