@@ -177,6 +177,45 @@ function toggleVoicePanel(open){
   document.body.appendChild(el); loadVoices(); renderVoicePanel();
 }
 
+/* Bảng cài đặt máy chấm AI (nút trên header, dùng chung cho mọi phần) */
+const AI_PARTS = [["Writing Task 1 & 2", true], ["Speaking", false], ["Reading & Listening (giải thích đáp án)", false]];
+function aiUI(){
+  const b = document.getElementById("aibtn"); if(!b) return;
+  const on = !!graderUrl(); b.classList.toggle("on", on);
+  b.title = on ? "Máy chấm AI đã kết nối" : "Chưa kết nối máy chấm AI";
+}
+function renderAIPanel(){
+  const el = document.getElementById("aipanel"); if(!el) return;
+  const url = graderUrl(), t = S.aiTest;
+  el.innerHTML = `<div class="vp-head"><h3>🤖 Chấm bài bằng AI</h3><button class="btn small" type="button" data-act="aiclose" aria-label="Đóng">✕</button></div>
+    <p class="small"><span class="ai-dot ${url?"on":""}"></span> ${url?"Đã kết nối máy chấm":"Chưa kết nối máy chấm"}</p>
+    ${url ? `<p class="small muted ai-url">${esc(url)}</p>
+      <div class="row"><button class="btn primary" type="button" data-act="aitest" ${t&&t.busy?"disabled":""}>${t&&t.busy?"⏳ Đang kiểm tra…":"Kiểm tra kết nối"}</button><button class="btn" type="button" data-act="graderedit">Đổi địa chỉ</button></div>
+      ${t&&t.msg?`<p class="small" style="color:var(${t.ok?"--ok":"--bad"})">${esc(t.msg)}</p>`:""}`
+    : `<p class="small">Làm theo <a href="${GUIDE_URL}" target="_blank" rel="noopener">hướng dẫn cài đặt (khoảng 10 phút, miễn phí)</a>, rồi dán địa chỉ máy chấm vào đây:</p>
+      <div class="row"><input id="graderurl" class="urlin" placeholder="https://hiking-ielts-grader.ten-ban.workers.dev" autocomplete="off" spellcheck="false"><button class="btn primary" type="button" data-act="gradersave">Lưu</button></div>`}
+    <div><span class="small muted">Các phần dùng máy chấm</span><ul class="ai-parts">${AI_PARTS.map(([n,ok])=>`<li><span>${esc(n)}</span><span class="tag ${ok?"ok":""}">${ok?"Đang dùng":"Sắp có"}</span></li>`).join("")}</ul></div>
+    <p class="small muted">Địa chỉ chỉ lưu trong trình duyệt này. Khoá API nằm trên máy chấm của bạn, không bao giờ nằm trong trang web.</p>`;
+}
+function toggleAIPanel(open){
+  let el = document.getElementById("aipanel");
+  if(open === false || (el && open !== true)){ if(el) el.remove(); return; }
+  toggleVoicePanel(false); S.aiTest = null;
+  if(!el){ el = document.createElement("div"); el.id = "aipanel"; el.className = "voicepanel sheet"; el.setAttribute("role","dialog"); el.setAttribute("aria-label","Cài đặt chấm bài bằng AI"); document.body.appendChild(el); }
+  renderAIPanel();
+}
+async function aiTest(){
+  S.aiTest = {busy:true}; renderAIPanel();
+  try{
+    const d = await (await fetch(graderUrl())).json();
+    if(!d.ok) throw new Error("bad");
+    const gm = Array.isArray(d.gemini), wa = d.workersAI && d.workersAI !== "not bound";
+    S.aiTest = (gm || wa) ? {ok:true, msg:"Kết nối tốt. " + [gm?"Gemini: có":"Gemini: chưa thêm khoá", wa?"Cloudflare AI: có":"Cloudflare AI: chưa gắn"].join(" · ")}
+      : {ok:false, msg:"Máy chấm chạy nhưng chưa có Gemini hay Cloudflare AI. Xem lại bước cấu hình trong hướng dẫn."};
+  }catch(e){ S.aiTest = {ok:false, msg:"Không kết nối được. Kiểm tra lại địa chỉ, hoặc máy chấm chưa được deploy."}; }
+  renderAIPanel();
+}
+
 /* ============ RENDER: shell ============ */
 function renderRail(){
   let h = '<div class="label">10 unit · Complete IELTS 4–5</div>';
@@ -764,10 +803,10 @@ function gradeResultHTML(g){
 }
 function aiGradeHTML(u, C, n){
   const url = graderUrl(), key = draftKey(u, C.i), g = P.grades[key];
-  if(!url) return `<div class="sheet stack"><span class="eyebrow">🤖 Chấm bài bằng AI</span>
-    <p class="small">Chưa kết nối máy chấm. Làm theo <a href="${GUIDE_URL}" target="_blank" rel="noopener">hướng dẫn cài đặt (khoảng 10 phút, miễn phí)</a>, rồi dán địa chỉ máy chấm vào đây:</p>
-    <div class="row"><input id="graderurl" class="urlin" placeholder="https://hiking-ielts-grader.ten-ban.workers.dev" autocomplete="off" spellcheck="false"><button class="btn primary" type="button" data-act="gradersave">Lưu</button></div></div>`;
-  return `<div class="sheet stack"><div class="row" style="justify-content:space-between"><span class="eyebrow">🤖 Chấm bài bằng AI</span><button class="btn small" type="button" data-act="graderedit" title="${esc(url)}">Đổi máy chấm</button></div>
+  if(!url) return `<div class="sheet ai-off"><span class="eyebrow">🤖 Chấm bài bằng AI</span>
+    <p class="small">Chưa kết nối máy chấm AI. Bấm nút <b>🤖 Chấm AI</b> trên đầu trang để cài đặt một lần, dùng cho mọi phần.</p>
+    <button class="btn small" type="button" data-act="ai">Mở cài đặt</button></div>`;
+  return `<div class="sheet stack"><div class="row" style="justify-content:space-between"><span class="eyebrow">🤖 Chấm bài bằng AI</span><button class="btn small" type="button" data-act="ai">⚙ Cài đặt</button></div>
     <p class="muted small">AI đọc bài của bạn và cho band ước lượng theo 4 tiêu chí IELTS, kèm nhận xét và sửa lỗi. Cần ít nhất 50 từ. Máy chấm tự luân phiên giữa Gemini và Cloudflare khi một bên hết lượt miễn phí.</p>
     <div class="row"><button class="btn primary" type="button" data-act="aigrade" ${S.grading?"disabled":""}>${S.grading?"⏳ Đang chấm… (khoảng 10–30 giây)":g?"Chấm lại bài này":"Chấm bài này"}</button></div>
     ${S.gradeErr?`<p class="small" style="color:var(--bad)">${esc(S.gradeErr)}</p>`:""}
@@ -897,14 +936,17 @@ document.addEventListener("click", e => {
   else if(a==="talk"){ runTimer(120); }
   else if(a==="tstop"){ clearInterval(S.timer); }
   else if(a==="spoke"){ P.spoke[u.id]=!P.spoke[u.id]; save(); render(); }
-  else if(a==="voice"){ toggleVoicePanel(); }
+  else if(a==="voice"){ toggleAIPanel(false); toggleVoicePanel(); }
+  else if(a==="ai"){ toggleAIPanel(); }
+  else if(a==="aiclose"){ toggleAIPanel(false); }
+  else if(a==="aitest"){ aiTest(); }
   else if(a==="voiceclose"){ toggleVoicePanel(false); }
   else if(a==="accent"){ P.accent=b.dataset.a; P.voice=""; save(); loadVoices(); }
   else if(a==="voiceauto"){ P.voice=""; save(); loadVoices(); stopSpeech(); speak("Hello! This is the voice that will read your lessons."); }
   else if(a==="voicetest"){ stopSpeech(); speak("Hello! This is the voice that will read your lessons. I hope it sounds natural.", {rate:P.rate}); }
   else if(a==="aigrade"){ if(!S.grading) aiGrade(); }
-  else if(a==="gradersave"){ const v=$("#graderurl").value.trim(); if(!/^https:\/\/\S+$/.test(v)){ toast("Địa chỉ phải bắt đầu bằng https://"); return; } P.graderUrl=v; save(); render(); }
-  else if(a==="graderedit"){ P.graderUrl=""; if(window.HIKING_CONFIG) window.HIKING_CONFIG.graderUrl=""; save(); render(); }
+  else if(a==="gradersave"){ const v=$("#graderurl").value.trim(); if(!/^https:\/\/\S+$/.test(v)){ toast("Địa chỉ phải bắt đầu bằng https://"); return; } P.graderUrl=v; save(); aiUI(); renderAIPanel(); render(); aiTest(); }
+  else if(a==="graderedit"){ P.graderUrl=""; if(window.HIKING_CONFIG) window.HIKING_CONFIG.graderUrl=""; save(); S.aiTest=null; aiUI(); renderAIPanel(); render(); }
 });
 
 /* Quẹt thẻ: trái = thẻ sau, phải = thẻ trước (chuột, cảm ứng và phím mũi tên) */
@@ -1066,3 +1108,4 @@ function setTheme(t){
 if(darkMQ && darkMQ.addEventListener) darkMQ.addEventListener("change", themeUI);
 document.addEventListener("click", e => { if(e.target.closest('[data-act="theme"]')) setTheme(curTheme() === "dark" ? "light" : "dark"); });
 themeUI();
+aiUI();

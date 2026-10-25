@@ -353,3 +353,16 @@ body,.top,.sheet,.card .face,.player{transition:background-color .25s,color .25s
 .gnav{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--line)}
 .gnav button[disabled]{opacity:.4;cursor:default}
 .gbar .seg .muted{color:inherit;opacity:.7}
+
+/* AI grader button + panel */
+.aibtn{display:inline-flex;align-items:center;gap:6px}
+.ai-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--muted);opacity:.6;flex:none}
+.ai-dot.on,.aibtn.on .ai-dot{background:var(--ok);opacity:1;box-shadow:0 0 0 3px color-mix(in srgb,var(--ok) 25%,transparent)}
+.ai-url{word-break:break-all;margin-top:-6px}
+.ai-parts{list-style:none;padding:0;margin:6px 0 0;display:flex;flex-direction:column;gap:6px}
+.ai-parts li{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:.9rem}
+.ai-parts .tag{font-size:.75rem;padding:2px 8px;border-radius:99px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+.ai-parts .tag.ok{border-color:var(--ok);color:var(--ok)}
+.ai-off{display:flex;flex-direction:column;align-items:flex-start;gap:8px}
+@media (max-width:720px){ .top .hd-tx{display:none} }
+.voicepanel .ai-parts{padding-left:0}.voicepanel .ai-parts li{margin:0}
