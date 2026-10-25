@@ -39,6 +39,37 @@ window.UNITS = (window.UNITS || []).concat([
     {g:"Chủ đề: thành công & tài năng",w:"novelty",p:"n",ipa:"/ˈnɒvlti/",vi:"sự mới lạ",ex:"The novelty of the new job soon wore off."},
     {g:"Chủ đề: thành công & tài năng",w:"donate",p:"v",ipa:"/dəʊˈneɪt/",vi:"quyên góp, hiến tặng",ex:"He donates money to a children's charity every year."}
   ],
+  phrases:[
+    {g:"Tính từ + danh từ",w:"natural ability",p:"noun phrase",ipa:"/ˈnætʃrəl əˈbɪləti/",vi:"năng khiếu bẩm sinh",ex:"Some people have a natural ability for music."},
+    {g:"Tính từ + danh từ",w:"a well-paid job",p:"noun phrase",ipa:"/ə ˌwel ˈpeɪd dʒɒb/",vi:"công việc lương cao",ex:"He left a well-paid job to work for a charity."},
+    {g:"Tính từ + danh từ",w:"hard work",p:"noun phrase",ipa:"/hɑːd wɜːk/",vi:"sự chăm chỉ",ex:"Success comes from hard work."},
+    {g:"Tính từ + danh từ",w:"a wealthy family",p:"noun phrase",ipa:"/ə ˈwelθi ˈfæməli/",vi:"gia đình giàu có",ex:"She was born into a wealthy family."},
+    {g:"Tính từ + danh từ",w:"an unexpected success",p:"noun phrase",ipa:"/ən ˌʌnɪkˈspektɪd səkˈses/",vi:"thành công bất ngờ",ex:"The small café became an unexpected success."},
+    {g:"Danh từ + danh từ",w:"career path",p:"noun phrase",ipa:"/kəˈrɪə pɑːθ/",vi:"con đường sự nghiệp",ex:"Choosing a career path is not easy."},
+    {g:"Danh từ + danh từ",w:"charity work",p:"noun phrase",ipa:"/ˈtʃærəti wɜːk/",vi:"công việc thiện nguyện",ex:"She does charity work at weekends."},
+    {g:"Danh từ + danh từ",w:"life goals",p:"noun phrase",ipa:"/laɪf ɡəʊlz/",vi:"mục tiêu sống",ex:"Write down your life goals."},
+    {g:"Danh từ + danh từ",w:"role model",p:"noun phrase",ipa:"/ˈrəʊl ˌmɒdl/",vi:"hình mẫu lý tưởng",ex:"My mother is my role model."},
+    {g:"Danh từ + of + danh từ",w:"quality of life",p:"noun phrase",ipa:"/ˈkwɒləti əv laɪf/",vi:"chất lượng cuộc sống",ex:"Money doesn't always improve quality of life."},
+    {g:"Danh từ + of + danh từ",w:"the key to success",p:"noun phrase",ipa:"/ðə kiː tə səkˈses/",vi:"chìa khóa thành công",ex:"Patience is the key to success."},
+    {g:"Danh từ + of + danh từ",w:"a sense of achievement",p:"noun phrase",ipa:"/ə sens əv əˈtʃiːvmənt/",vi:"cảm giác thành tựu",ex:"Finishing a marathon gives you a sense of achievement."}
+  ],
+  collocs:[
+    {g:"Động từ + danh từ",w:"achieve a goal",p:"collocation",ipa:"/əˈtʃiːv ə ɡəʊl/",vi:"đạt được mục tiêu",ex:"She worked hard to achieve her goal."},
+    {g:"Động từ + danh từ",w:"reach your potential",p:"collocation",ipa:"/riːtʃ jɔː pəˈtenʃl/",vi:"phát huy hết tiềm năng",ex:"Good teachers help students reach their potential."},
+    {g:"Động từ + danh từ",w:"make a decision",p:"collocation",ipa:"/meɪk ə dɪˈsɪʒn/",vi:"đưa ra quyết định",ex:"It was hard to make a decision about my future."},
+    {g:"Động từ + danh từ",w:"gain experience",p:"collocation",ipa:"/ɡeɪn ɪkˈspɪəriəns/",vi:"tích lũy kinh nghiệm",ex:"I want to gain experience before starting a business."},
+    {g:"Động từ + danh từ",w:"give a presentation",p:"collocation",ipa:"/ɡɪv ə ˌpreznˈteɪʃn/",vi:"thuyết trình",ex:"I gave a presentation to the whole class."},
+    {g:"Động từ + danh từ",w:"raise money",p:"collocation",ipa:"/reɪz ˈmʌni/",vi:"quyên góp tiền",ex:"We raised money for flood victims."},
+    {g:"Động từ + danh từ",w:"face a challenge",p:"collocation",ipa:"/feɪs ə ˈtʃælɪndʒ/",vi:"đối mặt thử thách",ex:"Every athlete faces challenges."},
+    {g:"Động từ + giới từ",w:"succeed in",p:"collocation",ipa:"/səkˈsiːd ɪn/",vi:"thành công trong việc",ex:"He succeeded in passing the exam."},
+    {g:"Động từ + giới từ",w:"give up",p:"collocation",ipa:"/ɡɪv ʌp/",vi:"bỏ cuộc",ex:"Never give up on your dreams."},
+    {g:"Động từ + giới từ",w:"work towards",p:"collocation",ipa:"/wɜːk təˈwɔːdz/",vi:"nỗ lực hướng tới",ex:"I'm working towards a band 6.5."},
+    {g:"Tính từ + giới từ",w:"good at",p:"collocation",ipa:"/ɡʊd ət/",vi:"giỏi về",ex:"She is good at maths."},
+    {g:"Tính từ + giới từ",w:"keen on",p:"collocation",ipa:"/kiːn ɒn/",vi:"thích, đam mê",ex:"He's keen on photography."},
+    {g:"Tính từ + giới từ",w:"proud of",p:"collocation",ipa:"/praʊd əv/",vi:"tự hào về",ex:"My parents are proud of me."},
+    {g:"Trạng từ + tính từ",w:"highly successful",p:"collocation",ipa:"/ˈhaɪli səkˈsesfl/",vi:"cực kỳ thành công",ex:"She runs a highly successful company."},
+    {g:"Trạng từ + tính từ",w:"extremely talented",p:"collocation",ipa:"/ɪkˈstriːmli ˈtæləntɪd/",vi:"cực kỳ tài năng",ex:"The young pianist is extremely talented."}
+  ],
   grammar:{
     title:"Zero & first conditionals (if / unless)",
     rules:[
@@ -156,6 +187,36 @@ window.UNITS = (window.UNITS || []).concat([
     {g:"Word list của sách",w:"unemployment rate",p:"n",ipa:"/ˌʌnɪmˈplɔɪmənt reɪt/",vi:"tỷ lệ thất nghiệp",ex:"The unemployment rate fell to four percent."},
     {g:"Trọng tâm từ vựng: raise / rise",w:"rise",p:"v (nội động từ)",ipa:"/raɪz/",vi:"tăng lên, mọc lên (không có tân ngữ)",ex:"The number of online students rose sharply."},
     {g:"Trọng tâm từ vựng: raise / rise",w:"raise",p:"v (ngoại động từ)",ipa:"/reɪz/",vi:"nâng lên, làm tăng (cần tân ngữ)",ex:"The school raised its fees last year."}
+  ],
+  phrases:[
+    {g:"Tính từ + danh từ",w:"higher education",p:"noun phrase",ipa:"/ˌhaɪər ˌedʒuˈkeɪʃn/",vi:"giáo dục đại học",ex:"Higher education is expensive in many countries."},
+    {g:"Tính từ + danh từ",w:"online courses",p:"noun phrase",ipa:"/ˌɒnlaɪn ˈkɔːsɪz/",vi:"khóa học trực tuyến",ex:"Online courses are popular with working adults."},
+    {g:"Tính từ + danh từ",w:"high expectations",p:"noun phrase",ipa:"/haɪ ˌekspekˈteɪʃnz/",vi:"kỳ vọng cao",ex:"Teachers have high expectations of us."},
+    {g:"Tính từ + danh từ",w:"useful feedback",p:"noun phrase",ipa:"/ˈjuːsfl ˈfiːdbæk/",vi:"nhận xét hữu ích",ex:"My tutor gave me useful feedback on my essay."},
+    {g:"Danh từ + danh từ",w:"course fees",p:"noun phrase",ipa:"/kɔːs fiːz/",vi:"học phí",ex:"Course fees went up last year."},
+    {g:"Danh từ + danh từ",w:"study skills",p:"noun phrase",ipa:"/ˈstʌdi skɪlz/",vi:"kỹ năng học tập",ex:"The college runs workshops on study skills."},
+    {g:"Danh từ + danh từ",w:"exam results",p:"noun phrase",ipa:"/ɪɡˈzæm rɪˈzʌlts/",vi:"kết quả thi",ex:"I'm waiting for my exam results."},
+    {g:"Danh từ + danh từ",w:"the literacy rate",p:"noun phrase",ipa:"/ðə ˈlɪtərəsi reɪt/",vi:"tỷ lệ biết chữ",ex:"The literacy rate in Vietnam is very high."},
+    {g:"Danh từ + danh từ",w:"the unemployment rate",p:"noun phrase",ipa:"/ðə ˌʌnɪmˈplɔɪmənt reɪt/",vi:"tỷ lệ thất nghiệp",ex:"The unemployment rate rose in 2020."},
+    {g:"Danh từ + of + danh từ",w:"the number of students",p:"noun phrase",ipa:"/ðə ˈnʌmbər əv ˈstjuːdnts/",vi:"số lượng sinh viên",ex:"The number of students rose dramatically."},
+    {g:"Danh từ + of + danh từ",w:"a period of time",p:"noun phrase",ipa:"/ə ˈpɪəriəd əv taɪm/",vi:"một khoảng thời gian",ex:"Sales fell over a short period of time."}
+  ],
+  collocs:[
+    {g:"Động từ + danh từ",w:"attend a lecture",p:"collocation",ipa:"/əˈtend ə ˈlektʃə(r)/",vi:"dự một bài giảng",ex:"I attend a lecture every Monday morning."},
+    {g:"Động từ + danh từ",w:"take an exam",p:"collocation",ipa:"/teɪk ən ɪɡˈzæm/",vi:"làm bài thi, dự thi",ex:"I'll take an exam in December."},
+    {g:"Động từ + danh từ",w:"pass an exam",p:"collocation",ipa:"/pɑːs ən ɪɡˈzæm/",vi:"thi đỗ",ex:"She passed an exam in Japanese."},
+    {g:"Động từ + danh từ",w:"fail an exam",p:"collocation",ipa:"/feɪl ən ɪɡˈzæm/",vi:"thi trượt",ex:"He failed an exam because he didn't study."},
+    {g:"Động từ + danh từ",w:"hand in an assignment",p:"collocation",ipa:"/hænd ɪn ən əˈsaɪnmənt/",vi:"nộp bài tập",ex:"Hand in your assignment by Friday."},
+    {g:"Động từ + danh từ",w:"meet a deadline",p:"collocation",ipa:"/miːt ə ˈdedlaɪn/",vi:"kịp hạn chót",ex:"I worked all night to meet the deadline."},
+    {g:"Động từ + danh từ",w:"get a qualification",p:"collocation",ipa:"/ɡet ə ˌkwɒlɪfɪˈkeɪʃn/",vi:"lấy chứng chỉ, bằng cấp",ex:"You need to get a qualification to teach."},
+    {g:"Động từ + danh từ",w:"make progress",p:"collocation",ipa:"/meɪk ˈprəʊɡres/",vi:"tiến bộ",ex:"You'll make progress if you practise daily."},
+    {g:"Mô tả xu hướng (Writing Task 1)",w:"rise sharply",p:"collocation",ipa:"/raɪz ˈʃɑːpli/",vi:"tăng mạnh",ex:"Enrolment rose sharply in 2015."},
+    {g:"Mô tả xu hướng (Writing Task 1)",w:"fall slightly",p:"collocation",ipa:"/fɔːl ˈslaɪtli/",vi:"giảm nhẹ",ex:"The number fell slightly after that."},
+    {g:"Mô tả xu hướng (Writing Task 1)",w:"increase dramatically",p:"collocation",ipa:"/ɪnˈkriːs drəˈmætɪkli/",vi:"tăng đột biến",ex:"Ebook sales increased dramatically."},
+    {g:"Mô tả xu hướng (Writing Task 1)",w:"remain stable",p:"collocation",ipa:"/rɪˈmeɪn ˈsteɪbl/",vi:"giữ ổn định",ex:"The figure remained stable for five years."},
+    {g:"Mô tả xu hướng (Writing Task 1)",w:"reach a peak",p:"collocation",ipa:"/riːtʃ ə piːk/",vi:"đạt đỉnh",ex:"The rate reached a peak in 2010."},
+    {g:"Động từ + giới từ",w:"enrol on a course",p:"collocation",ipa:"/ɪnˈrəʊl ɒn ə kɔːs/",vi:"đăng ký một khóa học",ex:"I enrolled on a course in business English."},
+    {g:"Động từ + giới từ",w:"concentrate on",p:"collocation",ipa:"/ˈkɒnsntreɪt ɒn/",vi:"tập trung vào",ex:"Concentrate on your weakest skill."}
   ],
   grammar:{
     title:"Prepositions to describe graphs",
@@ -290,6 +351,37 @@ window.UNITS = (window.UNITS || []).concat([
     {g:"Trọng tâm từ vựng: tourism / tourist",w:"tourism",p:"n",ipa:"/ˈtʊərɪzəm/",vi:"ngành du lịch",ex:"Tourism brings money to the region."},
     {g:"Trọng tâm từ vựng: tourism / tourist",w:"tourist",p:"n",ipa:"/ˈtʊərɪst/",vi:"khách du lịch",ex:"The town is full of tourists in summer."}
   ],
+  phrases:[
+    {g:"Tính từ + danh từ",w:"breathtaking views",p:"noun phrase",ipa:"/ˈbreθteɪkɪŋ vjuːz/",vi:"quang cảnh ngoạn mục",ex:"The mountain offers breathtaking views."},
+    {g:"Tính từ + danh từ",w:"local culture",p:"noun phrase",ipa:"/ˈləʊkl ˈkʌltʃə(r)/",vi:"văn hóa địa phương",ex:"I like to learn about local culture when I travel."},
+    {g:"Tính từ + danh từ",w:"a memorable trip",p:"noun phrase",ipa:"/ə ˈmemərəbl trɪp/",vi:"chuyến đi đáng nhớ",ex:"Our trip to Sapa was a memorable trip."},
+    {g:"Tính từ + danh từ",w:"a popular destination",p:"noun phrase",ipa:"/ə ˈpɒpjələ ˌdestɪˈneɪʃn/",vi:"điểm đến nổi tiếng",ex:"Hoi An is a popular destination."},
+    {g:"Tính từ + danh từ",w:"budget travel",p:"noun phrase",ipa:"/ˈbʌdʒɪt ˈtrævl/",vi:"du lịch tiết kiệm",ex:"Hostels are perfect for budget travel."},
+    {g:"Danh từ + danh từ",w:"package holiday",p:"noun phrase",ipa:"/ˈpækɪdʒ ˈhɒlədeɪ/",vi:"kỳ nghỉ trọn gói",ex:"A package holiday includes flights and a hotel."},
+    {g:"Danh từ + danh từ",w:"tour guide",p:"noun phrase",ipa:"/ˈtʊə ɡaɪd/",vi:"hướng dẫn viên",ex:"The tour guide told us funny stories."},
+    {g:"Danh từ + danh từ",w:"tourist attraction",p:"noun phrase",ipa:"/ˈtʊərɪst əˈtrækʃn/",vi:"điểm tham quan",ex:"The Old Quarter is a big tourist attraction."},
+    {g:"Danh từ + danh từ",w:"travel agent",p:"noun phrase",ipa:"/ˈtrævl ˈeɪdʒənt/",vi:"đại lý du lịch",ex:"We booked the trip through a travel agent."},
+    {g:"Danh từ + danh từ",w:"the tourism industry",p:"noun phrase",ipa:"/ðə ˈtʊərɪzəm ˈɪndəstri/",vi:"ngành du lịch",ex:"The tourism industry employs many young people."},
+    {g:"Danh từ + of + danh từ",w:"the impact of tourism",p:"noun phrase",ipa:"/ði ˈɪmpækt əv ˈtʊərɪzəm/",vi:"tác động của du lịch",ex:"The impact of tourism on small islands is huge."},
+    {g:"Danh từ + of + danh từ",w:"a change of scenery",p:"noun phrase",ipa:"/ə tʃeɪndʒ əv ˈsiːnəri/",vi:"sự thay đổi không khí, cảnh vật",ex:"I need a change of scenery after exams."}
+  ],
+  collocs:[
+    {g:"Động từ + danh từ",w:"go sightseeing",p:"collocation",ipa:"/ɡəʊ ˈsaɪtsiːɪŋ/",vi:"đi tham quan",ex:"We went sightseeing in Hue."},
+    {g:"Động từ + danh từ",w:"book a flight",p:"collocation",ipa:"/bʊk ə flaɪt/",vi:"đặt vé máy bay",ex:"Book a flight early to get a good price."},
+    {g:"Động từ + danh từ",w:"take a trip",p:"collocation",ipa:"/teɪk ə trɪp/",vi:"đi một chuyến",ex:"Let's take a trip to Da Lat."},
+    {g:"Động từ + danh từ",w:"go on holiday",p:"collocation",ipa:"/ɡəʊ ɒn ˈhɒlədeɪ/",vi:"đi nghỉ",ex:"We go on holiday every summer."},
+    {g:"Động từ + danh từ",w:"explore the city",p:"collocation",ipa:"/ɪkˈsplɔː ðə ˈsɪti/",vi:"khám phá thành phố",ex:"We spent a day exploring the city."},
+    {g:"Động từ + danh từ",w:"broaden your horizons",p:"collocation",ipa:"/ˈbrɔːdn jɔː həˈraɪznz/",vi:"mở mang tầm mắt",ex:"Travelling broadens your horizons."},
+    {g:"Động từ + danh từ",w:"pack your bags",p:"collocation",ipa:"/pæk jɔː bæɡz/",vi:"thu xếp hành lý",ex:"Pack your bags the night before."},
+    {g:"Động từ + danh từ",w:"check in",p:"collocation",ipa:"/tʃek ɪn/",vi:"làm thủ tục nhận phòng / lên máy bay",ex:"We checked in at the hotel at 2 p.m."},
+    {g:"Động từ + giới từ",w:"set off",p:"collocation",ipa:"/set ɒf/",vi:"khởi hành",ex:"We set off at dawn."},
+    {g:"Động từ + giới từ",w:"look forward to",p:"collocation",ipa:"/lʊk ˈfɔːwəd tə/",vi:"mong chờ",ex:"I'm looking forward to my holiday."},
+    {g:"Động từ + giới từ",w:"stay at",p:"collocation",ipa:"/steɪ ət/",vi:"ở tại",ex:"We stayed at a small hotel by the beach."},
+    {g:"Tính từ + danh từ",w:"a long-haul flight",p:"collocation",ipa:"/ə ˈlɒŋ hɔːl flaɪt/",vi:"chuyến bay đường dài",ex:"A long-haul flight can be tiring."},
+    {g:"Tính từ + danh từ",w:"peak season",p:"collocation",ipa:"/piːk ˈsiːzn/",vi:"mùa cao điểm",ex:"Hotels are expensive in peak season."},
+    {g:"Trạng từ + tính từ",w:"absolutely stunning",p:"collocation",ipa:"/ˈæbsəluːtli ˈstʌnɪŋ/",vi:"đẹp tuyệt vời",ex:"The beach was absolutely stunning."},
+    {g:"Trạng từ + tính từ",w:"incredibly crowded",p:"collocation",ipa:"/ɪnˈkredəbli ˈkraʊdɪd/",vi:"đông không tưởng",ex:"The temple was incredibly crowded."}
+  ],
   grammar:{
     title:"Relative pronouns: who, which, that, where",
     rules:[
@@ -416,6 +508,37 @@ window.UNITS = (window.UNITS || []).concat([
     {g:"Trọng tâm từ vựng: effect / benefit / advantage / disadvantage",w:"advantage",p:"n",ipa:"/ədˈvɑːntɪdʒ/",vi:"ưu điểm, lợi thế",ex:"One advantage of rainwater is that it is free."},
     {g:"Trọng tâm từ vựng: effect / benefit / advantage / disadvantage",w:"disadvantage",p:"n",ipa:"/ˌdɪsədˈvɑːntɪdʒ/",vi:"nhược điểm, bất lợi",ex:"A disadvantage of wells is that they can dry up."}
   ],
+  phrases:[
+    {g:"Tính từ + danh từ",w:"clean drinking water",p:"noun phrase",ipa:"/kliːn ˈdrɪŋkɪŋ ˈwɔːtə(r)/",vi:"nước uống sạch",ex:"Everyone needs clean drinking water."},
+    {g:"Tính từ + danh từ",w:"running water",p:"noun phrase",ipa:"/ˌrʌnɪŋ ˈwɔːtə(r)/",vi:"nước máy",ex:"Many villages still have no running water."},
+    {g:"Tính từ + danh từ",w:"rural areas",p:"noun phrase",ipa:"/ˈrʊərəl ˈeəriəz/",vi:"vùng nông thôn",ex:"Water shortages are worse in rural areas."},
+    {g:"Tính từ + danh từ",w:"polluted rivers",p:"noun phrase",ipa:"/pəˈluːtɪd ˈrɪvəz/",vi:"những dòng sông ô nhiễm",ex:"Polluted rivers kill fish."},
+    {g:"Danh từ + danh từ",w:"water shortage",p:"noun phrase",ipa:"/ˈwɔːtə ˈʃɔːtɪdʒ/",vi:"thiếu nước",ex:"The drought caused a water shortage."},
+    {g:"Danh từ + danh từ",w:"water supply",p:"noun phrase",ipa:"/ˈwɔːtə səˈplaɪ/",vi:"nguồn cung cấp nước",ex:"The town's water supply comes from the lake."},
+    {g:"Danh từ + danh từ",w:"water purification",p:"noun phrase",ipa:"/ˈwɔːtə ˌpjʊərɪfɪˈkeɪʃn/",vi:"lọc nước",ex:"Water purification saves lives."},
+    {g:"Danh từ + danh từ",w:"irrigation system",p:"noun phrase",ipa:"/ˌɪrɪˈɡeɪʃn ˈsɪstəm/",vi:"hệ thống tưới tiêu",ex:"The farm has a modern irrigation system."},
+    {g:"Danh từ + danh từ",w:"water pressure",p:"noun phrase",ipa:"/ˈwɔːtə ˈpreʃə(r)/",vi:"áp lực nước",ex:"The water pressure is low in the morning."},
+    {g:"Danh từ + of + danh từ",w:"a lack of water",p:"noun phrase",ipa:"/ə læk əv ˈwɔːtə(r)/",vi:"sự thiếu nước",ex:"A lack of water hurts farmers."},
+    {g:"Danh từ + of + danh từ",w:"access to clean water",p:"noun phrase",ipa:"/ˈækses tə kliːn ˈwɔːtə(r)/",vi:"tiếp cận nước sạch",ex:"Access to clean water improves health."},
+    {g:"Danh từ + of + danh từ",w:"the pros and cons",p:"noun phrase",ipa:"/ðə prəʊz ənd kɒnz/",vi:"ưu và nhược điểm",ex:"Let's look at the pros and cons of dams."}
+  ],
+  collocs:[
+    {g:"Động từ + danh từ",w:"save water",p:"collocation",ipa:"/seɪv ˈwɔːtə(r)/",vi:"tiết kiệm nước",ex:"Turn off the tap to save water."},
+    {g:"Động từ + danh từ",w:"waste water",p:"collocation",ipa:"/weɪst ˈwɔːtə(r)/",vi:"lãng phí nước",ex:"Long showers waste water."},
+    {g:"Động từ + danh từ",w:"collect rainwater",p:"collocation",ipa:"/kəˈlekt ˈreɪnwɔːtə(r)/",vi:"hứng nước mưa",ex:"Families collect rainwater in big jars."},
+    {g:"Động từ + danh từ",w:"fetch water",p:"collocation",ipa:"/fetʃ ˈwɔːtə(r)/",vi:"đi lấy nước",ex:"Girls often fetch water from the well."},
+    {g:"Động từ + danh từ",w:"cultivate crops",p:"collocation",ipa:"/ˈkʌltɪveɪt krɒps/",vi:"trồng trọt",ex:"Farmers need rain to cultivate crops."},
+    {g:"Động từ + danh từ",w:"turn on a tap",p:"collocation",ipa:"/tɜːn ɒn ə tæp/",vi:"mở vòi nước",ex:"Turn on a tap and clean water comes out."},
+    {g:"Động từ + danh từ",w:"dig a well",p:"collocation",ipa:"/dɪɡ ə wel/",vi:"đào giếng",ex:"The charity helped dig a well."},
+    {g:"Động từ + giới từ",w:"run out of",p:"collocation",ipa:"/rʌn aʊt əv/",vi:"hết, cạn kiệt",ex:"The town may run out of water by summer."},
+    {g:"Động từ + giới từ",w:"drain away",p:"collocation",ipa:"/dreɪn əˈweɪ/",vi:"thoát đi",ex:"Rainwater drains away into the sea."},
+    {g:"Động từ + giới từ",w:"suffer from",p:"collocation",ipa:"/ˈsʌfə frəm/",vi:"chịu đựng, mắc phải",ex:"Many villages suffer from drought."},
+    {g:"Tính từ + giới từ",w:"safe for",p:"collocation",ipa:"/seɪf fə(r)/",vi:"an toàn cho",ex:"This water is safe for drinking."},
+    {g:"Tính từ + giới từ",w:"short of",p:"collocation",ipa:"/ʃɔːt əv/",vi:"thiếu",ex:"The region is short of water."},
+    {g:"Nói về ưu/nhược điểm",w:"have an effect on",p:"collocation",ipa:"/hæv ən ɪˈfekt ɒn/",vi:"có ảnh hưởng đến",ex:"Dirty water has an effect on health."},
+    {g:"Nói về ưu/nhược điểm",w:"a major advantage",p:"collocation",ipa:"/ə ˈmeɪdʒər ədˈvɑːntɪdʒ/",vi:"ưu điểm lớn",ex:"A major advantage of filters is the low cost."},
+    {g:"Nói về ưu/nhược điểm",w:"a serious disadvantage",p:"collocation",ipa:"/ə ˈsɪəriəs ˌdɪsədˈvɑːntɪdʒ/",vi:"nhược điểm nghiêm trọng",ex:"A serious disadvantage of dams is flooding land."}
+  ],
   grammar:{
     title:"The passive",
     rules:[
@@ -536,6 +659,37 @@ window.UNITS = (window.UNITS || []).concat([
     {g:"Word list của sách",w:"-shaped",p:"suffix",ipa:"/ʃeɪpt/",vi:"có hình… (L-shaped, egg-shaped)",ex:"The museum is an egg-shaped building."},
     {g:"Chủ đề: kiến trúc",w:"features",p:"n",ipa:"/ˈfiːtʃəz/",vi:"đặc điểm, chi tiết nổi bật",ex:"The building has many modern features."},
     {g:"Chủ đề: kiến trúc",w:"construct",p:"v",ipa:"/kənˈstrʌkt/",vi:"xây dựng",ex:"The bridge was constructed in only two years."}
+  ],
+  phrases:[
+    {g:"Tính từ + danh từ",w:"affordable housing",p:"noun phrase",ipa:"/əˈfɔːdəbl ˈhaʊzɪŋ/",vi:"nhà ở giá phải chăng",ex:"The city needs more affordable housing."},
+    {g:"Tính từ + danh từ",w:"modern architecture",p:"noun phrase",ipa:"/ˈmɒdn ˈɑːkɪtektʃə(r)/",vi:"kiến trúc hiện đại",ex:"Singapore is famous for its modern architecture."},
+    {g:"Tính từ + danh từ",w:"traditional houses",p:"noun phrase",ipa:"/trəˈdɪʃənl ˈhaʊzɪz/",vi:"nhà truyền thống",ex:"Traditional houses have thick walls."},
+    {g:"Tính từ + danh từ",w:"a thatched roof",p:"noun phrase",ipa:"/ə θætʃt ruːf/",vi:"mái nhà lợp tranh",ex:"The cottage has a thatched roof."},
+    {g:"Tính từ + danh từ",w:"a famous landmark",p:"noun phrase",ipa:"/ə ˈfeɪməs ˈlændmɑːk/",vi:"công trình biểu tượng nổi tiếng",ex:"The Opera House is a famous landmark."},
+    {g:"Danh từ + danh từ",w:"building materials",p:"noun phrase",ipa:"/ˈbɪldɪŋ məˈtɪəriəlz/",vi:"vật liệu xây dựng",ex:"Prices of building materials rose last year."},
+    {g:"Danh từ + danh từ",w:"tower block",p:"noun phrase",ipa:"/ˈtaʊə blɒk/",vi:"tòa nhà cao tầng",ex:"They live on the 20th floor of a tower block."},
+    {g:"Danh từ + danh từ",w:"city skyline",p:"noun phrase",ipa:"/ˈsɪti ˈskaɪlaɪn/",vi:"đường chân trời thành phố",ex:"The new tower changed the city skyline."},
+    {g:"Danh từ + danh từ",w:"housing shortage",p:"noun phrase",ipa:"/ˈhaʊzɪŋ ˈʃɔːtɪdʒ/",vi:"thiếu nhà ở",ex:"Big cities face a housing shortage."},
+    {g:"Danh từ + danh từ",w:"steel frame",p:"noun phrase",ipa:"/stiːl freɪm/",vi:"khung thép",ex:"The building has a steel frame."},
+    {g:"Danh từ + of + danh từ",w:"a block of flats",p:"noun phrase",ipa:"/ə blɒk əv flæts/",vi:"một khu chung cư",ex:"They built a block of flats near the station."},
+    {g:"Danh từ + of + danh từ",w:"the cost of living",p:"noun phrase",ipa:"/ðə kɒst əv ˈlɪvɪŋ/",vi:"chi phí sinh hoạt",ex:"The cost of living in Hanoi is rising."}
+  ],
+  collocs:[
+    {g:"Động từ + danh từ",w:"build a house",p:"collocation",ipa:"/bɪld ə haʊs/",vi:"xây nhà",ex:"They built a house by the river."},
+    {g:"Động từ + danh từ",w:"knock down a building",p:"collocation",ipa:"/nɒk daʊn ə ˈbɪldɪŋ/",vi:"phá dỡ một tòa nhà",ex:"They knocked down a building to make a park."},
+    {g:"Động từ + danh từ",w:"design a building",p:"collocation",ipa:"/dɪˈzaɪn ə ˈbɪldɪŋ/",vi:"thiết kế một tòa nhà",ex:"She designed a building for the university."},
+    {g:"Động từ + danh từ",w:"rent a flat",p:"collocation",ipa:"/rent ə flæt/",vi:"thuê một căn hộ",ex:"Students often rent a flat together."},
+    {g:"Động từ + danh từ",w:"lay the foundations",p:"collocation",ipa:"/leɪ ðə faʊnˈdeɪʃnz/",vi:"đổ móng",ex:"Workers lay the foundations first."},
+    {g:"Động từ + danh từ",w:"meet the demand",p:"collocation",ipa:"/miːt ðə dɪˈmɑːnd/",vi:"đáp ứng nhu cầu",ex:"New flats will help meet the demand."},
+    {g:"Động từ + giới từ",w:"stand out",p:"collocation",ipa:"/stænd aʊt/",vi:"nổi bật",ex:"The red building stands out from the others."},
+    {g:"Động từ + giới từ",w:"be built of",p:"collocation",ipa:"/bi bɪlt əv/",vi:"được xây bằng",ex:"The house is built of timber."},
+    {g:"Động từ + giới từ",w:"benefit from",p:"collocation",ipa:"/ˈbenɪfɪt frəm/",vi:"hưởng lợi từ",ex:"Residents benefit from the new lifts."},
+    {g:"Động từ + giới từ",w:"move into",p:"collocation",ipa:"/muːv ˈɪntuː/",vi:"chuyển vào ở",ex:"We moved into our new flat last month."},
+    {g:"Tính từ + danh từ",w:"spacious rooms",p:"collocation",ipa:"/ˈspeɪʃəs ruːmz/",vi:"những căn phòng rộng rãi",ex:"The villa has spacious rooms."},
+    {g:"Tính từ + danh từ",w:"high ceilings",p:"collocation",ipa:"/haɪ ˈsiːlɪŋz/",vi:"trần nhà cao",ex:"Old French houses have high ceilings."},
+    {g:"Tính từ + danh từ",w:"a convenient location",p:"collocation",ipa:"/ə kənˈviːniənt ləʊˈkeɪʃn/",vi:"vị trí thuận tiện",ex:"The flat is in a convenient location."},
+    {g:"Trạng từ + tính từ",w:"beautifully designed",p:"collocation",ipa:"/ˈbjuːtɪfli dɪˈzaɪnd/",vi:"được thiết kế đẹp",ex:"The library is beautifully designed."},
+    {g:"Trạng từ + tính từ",w:"newly built",p:"collocation",ipa:"/ˈnjuːli bɪlt/",vi:"mới xây",ex:"We live in a newly built area."}
   ],
   grammar:{
     title:"Modal verbs",

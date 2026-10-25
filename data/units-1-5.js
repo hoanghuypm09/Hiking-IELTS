@@ -81,6 +81,24 @@ window.UNITS = (window.UNITS || []).concat([
     {g:"Dùng trong Writing Task 1",w:"the remaining 8 percent",p:"noun phrase",ipa:"/ðə rɪˈmeɪnɪŋ eɪt pəˈsent/",vi:"8% còn lại",ex:"The remaining 8 percent gave other reasons."},
     {g:"Dùng trong Writing Task 1",w:"public services",p:"noun phrase",ipa:"/ˈpʌblɪk ˈsɜːvɪsɪz/",vi:"dịch vụ công",ex:"The bar chart compares satisfaction with four public services."}
   ],
+  collocs:[
+    {g:"Động từ + danh từ",w:"live in the city centre",p:"collocation",ipa:"/lɪv ɪn ðə ˈsɪti ˈsentə/",vi:"sống ở trung tâm thành phố",ex:"I'd love to live in the city centre, near my office."},
+    {g:"Động từ + danh từ",w:"move to a new city",p:"collocation",ipa:"/muːv tu ə njuː ˈsɪti/",vi:"chuyển đến thành phố mới",ex:"She moved to a new city to start her first job."},
+    {g:"Động từ + danh từ",w:"find a job",p:"collocation",ipa:"/faɪnd ə dʒɒb/",vi:"tìm được việc làm",ex:"It's easier to find a job in a big city."},
+    {g:"Động từ + danh từ",w:"pay the rent",p:"collocation",ipa:"/peɪ ðə rent/",vi:"trả tiền thuê nhà",ex:"I share a flat so it's easier to pay the rent."},
+    {g:"Động từ + danh từ",w:"get around",p:"collocation",ipa:"/ɡet əˈraʊnd/",vi:"đi lại (trong thành phố)",ex:"The easiest way to get around Hanoi is by motorbike."},
+    {g:"Động từ + danh từ",w:"spend time with",p:"collocation",ipa:"/spend taɪm wɪð/",vi:"dành thời gian với",ex:"At weekends I spend time with my family."},
+    {g:"Tính từ + danh từ",w:"heavy traffic",p:"collocation",ipa:"/ˈhevi ˈtræfɪk/",vi:"giao thông đông đúc",ex:"There is always heavy traffic at 6 p.m."},
+    {g:"Tính từ + danh từ",w:"fresh air",p:"collocation",ipa:"/freʃ eə(r)/",vi:"không khí trong lành",ex:"I go to the countryside for some fresh air."},
+    {g:"Tính từ + danh từ",w:"busy street",p:"collocation",ipa:"/ˈbɪzi striːt/",vi:"con phố đông đúc",ex:"My flat is on a busy street, so it's quite noisy."},
+    {g:"Tính từ + danh từ",w:"peaceful neighbourhood",p:"collocation",ipa:"/ˈpiːsfl ˈneɪbəhʊd/",vi:"khu phố yên bình",ex:"We live in a peaceful neighbourhood near the lake."},
+    {g:"Mô tả số liệu (Writing Task 1)",w:"the largest proportion",p:"collocation",ipa:"/ðə ˈlɑːdʒɪst prəˈpɔːʃn/",vi:"tỉ lệ lớn nhất",ex:"The largest proportion of residents travel by motorbike."},
+    {g:"Mô tả số liệu (Writing Task 1)",w:"a small percentage",p:"collocation",ipa:"/ə smɔːl pəˈsentɪdʒ/",vi:"một tỉ lệ phần trăm nhỏ",ex:"Only a small percentage of people walk to work."},
+    {g:"Mô tả số liệu (Writing Task 1)",w:"just over half",p:"collocation",ipa:"/dʒʌst ˈəʊvə hɑːf/",vi:"hơn một nửa một chút",ex:"Just over half of the students live with their parents."},
+    {g:"Mô tả số liệu (Writing Task 1)",w:"roughly a quarter",p:"collocation",ipa:"/ˈrʌfli ə ˈkwɔːtə(r)/",vi:"khoảng một phần tư",ex:"Roughly a quarter of the city is green space."},
+    {g:"Trạng từ + tính từ",w:"extremely crowded",p:"collocation",ipa:"/ɪkˈstriːmli ˈkraʊdɪd/",vi:"cực kỳ đông đúc",ex:"The market is extremely crowded before Tết."},
+    {g:"Trạng từ + tính từ",w:"fairly quiet",p:"collocation",ipa:"/ˈfeəli ˈkwaɪət/",vi:"khá yên tĩnh",ex:"My street is fairly quiet at night."}
+  ],
   grammar:{
     title:"Present simple & Present continuous",
     rules:[
@@ -214,6 +232,37 @@ window.UNITS = (window.UNITS || []).concat([
     {g:"Chủ đề: học tập & khám phá",w:"knowledge",p:"n",ipa:"/ˈnɒlɪdʒ/",vi:"kiến thức",ex:"Reading widely increases your knowledge."},
     {g:"Chủ đề: học tập & khám phá",w:"pass down",p:"v",ipa:"/pɑːs daʊn/",vi:"truyền lại (cho thế hệ sau)",ex:"My grandmother passed down her recipes to my mother."}
   ],
+  phrases:[
+    {g:"Tính từ + danh từ",w:"ancient civilisation",p:"noun phrase",ipa:"/ˈeɪnʃənt ˌsɪvəlaɪˈzeɪʃn/",vi:"nền văn minh cổ đại",ex:"The Egyptians were a great ancient civilisation."},
+    {g:"Tính từ + danh từ",w:"traditional skills",p:"noun phrase",ipa:"/trəˈdɪʃənl skɪlz/",vi:"kỹ năng truyền thống",ex:"Old people in the village teach traditional skills like weaving."},
+    {g:"Tính từ + danh từ",w:"the younger generation",p:"noun phrase",ipa:"/ðə ˈjʌŋɡə ˌdʒenəˈreɪʃn/",vi:"thế hệ trẻ",ex:"The younger generation learns mostly from the internet."},
+    {g:"Tính từ + danh từ",w:"extensive knowledge",p:"noun phrase",ipa:"/ɪkˈstensɪv ˈnɒlɪdʒ/",vi:"kiến thức sâu rộng",ex:"Our guide had extensive knowledge of local history."},
+    {g:"Tính từ + danh từ",w:"a long sea voyage",p:"noun phrase",ipa:"/ə lɒŋ siː ˈvɔɪɪdʒ/",vi:"chuyến đi biển dài ngày",ex:"A long sea voyage was dangerous in the past."},
+    {g:"Danh từ + danh từ",w:"memory technique",p:"noun phrase",ipa:"/ˈmeməri tekˈniːk/",vi:"kỹ thuật ghi nhớ",ex:"A good memory technique is to link words to pictures."},
+    {g:"Danh từ + danh từ",w:"community support",p:"noun phrase",ipa:"/kəˈmjuːnəti səˈpɔːt/",vi:"sự hỗ trợ của cộng đồng",ex:"The library was built with community support."},
+    {g:"Danh từ + danh từ",w:"university degree",p:"noun phrase",ipa:"/ˌjuːnɪˈvɜːsəti dɪˈɡriː/",vi:"bằng đại học",ex:"You don't always need a university degree to succeed."},
+    {g:"Danh từ + danh từ",w:"navigation skills",p:"noun phrase",ipa:"/ˌnævɪˈɡeɪʃn skɪlz/",vi:"kỹ năng định hướng",ex:"Pacific sailors had amazing navigation skills."},
+    {g:"Danh từ + of + danh từ",w:"a way of life",p:"noun phrase",ipa:"/ə weɪ əv laɪf/",vi:"lối sống",ex:"Fishing is a way of life on this island."},
+    {g:"Danh từ + of + danh từ",w:"the history of navigation",p:"noun phrase",ipa:"/ðə ˈhɪstri əv ˌnævɪˈɡeɪʃn/",vi:"lịch sử ngành hàng hải",ex:"The museum shows the history of navigation."},
+    {g:"Danh từ + of + danh từ",w:"a source of knowledge",p:"noun phrase",ipa:"/ə sɔːs əv ˈnɒlɪdʒ/",vi:"nguồn kiến thức",ex:"Grandparents are a great source of knowledge."}
+  ],
+  collocs:[
+    {g:"Động từ + danh từ",w:"gain knowledge",p:"collocation",ipa:"/ɡeɪn ˈnɒlɪdʒ/",vi:"tiếp thu kiến thức",ex:"You can gain knowledge from travelling."},
+    {g:"Động từ + danh từ",w:"learn a skill",p:"collocation",ipa:"/lɜːn ə skɪl/",vi:"học một kỹ năng",ex:"It takes years to learn a skill like boat building."},
+    {g:"Động từ + danh từ",w:"pass on knowledge",p:"collocation",ipa:"/pɑːs ɒn ˈnɒlɪdʒ/",vi:"truyền lại kiến thức",ex:"Elders pass on knowledge through stories and songs."},
+    {g:"Động từ + danh từ",w:"set sail",p:"collocation",ipa:"/set seɪl/",vi:"ra khơi",ex:"The explorers set sail in the spring."},
+    {g:"Động từ + danh từ",w:"make a discovery",p:"collocation",ipa:"/meɪk ə dɪˈskʌvəri/",vi:"có một phát hiện",ex:"They made an important discovery on the island."},
+    {g:"Động từ + danh từ",w:"carry out an experiment",p:"collocation",ipa:"/ˈkæri aʊt ən ɪkˈsperɪmənt/",vi:"tiến hành thí nghiệm",ex:"The team carried out an experiment to test the theory."},
+    {g:"Động từ + danh từ",w:"earn a degree",p:"collocation",ipa:"/ɜːn ə dɪˈɡriː/",vi:"lấy được bằng",ex:"She earned a degree in history."},
+    {g:"Động từ + giới từ",w:"rely on",p:"collocation",ipa:"/rɪˈlaɪ ɒn/",vi:"dựa vào",ex:"Early sailors relied on the stars."},
+    {g:"Động từ + giới từ",w:"depend on",p:"collocation",ipa:"/dɪˈpend ɒn/",vi:"phụ thuộc vào",ex:"Success depends on practice."},
+    {g:"Động từ + giới từ",w:"learn from",p:"collocation",ipa:"/lɜːn frəm/",vi:"học hỏi từ",ex:"We can learn from our mistakes."},
+    {g:"make / do / take",w:"make progress",p:"collocation",ipa:"/meɪk ˈprəʊɡres/",vi:"tiến bộ",ex:"I made progress quickly with my new technique."},
+    {g:"make / do / take",w:"take notes",p:"collocation",ipa:"/teɪk nəʊts/",vi:"ghi chép",ex:"Take notes while you listen to the lecture."},
+    {g:"make / do / take",w:"do research",p:"collocation",ipa:"/duː rɪˈsɜːtʃ/",vi:"làm nghiên cứu",ex:"He did research on ancient boats."},
+    {g:"Trạng từ + động từ",w:"deeply rooted",p:"collocation",ipa:"/ˈdiːpli ˈruːtɪd/",vi:"ăn sâu, bắt rễ sâu",ex:"These traditions are deeply rooted in our culture."},
+    {g:"Trạng từ + động từ",w:"widely known",p:"collocation",ipa:"/ˈwaɪdli nəʊn/",vi:"được biết đến rộng rãi",ex:"His story is widely known in Vietnam."}
+  ],
   grammar:{
     title:"Past simple",
     rules:[
@@ -343,6 +392,39 @@ window.UNITS = (window.UNITS || []).concat([
     {g:"Chủ đề: giao thông",w:"zero emissions",p:"n",ipa:"/ˈzɪərəʊ ɪˈmɪʃnz/",vi:"không phát thải khí",ex:"Electric buses produce zero emissions on the road."},
     {g:"Chủ đề: giao thông",w:"commuter",p:"n",ipa:"/kəˈmjuːtə/",vi:"người đi làm/đi học hằng ngày",ex:"The trains are full of commuters at 7 a.m."},
     {g:"Chủ đề: giao thông",w:"congestion",p:"n",ipa:"/kənˈdʒestʃən/",vi:"tắc nghẽn giao thông",ex:"Congestion is worst in the city centre."}
+  ],
+  phrases:[
+    {g:"Tính từ + danh từ",w:"public transport",p:"noun phrase",ipa:"/ˌpʌblɪk ˈtrænspɔːt/",vi:"phương tiện công cộng",ex:"Public transport in Singapore is cheap and fast."},
+    {g:"Tính từ + danh từ",w:"rush hour",p:"noun phrase",ipa:"/ˈrʌʃ aʊə(r)/",vi:"giờ cao điểm",ex:"I avoid driving during rush hour."},
+    {g:"Tính từ + danh từ",w:"electric vehicles",p:"noun phrase",ipa:"/ɪˈlektrɪk ˈviːəklz/",vi:"xe điện",ex:"More people are buying electric vehicles."},
+    {g:"Tính từ + danh từ",w:"an alternative route",p:"noun phrase",ipa:"/ən ɔːlˈtɜːnətɪv ruːt/",vi:"tuyến đường thay thế",ex:"The road was closed so we took an alternative route."},
+    {g:"Tính từ + danh từ",w:"renewable energy",p:"noun phrase",ipa:"/rɪˌnjuːəbl ˈenədʒi/",vi:"năng lượng tái tạo",ex:"The new trams run on renewable energy."},
+    {g:"Danh từ + danh từ",w:"traffic congestion",p:"noun phrase",ipa:"/ˈtræfɪk kənˈdʒestʃən/",vi:"tắc nghẽn giao thông",ex:"Traffic congestion wastes millions of hours every year."},
+    {g:"Danh từ + danh từ",w:"air pollution",p:"noun phrase",ipa:"/eə pəˈluːʃn/",vi:"ô nhiễm không khí",ex:"Air pollution is a serious problem in big cities."},
+    {g:"Danh từ + danh từ",w:"bus lane",p:"noun phrase",ipa:"/bʌs leɪn/",vi:"làn đường dành cho xe buýt",ex:"Cars must not drive in the bus lane."},
+    {g:"Danh từ + danh từ",w:"cycle path",p:"noun phrase",ipa:"/ˈsaɪkl pɑːθ/",vi:"đường dành cho xe đạp",ex:"The city built a cycle path along the river."},
+    {g:"Danh từ + danh từ",w:"ticket price",p:"noun phrase",ipa:"/ˈtɪkɪt praɪs/",vi:"giá vé",ex:"The ticket price for students is half."},
+    {g:"Danh từ + danh từ",w:"transport system",p:"noun phrase",ipa:"/ˈtrænspɔːt ˈsɪstəm/",vi:"hệ thống giao thông",ex:"The city needs a better transport system."},
+    {g:"Danh từ + of + danh từ",w:"a range of options",p:"noun phrase",ipa:"/ə reɪndʒ əv ˈɒpʃnz/",vi:"nhiều lựa chọn",ex:"Commuters have a range of options in the city."},
+    {g:"Danh từ + of + danh từ",w:"the number of passengers",p:"noun phrase",ipa:"/ðə ˈnʌmbər əv ˈpæsɪndʒəz/",vi:"số lượng hành khách",ex:"The number of passengers rose by 15 percent."}
+  ],
+  collocs:[
+    {g:"Động từ + danh từ",w:"take the bus",p:"collocation",ipa:"/teɪk ðə bʌs/",vi:"đi xe buýt",ex:"I take the bus to work every day."},
+    {g:"Động từ + danh từ",w:"catch a train",p:"collocation",ipa:"/kætʃ ə treɪn/",vi:"bắt kịp chuyến tàu",ex:"We ran to catch a train at seven."},
+    {g:"Động từ + danh từ",w:"miss the bus",p:"collocation",ipa:"/mɪs ðə bʌs/",vi:"lỡ chuyến xe buýt",ex:"If you miss the bus, you'll have to wait an hour."},
+    {g:"Động từ + danh từ",w:"reduce traffic",p:"collocation",ipa:"/rɪˈdjuːs ˈtræfɪk/",vi:"giảm lưu lượng giao thông",ex:"A metro line will reduce traffic in the centre."},
+    {g:"Động từ + danh từ",w:"cut emissions",p:"collocation",ipa:"/kʌt ɪˈmɪʃnz/",vi:"cắt giảm khí thải",ex:"Cities must cut emissions to clean the air."},
+    {g:"Động từ + danh từ",w:"solve a problem",p:"collocation",ipa:"/sɒlv ə ˈprɒbləm/",vi:"giải quyết vấn đề",ex:"More buses won't solve the problem alone."},
+    {g:"Động từ + danh từ",w:"cause delays",p:"collocation",ipa:"/kɔːz dɪˈleɪz/",vi:"gây chậm trễ",ex:"Road works cause delays every morning."},
+    {g:"Động từ + danh từ",w:"get stuck in traffic",p:"collocation",ipa:"/ɡet stʌk ɪn ˈtræfɪk/",vi:"bị kẹt xe",ex:"I got stuck in traffic for an hour."},
+    {g:"Tính từ + danh từ",w:"heavy traffic",p:"collocation",ipa:"/ˈhevi ˈtræfɪk/",vi:"giao thông đông đúc",ex:"There is heavy traffic near the school gate."},
+    {g:"Tính từ + danh từ",w:"a long journey",p:"collocation",ipa:"/ə lɒŋ ˈdʒɜːni/",vi:"chuyến đi dài",ex:"It's a long journey from my village to the city."},
+    {g:"Tính từ + danh từ",w:"a reliable service",p:"collocation",ipa:"/ə rɪˈlaɪəbl ˈsɜːvɪs/",vi:"dịch vụ đáng tin cậy",ex:"People will use buses if it's a reliable service."},
+    {g:"Động từ + giới từ",w:"travel by",p:"collocation",ipa:"/ˈtrævl baɪ/",vi:"đi bằng (phương tiện)",ex:"Most students travel by bus."},
+    {g:"Động từ + giới từ",w:"switch to",p:"collocation",ipa:"/swɪtʃ tə/",vi:"chuyển sang",ex:"Many drivers switched to electric cars."},
+    {g:"Động từ + giới từ",w:"invest in",p:"collocation",ipa:"/ɪnˈvest ɪn/",vi:"đầu tư vào",ex:"The government will invest in new trains."},
+    {g:"Trạng từ + động từ/tính từ",w:"heavily polluted",p:"collocation",ipa:"/ˈhevɪli pəˈluːtɪd/",vi:"bị ô nhiễm nặng",ex:"The air is heavily polluted in winter."},
+    {g:"Trạng từ + động từ/tính từ",w:"highly efficient",p:"collocation",ipa:"/ˈhaɪli ɪˈfɪʃnt/",vi:"rất hiệu quả",ex:"The new metro is highly efficient."}
   ],
   grammar:{
     title:"Making comparisons",
@@ -474,6 +556,37 @@ window.UNITS = (window.UNITS || []).concat([
     {g:"Chủ đề: phát minh & công nghệ",w:"assemble",p:"v",ipa:"/əˈsembl/",vi:"lắp ráp",ex:"Workers assemble the phones by hand."},
     {g:"Chủ đề: phát minh & công nghệ",w:"experiment",p:"n/v",ipa:"/ɪkˈsperɪmənt/",vi:"thí nghiệm; thử nghiệm",ex:"He did hundreds of experiments before he succeeded."}
   ],
+  phrases:[
+    {g:"Tính từ + danh từ",w:"modern technology",p:"noun phrase",ipa:"/ˈmɒdn tekˈnɒlədʒi/",vi:"công nghệ hiện đại",ex:"Modern technology makes life easier."},
+    {g:"Tính từ + danh từ",w:"a useful device",p:"noun phrase",ipa:"/ə ˈjuːsfl dɪˈvaɪs/",vi:"một thiết bị hữu ích",ex:"A phone charger is a useful device to carry."},
+    {g:"Tính từ + danh từ",w:"an attractive design",p:"noun phrase",ipa:"/ən əˈtræktɪv dɪˈzaɪn/",vi:"thiết kế bắt mắt",ex:"People buy this phone for its attractive design."},
+    {g:"Tính từ + danh từ",w:"widespread use",p:"noun phrase",ipa:"/ˈwaɪdspred juːs/",vi:"sự sử dụng rộng rãi",ex:"The widespread use of smartphones changed how we live."},
+    {g:"Tính từ + danh từ",w:"three-dimensional printing",p:"noun phrase",ipa:"/ˌθriː daɪˈmenʃənl ˈprɪntɪŋ/",vi:"in ba chiều",ex:"Three-dimensional printing can make car parts."},
+    {g:"Danh từ + danh từ",w:"kitchen equipment",p:"noun phrase",ipa:"/ˈkɪtʃɪn ɪˈkwɪpmənt/",vi:"đồ dùng nhà bếp",ex:"We sell kitchen equipment online."},
+    {g:"Danh từ + danh từ",w:"air conditioning",p:"noun phrase",ipa:"/ˈeə kənˌdɪʃənɪŋ/",vi:"điều hòa không khí",ex:"Air conditioning uses a lot of electricity."},
+    {g:"Danh từ + danh từ",w:"safety features",p:"noun phrase",ipa:"/ˈseɪfti ˈfiːtʃəz/",vi:"tính năng an toàn",ex:"New cars have many safety features."},
+    {g:"Danh từ + danh từ",w:"battery life",p:"noun phrase",ipa:"/ˈbætri laɪf/",vi:"thời lượng pin",ex:"This laptop has a long battery life."},
+    {g:"Danh từ + danh từ",w:"product design",p:"noun phrase",ipa:"/ˈprɒdʌkt dɪˈzaɪn/",vi:"thiết kế sản phẩm",ex:"She works in product design."},
+    {g:"Danh từ + of + danh từ",w:"a piece of equipment",p:"noun phrase",ipa:"/ə piːs əv ɪˈkwɪpmənt/",vi:"một món thiết bị",ex:"A fridge is an expensive piece of equipment."},
+    {g:"Danh từ + of + danh từ",w:"the cost of production",p:"noun phrase",ipa:"/ðə kɒst əv prəˈdʌkʃn/",vi:"chi phí sản xuất",ex:"Robots lower the cost of production."}
+  ],
+  collocs:[
+    {g:"Động từ + danh từ",w:"come up with an idea",p:"collocation",ipa:"/kʌm ʌp wɪð ən aɪˈdɪə/",vi:"nghĩ ra một ý tưởng",ex:"He came up with an idea for a solar fan."},
+    {g:"Động từ + danh từ",w:"make an invention",p:"collocation",ipa:"/meɪk ən ɪnˈvenʃn/",vi:"tạo ra phát minh",ex:"Edison made many inventions."},
+    {g:"Động từ + danh từ",w:"solve a problem",p:"collocation",ipa:"/sɒlv ə ˈprɒbləm/",vi:"giải quyết vấn đề",ex:"This device solves a common problem."},
+    {g:"Động từ + danh từ",w:"save time",p:"collocation",ipa:"/seɪv taɪm/",vi:"tiết kiệm thời gian",ex:"A dishwasher saves time."},
+    {g:"Động từ + danh từ",w:"save energy",p:"collocation",ipa:"/seɪv ˈenədʒi/",vi:"tiết kiệm năng lượng",ex:"LED lights save energy."},
+    {g:"Động từ + danh từ",w:"develop a product",p:"collocation",ipa:"/dɪˈveləp ə ˈprɒdʌkt/",vi:"phát triển sản phẩm",ex:"It took three years to develop the product."},
+    {g:"Động từ + danh từ",w:"carry out tests",p:"collocation",ipa:"/ˈkæri aʊt tests/",vi:"tiến hành thử nghiệm",ex:"Engineers carry out tests on every machine."},
+    {g:"Động từ + danh từ",w:"take up space",p:"collocation",ipa:"/teɪk ʌp speɪs/",vi:"chiếm chỗ",ex:"Big printers take up space in small offices."},
+    {g:"Động từ + giới từ",w:"be made of",p:"collocation",ipa:"/bi meɪd əv/",vi:"được làm bằng",ex:"The case is made of plastic."},
+    {g:"Động từ + giới từ",w:"be used for",p:"collocation",ipa:"/bi juːzd fə(r)/",vi:"được dùng để",ex:"This tool is used for cutting metal."},
+    {g:"Động từ + giới từ",w:"consist of",p:"collocation",ipa:"/kənˈsɪst əv/",vi:"bao gồm",ex:"The kit consists of six parts."},
+    {g:"Tính từ + giới từ",w:"useful for",p:"collocation",ipa:"/ˈjuːsfl fə(r)/",vi:"hữu ích cho",ex:"This app is useful for students."},
+    {g:"Tính từ + giới từ",w:"popular with",p:"collocation",ipa:"/ˈpɒpjələ wɪð/",vi:"được ưa chuộng bởi",ex:"Smartwatches are popular with young people."},
+    {g:"Trạng từ + tính từ/động từ",w:"run smoothly",p:"collocation",ipa:"/rʌn ˈsmuːðli/",vi:"vận hành trơn tru",ex:"The engine runs smoothly."},
+    {g:"Trạng từ + tính từ/động từ",w:"widely used",p:"collocation",ipa:"/ˈwaɪdli juːzd/",vi:"được dùng rộng rãi",ex:"This software is widely used in schools."}
+  ],
   grammar:{
     title:"Present perfect",
     rules:[
@@ -593,6 +706,37 @@ window.UNITS = (window.UNITS || []).concat([
     {g:"Chủ đề: thế giới động vật",w:"diet",p:"n",ipa:"/ˈdaɪət/",vi:"chế độ ăn (của con vật, con người)",ex:"The panda's diet consists mainly of bamboo."},
     {g:"Chủ đề: thế giới động vật",w:"prey",p:"n",ipa:"/preɪ/",vi:"con mồi",ex:"Eagles hunt small animals as prey."},
     {g:"Chủ đề: thế giới động vật",w:"breed",p:"v",ipa:"/briːd/",vi:"sinh sản; nhân giống",ex:"Turtles return to the same beach to breed."}
+  ],
+  phrases:[
+    {g:"Tính từ + danh từ",w:"endangered species",p:"noun phrase",ipa:"/ɪnˈdeɪndʒəd ˈspiːʃiːz/",vi:"loài có nguy cơ tuyệt chủng",ex:"The saola is an endangered species."},
+    {g:"Tính từ + danh từ",w:"a hostile environment",p:"noun phrase",ipa:"/ə ˈhɒstaɪl ɪnˈvaɪrənmənt/",vi:"môi trường khắc nghiệt",ex:"The desert is a hostile environment."},
+    {g:"Tính từ + danh từ",w:"natural habitat",p:"noun phrase",ipa:"/ˈnætʃrəl ˈhæbɪtæt/",vi:"môi trường sống tự nhiên",ex:"Forests are the natural habitat of many birds."},
+    {g:"Tính từ + danh từ",w:"distinctive markings",p:"noun phrase",ipa:"/dɪˈstɪŋktɪv ˈmɑːkɪŋz/",vi:"hoa văn đặc trưng",ex:"Each zebra has distinctive markings."},
+    {g:"Tính từ + danh từ",w:"the southern hemisphere",p:"noun phrase",ipa:"/ðə ˈsʌðən ˈhemɪsfɪə(r)/",vi:"nam bán cầu",ex:"Penguins live in the southern hemisphere."},
+    {g:"Danh từ + danh từ",w:"food chain",p:"noun phrase",ipa:"/ˈfuːd tʃeɪn/",vi:"chuỗi thức ăn",ex:"Bees are an important part of the food chain."},
+    {g:"Danh từ + danh từ",w:"bee colony",p:"noun phrase",ipa:"/biː ˈkɒləni/",vi:"đàn ong",ex:"A bee colony can have 50,000 bees."},
+    {g:"Danh từ + danh từ",w:"wildlife park",p:"noun phrase",ipa:"/ˈwaɪldlaɪf pɑːk/",vi:"công viên động vật hoang dã",ex:"We visited a wildlife park in Ninh Binh."},
+    {g:"Danh từ + danh từ",w:"animal behaviour",p:"noun phrase",ipa:"/ˈænɪml bɪˈheɪvjə(r)/",vi:"tập tính động vật",ex:"She studies animal behaviour."},
+    {g:"Danh từ + danh từ",w:"migration patterns",p:"noun phrase",ipa:"/maɪˈɡreɪʃn ˈpætnz/",vi:"mô hình di cư",ex:"Climate change affects migration patterns."},
+    {g:"Danh từ + of + danh từ",w:"a source of food",p:"noun phrase",ipa:"/ə sɔːs əv fuːd/",vi:"nguồn thức ăn",ex:"Insects are a source of food for birds."},
+    {g:"Danh từ + of + danh từ",w:"the loss of habitat",p:"noun phrase",ipa:"/ðə lɒs əv ˈhæbɪtæt/",vi:"sự mất môi trường sống",ex:"The loss of habitat is the biggest threat."}
+  ],
+  collocs:[
+    {g:"Động từ + danh từ",w:"protect wildlife",p:"collocation",ipa:"/prəˈtekt ˈwaɪldlaɪf/",vi:"bảo vệ động vật hoang dã",ex:"We must protect wildlife for the future."},
+    {g:"Động từ + danh từ",w:"save a species",p:"collocation",ipa:"/seɪv ə ˈspiːʃiːz/",vi:"cứu một loài",ex:"Scientists worked hard to save the species."},
+    {g:"Động từ + danh từ",w:"face extinction",p:"collocation",ipa:"/feɪs ɪkˈstɪŋkʃn/",vi:"đối mặt nguy cơ tuyệt chủng",ex:"Many frogs face extinction."},
+    {g:"Động từ + danh từ",w:"destroy habitats",p:"collocation",ipa:"/dɪˈstrɔɪ ˈhæbɪtæts/",vi:"phá hủy môi trường sống",ex:"Farming destroys habitats."},
+    {g:"Động từ + danh từ",w:"hunt for food",p:"collocation",ipa:"/hʌnt fə fuːd/",vi:"săn mồi",ex:"Owls hunt for food at night."},
+    {g:"Động từ + danh từ",w:"spray pesticides",p:"collocation",ipa:"/spreɪ ˈpestɪsaɪdz/",vi:"phun thuốc trừ sâu",ex:"Farmers spray pesticides on their crops."},
+    {g:"Động từ + danh từ",w:"focus efforts on",p:"collocation",ipa:"/ˈfəʊkəs ˈefəts ɒn/",vi:"tập trung nỗ lực vào",ex:"The group focuses efforts on the tigers."},
+    {g:"Động từ + giới từ",w:"feed on",p:"collocation",ipa:"/fiːd ɒn/",vi:"ăn (cái gì làm thức ăn)",ex:"Pandas feed on bamboo."},
+    {g:"Động từ + giới từ",w:"die out",p:"collocation",ipa:"/daɪ aʊt/",vi:"tuyệt chủng, chết dần",ex:"Dinosaurs died out millions of years ago."},
+    {g:"Động từ + giới từ",w:"depend on",p:"collocation",ipa:"/dɪˈpend ɒn/",vi:"phụ thuộc vào",ex:"Many plants depend on bees."},
+    {g:"Động từ + giới từ",w:"get rid of",p:"collocation",ipa:"/ɡet rɪd əv/",vi:"loại bỏ",ex:"Cats help get rid of mice."},
+    {g:"Tính từ + giới từ",w:"harmless to",p:"collocation",ipa:"/ˈhɑːmləs tə/",vi:"vô hại đối với",ex:"This snake is harmless to people."},
+    {g:"Tính từ + giới từ",w:"dangerous for",p:"collocation",ipa:"/ˈdeɪndʒərəs fə(r)/",vi:"nguy hiểm cho",ex:"Plastic is dangerous for sea animals."},
+    {g:"Trạng từ + tính từ",w:"critically endangered",p:"collocation",ipa:"/ˈkrɪtɪkli ɪnˈdeɪndʒəd/",vi:"cực kỳ nguy cấp",ex:"The Sumatran rhino is critically endangered."},
+    {g:"Trạng từ + tính từ",w:"highly intelligent",p:"collocation",ipa:"/ˈhaɪli ɪnˈtelɪdʒənt/",vi:"rất thông minh",ex:"Dolphins are highly intelligent."}
   ],
   grammar:{
     title:"Countable & uncountable nouns",
