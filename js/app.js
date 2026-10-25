@@ -92,6 +92,7 @@ function speak(text, opt={}){
     const u = new SpeechSynthesisUtterance(t);
     u.lang = v ? v.lang : (P.accent==="US" ? "en-US" : "en-GB"); u.rate = rate;
     if(v) u.voice = v;
+    if(opt.volume != null) u.volume = opt.volume;
     if(opt.pitch && v === pickVoice(0)) u.pitch = opt.pitch; // chỉ đổi cao độ khi hai người nói phải dùng chung một giọng
     if(k === list.length-1 && opt.onend) u.onend = u.onerror = () => { if(id === speakId) opt.onend(); };
     speechSynthesis.speak(u); last = u;
@@ -461,24 +462,108 @@ function vReading(u){
 
 function vListening(u){
   const C = curSet(u, "listening"), l = C.x;
+  if(PL.key !== C.id){ PL.key = C.id; PL.i = 0; }
   return setPicker(u, "listening") + `<div class="stack">
     <div class="sheet stack"><span class="eyebrow">${esc(l.title)}</span><p>${esc(l.intro)}</p>
-      <div class="row"><button class="btn primary" type="button" data-act="play">▶ Phát bài nghe</button><button class="btn" type="button" data-act="stop">■ Dừng</button>
-        <label class="row" style="gap:6px">Tốc độ <select id="rate" class="rate"><option value="0.75">Chậm</option><option value="0.9" selected>Vừa</option><option value="1">Bình thường</option></select></label></div>
-      <p class="muted small">Bài nghe do giọng máy của trình duyệt đọc, chỉ để luyện thêm. Hãy nghe audio của sách để quen giọng thật. Nên dùng Chrome hoặc Safari.</p></div>
+      <p class="muted small">Dùng thanh phát ở cuối trang: ▶ phát/tạm dừng, ⏮ ⏭ lùi/tới một câu, bấm vào thanh tiến trình hoặc vào một câu trong transcript để nghe từ chỗ đó. Phím tắt: Space, ← →. Bài nghe do giọng máy của trình duyệt đọc; chọn giọng hay hơn ở nút 🔊 Giọng đọc.</p></div>
     <div class="sheet">${quizHTML(C.id, l.quiz)}</div>
-    <details class="sheet"><summary>Xem transcript</summary><div class="script">
-      ${l.script.map(([s,t],i)=>`<p data-line="${i}"><span class="sp">${s==="A"?"Speaker 1":"Speaker 2"}</span>${esc(t)}</p>`).join("")}</div></details></div>`;
+    <details class="sheet" id="scriptbox"><summary>Xem transcript</summary><div class="script">
+      ${l.script.map(([s,t],i)=>`<p data-line="${i}" data-act="plline" data-i="${i}" title="Nghe từ câu này"><span class="sp">${s==="A"?"Speaker 1":"Speaker 2"}</span>${esc(t)}</p>`).join("")}</div></details></div>
+    ${playerHTML(u, C)}`;
 }
-function playDialogue(){
-  const l = curSet(UNITS[S.u], "listening").x; stopSpeech(); let i = 0;
-  const next = () => {
-    document.querySelectorAll(".script .now").forEach(e=>e.classList.remove("now"));
-    if(i >= l.script.length) return;
-    const [sp, text] = l.script[i]; const el = document.querySelector(`[data-line="${i}"]`); if(el) el.classList.add("now");
-    i++; speak(text, {voice: sp==="A"?0:1, pitch: sp==="A"?1:1.2, onend: () => setTimeout(next, 350)});
-  };
-  next();
+
+/* ============ THANH PHÁT BÀI NGHE (kiểu YouTube Music) ============
+   Giọng đọc của trình duyệt không cho tua theo giây, nên tiến trình được tính theo từng câu:
+   mỗi câu có thời lượng ước tính theo độ dài, tua = nhảy tới câu tương ứng. */
+const PL = {key:"", i:0, playing:false, repeat:"off", start:0, raf:0};
+const ICON = {
+  play:'<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>',
+  pause:'<svg viewBox="0 0 24 24"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>',
+  prev:'<svg viewBox="0 0 24 24"><path d="M6 6h2v12H6zM9.5 12 18 18V6z"/></svg>',
+  next:'<svg viewBox="0 0 24 24"><path d="M16 6h2v12h-2zM6 18l8.5-6L6 6z"/></svg>',
+  vol:'<svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3a4.5 4.5 0 0 0-2.5-4v8a4.5 4.5 0 0 0 2.5-4zM14 3.2v2.1a7 7 0 0 1 0 13.4v2.1a9 9 0 0 0 0-17.6z"/></svg>',
+  mute:'<svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm18.3 7.9L19.4 15l1.9-1.9-1.4-1.4-1.9 1.9-1.9-1.9-1.4 1.4 1.9 1.9-1.9 1.9 1.4 1.4 1.9-1.9 1.9 1.9z" transform="translate(-2 -1)"/></svg>',
+  rep:'<svg viewBox="0 0 24 24"><path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z"/></svg>',
+  rep1:'<svg viewBox="0 0 24 24"><path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4zm-4-2V9h-1l-2 1v1h1.5v4H13z"/></svg>',
+  up:'<svg viewBox="0 0 24 24"><path d="M7 14l5-5 5 5z"/></svg>'
+};
+function plScript(){ return curSet(UNITS[S.u], "listening").x.script; }
+function plRate(){ return Number(($("#rate")||{}).value || P.rate || 0.9); }
+function plDurs(){ const r = plRate(); return plScript().map(([,t]) => Math.max(1.5, t.length / 14) / r + 0.35); }
+const fmt = sec => Math.floor(sec/60) + ":" + String(Math.floor(sec%60)).padStart(2,"0");
+function playerHTML(u, C){
+  const n = C.x.script.length, rates = [["0.75","0.75×"],["0.9","0.9×"],["1","1×"],["1.1","1.1×"]];
+  const cur = String(P.rate>=1.05?1.1:P.rate>=0.95?1:P.rate>=0.82?0.9:0.75);
+  return `<div class="player" id="player" role="region" aria-label="Trình phát bài nghe">
+    <div class="pl-prog" id="plprog" role="slider" aria-label="Tiến trình" aria-valuemin="1" aria-valuemax="${n}" aria-valuenow="${PL.i+1}" tabindex="0">
+      <div class="pl-track"></div><div class="pl-fill" id="plfill"></div><div class="pl-knob" id="plknob"></div><div class="pl-tip" id="pltip"></div></div>
+    <div class="pl-row">
+      <div class="pl-left">
+        <button type="button" class="pl-btn pl-prev" data-act="plprev" aria-label="Câu trước">${ICON.prev}</button>
+        <button type="button" class="pl-btn pl-main" data-act="pltoggle" id="plplay" aria-label="Phát">${ICON.play}</button>
+        <button type="button" class="pl-btn" data-act="plnext" aria-label="Câu sau">${ICON.next}</button>
+        <span class="pl-time" id="pltime">0:00 / 0:00</span>
+      </div>
+      <div class="pl-mid">
+        <div class="pl-thumb" aria-hidden="true">${S.u+1}</div>
+        <div class="pl-meta"><b>${esc(C.x.title)}</b><span>Unit ${S.u+1} · ${esc(u.title)} · Bài ${C.i+1} · <span id="plline">Câu 1/${n}</span></span></div>
+      </div>
+      <div class="pl-right">
+        <select id="rate" class="pl-rate" aria-label="Tốc độ">${rates.map(([v,l])=>`<option value="${v}" ${v===cur?"selected":""}>${l}</option>`).join("")}</select>
+        <button type="button" class="pl-btn pl-sm" data-act="plmute" id="plmute" aria-label="Tắt tiếng">${P.mute?ICON.mute:ICON.vol}</button>
+        <button type="button" class="pl-btn pl-sm" data-act="plrepeat" id="plrep" aria-label="Lặp lại">${ICON.rep}</button>
+        <button type="button" class="pl-btn pl-sm" data-act="plscript" aria-label="Mở transcript">${ICON.up}</button>
+      </div>
+    </div></div>`;
+}
+function plUI(){
+  const el = $("#player"); if(!el) return;
+  const d = plDurs(), total = d.reduce((a,b)=>a+b, 0), n = d.length;
+  const before = d.slice(0, PL.i).reduce((a,b)=>a+b, 0);
+  const inLine = PL.playing ? Math.min(d[PL.i] || 0, (performance.now() - PL.start) / 1000) : 0;
+  const t = Math.min(total, before + inLine), pct = total ? t / total * 100 : 0;
+  $("#plfill").style.width = pct + "%"; $("#plknob").style.left = pct + "%";
+  $("#pltime").textContent = fmt(t) + " / " + fmt(total);
+  $("#plline").textContent = `Câu ${Math.min(PL.i+1, n)}/${n}`;
+  $("#plprog").setAttribute("aria-valuenow", PL.i+1);
+  const btn = $("#plplay"); btn.innerHTML = PL.playing ? ICON.pause : ICON.play; btn.setAttribute("aria-label", PL.playing ? "Tạm dừng" : "Phát");
+  const rep = $("#plrep"); rep.innerHTML = PL.repeat==="one" ? ICON.rep1 : ICON.rep; rep.classList.toggle("on", PL.repeat!=="off");
+  rep.setAttribute("aria-label", {off:"Lặp lại: tắt", all:"Lặp lại cả bài", one:"Lặp lại câu này"}[PL.repeat]); rep.title = rep.getAttribute("aria-label");
+  document.querySelectorAll(".script .now").forEach(e => e.classList.remove("now"));
+  const line = document.querySelector(`.script [data-line="${PL.i}"]`); if(line && (PL.playing || PL.i)) line.classList.add("now");
+}
+function plTick(){ cancelAnimationFrame(PL.raf); if(!PL.playing) return; plUI(); PL.raf = requestAnimationFrame(plTick); }
+function plPlay(i){
+  const sc = plScript(); if(i >= sc.length || i < 0) i = 0;
+  PL.i = i; PL.playing = true; PL.start = performance.now();
+  const [sp, text] = sc[i];
+  stopSpeech();
+  speak(text, {voice: sp==="A"?0:1, pitch: sp==="A"?1:1.2, volume: P.mute?0:1, onend: () => setTimeout(plEnded, 350)});
+  plTick();
+}
+function plEnded(){
+  if(!PL.playing) return;
+  const n = plScript().length;
+  if(PL.repeat==="one") return plPlay(PL.i);
+  if(PL.i + 1 < n) return plPlay(PL.i + 1);
+  if(PL.repeat==="all") return plPlay(0);
+  PL.playing = false; PL.i = n - 1; cancelAnimationFrame(PL.raf);
+  plUI(); $("#plfill").style.width = "100%"; $("#plknob").style.left = "100%";
+  const d = plDurs(), total = d.reduce((a,b)=>a+b,0); $("#pltime").textContent = fmt(total) + " / " + fmt(total);
+  PL.i = 0; // bấm ▶ lần nữa sẽ phát lại từ đầu
+}
+function plPause(){ PL.playing = false; cancelAnimationFrame(PL.raf); stopSpeech(); plUI(); }
+function plGo(i){ const n = plScript().length; i = Math.max(0, Math.min(n-1, i)); if(PL.playing) plPlay(i); else { PL.i = i; plUI(); } }
+function plSeek(clientX){
+  const r = $("#plprog").getBoundingClientRect(), f = Math.max(0, Math.min(1, (clientX - r.left) / r.width));
+  const d = plDurs(), total = d.reduce((a,b)=>a+b,0); let acc = 0, i = 0;
+  for(; i < d.length; i++){ if(acc + d[i] > f * total) break; acc += d[i]; }
+  plGo(Math.min(i, d.length-1));
+}
+function plHover(clientX){
+  const r = $("#plprog").getBoundingClientRect(), f = Math.max(0, Math.min(1, (clientX - r.left) / r.width));
+  const d = plDurs(), total = d.reduce((a,b)=>a+b,0), tip = $("#pltip");
+  tip.textContent = fmt(f * total); tip.style.left = (f * 100) + "%";
 }
 
 function vWriting(u){
@@ -598,7 +683,9 @@ function renderReview(){
 /* ============ EVENTS ============ */
 function render(){
   stopSpeech(); clearInterval(S.timer); renderRail();
+  PL.playing = false; cancelAnimationFrame(PL.raf);
   $("#main").innerHTML = S.view==="home" ? renderHome() : S.view==="review" ? renderReview() : renderUnit();
+  document.body.classList.toggle("has-player", !!$("#player")); plUI();
 }
 
 document.addEventListener("click", e => {
@@ -642,8 +729,13 @@ document.addEventListener("click", e => {
   else if(a==="vexport"){ const blob=new Blob([JSON.stringify({app:"hiking-ielts", custom:P.custom, edits:P.edits, hidden:P.hidden}, null, 1)], {type:"application/json"});
     const l=document.createElement("a"); l.href=URL.createObjectURL(blob); l.download="tu-vung-cua-toi.json"; l.click(); setTimeout(()=>URL.revokeObjectURL(l.href), 1000); }
   else if(a==="say"){ stopSpeech(); speak(b.dataset.text); }
-  else if(a==="play"){ playDialogue(); }
-  else if(a==="stop"){ stopSpeech(); }
+  else if(a==="pltoggle"){ PL.playing ? plPause() : plPlay(PL.i); }
+  else if(a==="plprev"){ plGo(PL.i - 1); }
+  else if(a==="plnext"){ plGo(PL.i + 1); }
+  else if(a==="plline"){ plPlay(+b.dataset.i); }
+  else if(a==="plrepeat"){ PL.repeat = {off:"all", all:"one", one:"off"}[PL.repeat]; plUI(); toast($("#plrep").getAttribute("aria-label")); }
+  else if(a==="plmute"){ P.mute = !P.mute; save(); b.innerHTML = P.mute ? ICON.mute : ICON.vol; if(PL.playing) plPlay(PL.i); }
+  else if(a==="plscript"){ const d=$("#scriptbox"); d.open = true; d.scrollIntoView({behavior:"smooth", block:"start"}); }
   else if(a==="prep"){ runTimer(60); }
   else if(a==="talk"){ runTimer(120); }
   else if(a==="tstop"){ clearInterval(S.timer); }
@@ -679,6 +771,10 @@ function cardTypeCheck(input){
   }
 }
 function nextCard(d){ S.card += d; S.flipped = false; S.enter = d > 0 ? "right" : "left"; render(); S.enter = ""; }
+let plDrag = false;
+document.addEventListener("pointerdown", e => { const pr = e.target.closest("#plprog"); if(!pr) return; plDrag = true; pr.classList.add("drag"); try{ pr.setPointerCapture(e.pointerId); }catch(_){} plSeek(e.clientX); });
+document.addEventListener("pointermove", e => { const pr = e.target.closest("#plprog"); if(pr || plDrag) plHover(e.clientX); });
+document.addEventListener("pointerup", e => { if(plDrag){ plDrag = false; const pr = $("#plprog"); if(pr) pr.classList.remove("drag"); plSeek(e.clientX); } });
 let SW = null;
 document.addEventListener("pointerdown", e => {
   const c = e.target.closest(".card"); if(!c || e.button > 0) return;
@@ -704,6 +800,11 @@ function endSwipe(e){
 document.addEventListener("pointerup", endSwipe);
 document.addEventListener("pointercancel", endSwipe);
 document.addEventListener("keydown", e => {
+  if($("#player") && !/INPUT|TEXTAREA|SELECT|BUTTON/.test(document.activeElement.tagName)){
+    if(e.key===" "){ e.preventDefault(); PL.playing ? plPause() : plPlay(PL.i); return; }
+    if(e.key==="ArrowRight"){ e.preventDefault(); plGo(PL.i + 1); return; }
+    if(e.key==="ArrowLeft"){ e.preventDefault(); plGo(PL.i - 1); return; }
+  }
   if(S.view!=="unit" || S.tab!=="vocab" || !$(".card") || /INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)) return;
   if(e.key==="ArrowRight") nextCard(1); else if(e.key==="ArrowLeft") nextCard(-1); else return;
   e.preventDefault();
@@ -751,6 +852,7 @@ let draftT;
 document.addEventListener("input", e => {
   if(e.target.id === "cardin"){ e.target.classList.remove("wrong"); return; }
   if(e.target.id === "raterange"){ const v=$("#ratev"); if(v) v.textContent = e.target.value; return; }
+  if(e.target.id === "rate"){ if(PL.playing) plPlay(PL.i); else plUI(); return; }
   if(e.target.id !== "draft") return;
   const u = UNITS[S.u], n = wordCount(e.target.value), wc = $("#wc");
   const min = curSet(u, "writing").x.min;
