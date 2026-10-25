@@ -352,7 +352,9 @@ const VMODES = {
   phrase: {field:"phrases", key:":np:",  qid:":np",    unit:"cụm", Unit:"Cụm", name:"Cụm danh từ", gapName:"cụm danh từ",
            tip:"Học cả cụm thay vì từng từ riêng lẻ giúp bài Writing và Speaking tự nhiên hơn. Mỗi thẻ ghi cấu trúc của cụm (ví dụ: tính từ + danh từ)."},
   colloc: {field:"collocs", key:":col:", qid:":col",   unit:"cụm", Unit:"Cụm", name:"Collocation", gapName:"collocation",
-           tip:"Collocation là những từ người bản xứ hay đi cùng nhau, ví dụ “make progress” chứ không nói “do progress”. Dùng đúng collocation giúp tăng điểm Lexical Resource."}
+           tip:"Collocation là những từ người bản xứ hay đi cùng nhau, ví dụ “make progress” chứ không nói “do progress”. Dùng đúng collocation giúp tăng điểm Lexical Resource."},
+  lesson: {field:"lesson",  key:":ls:",  qid:":ls",    unit:"từ",  Unit:"Từ",  name:"Từ trong bài", gapName:"từ",
+           tip:"Từ và cụm từ xuất hiện trong các bài tập của sách (phần mở đầu, Reading, Listening, Speaking, Writing), xếp theo đúng thứ tự từng phần của unit."}
 };
 /* Danh sách từ của một chế độ, đã gộp phần người học tự sửa / thêm / xóa (lưu trong localStorage) */
 function userList(u, m){
