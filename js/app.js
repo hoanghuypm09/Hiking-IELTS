@@ -4,7 +4,7 @@ const EXTRA = window.EXTRA || {};
 /* ============ STATE & STORAGE ============ */
 const KEY = "ielts45-progress-v2";
 function load(){ try{ return JSON.parse(localStorage.getItem(KEY)) || {}; }catch(e){ return {}; } }
-const P = Object.assign({known:{},scores:{},drafts:{},spoke:{},custom:{},edits:{},hidden:{},grades:{},graderUrl:"",voice:"",accent:"GB",rate:0.9}, load());
+const P = Object.assign({known:{},scores:{},drafts:{},spoke:{},custom:{},edits:{},hidden:{},grades:{},myread:{},graderUrl:"",voice:"",accent:"GB",rate:0.9}, load());
 function save(){ try{ localStorage.setItem(KEY, JSON.stringify(P)); }catch(e){} }
 
 const TABS = [["vocab","Từ vựng"],["grammar","Ngữ pháp"],["reading","Reading"],["listening","Listening"],["writing","Writing"],["speaking","Speaking"]];
@@ -20,8 +20,56 @@ function toast(msg){ const t=$("#toast"); t.textContent=msg; t.hidden=false; cle
 function wordCount(t){ return (t.trim().match(/\S+/g)||[]).length; }
 
 /* Mỗi kỹ năng có nhiều bài: bài 1 nằm trong UNITS, các bài thêm nằm trong window.EXTRA */
-function sets(u, k){ return [u[k], ...((EXTRA[u.id]||{})[k]||[])]; }
-function setId(u, k, i){ return i ? `${u.id}:${k}:${i+1}` : `${u.id}:${k}`; }
+function sets(u, k){ return [u[k], ...((EXTRA[u.id]||{})[k]||[]), ...(k==="reading" ? myReads(u).map(myToSet) : [])]; }
+function setId(u, k, i){ const x = sets(u, k)[i]; return x && x.mine ? `${u.id}:reading:my:${x.mine}` : i ? `${u.id}:${k}:${i+1}` : `${u.id}:${k}`; }
+
+/* Bài Reading của tôi: người dùng tự dán bài đọc + câu hỏi (vd. từ sách). Chỉ lưu trong trình duyệt. */
+function myReads(u){ return P.myread[u.id] || []; }
+function myParas(text){
+  let ps = String(text).replace(/\r/g,"").split(/\n\s*\n/).map(x => x.replace(/\s*\n\s*/g," ").trim()).filter(Boolean);
+  if(ps.length === 1) ps = String(text).split(/\n/).map(x => x.trim()).filter(Boolean);
+  // Bỏ ký hiệu đoạn A, B, C… nếu bài dán vào đã có sẵn (web tự đánh lại)
+  if(ps.length > 1 && ps.every((x,i) => new RegExp("^" + String.fromCharCode(65+i) + "[\\s.)]+\\S").test(x)))
+    ps = ps.map(x => x.replace(/^[A-Z][\s.)]+/, ""));
+  return ps;
+}
+function myKey(key){
+  const out = []; let auto = 0;
+  String(key||"").split(/\n|;/).map(x => x.trim()).filter(Boolean).forEach(line => {
+    const m = line.match(/^(\d+)\s*[.):\-]?\s*(.+)$/), num = m ? +m[1] : ++auto, ans = (m ? m[2] : line).trim();
+    if(m) auto = num;
+    out.push({t:"gap", num, q:"___", a: ans.split(/\s*\/\s*|\s+or\s+/i).filter(Boolean)});
+  });
+  return out;
+}
+function myToSet(m){
+  const paras = myParas(m.text), words = wordCount(m.text), key = myKey(m.key);
+  return {mine:m.id, title:m.title || "Bài của tôi", est:`Bài của tôi · khoảng ${words} từ`, paras, qtext:m.q || "",
+    quiz: key.length ? [{t:"head", text:"Phiếu trả lời (đối chiếu với đáp án bạn đã nhập)"}, ...key] : null};
+}
+function myEditorHTML(u){
+  const m = S.myedit.id ? myReads(u).find(x => x.id === S.myedit.id) || {} : {};
+  return `<form class="sheet stack myed" id="myedit" autocomplete="off">
+    <h3 style="margin:0">${S.myedit.id ? "Sửa bài của tôi" : "Thêm bài Reading của tôi"}</h3>
+    <p class="muted small" style="margin:0">Dán bài đọc và câu hỏi (ví dụ từ sách của bạn). Bài chỉ lưu trong trình duyệt này, không đưa lên mạng.</p>
+    <label class="vp-f"><span class="small muted">Tiêu đề</span><input name="title" value="${esc(m.title||"")}" placeholder="Vd: Unit 2 – Reading trang 20"></label>
+    <label class="vp-f"><span class="small muted">Bài đọc · cách các đoạn bằng một dòng trống</span><textarea name="text" rows="9" required placeholder="Dán bài đọc vào đây…">${esc(m.text||"")}</textarea></label>
+    <label class="vp-f"><span class="small muted">Câu hỏi (không bắt buộc)</span><textarea name="q" rows="6" placeholder="Dán phần câu hỏi vào đây…">${esc(m.q||"")}</textarea></label>
+    <label class="vp-f"><span class="small muted">Đáp án để tự chấm (không bắt buộc) · mỗi dòng một câu, vd: <code>14 TRUE</code>, <code>15 B</code>, <code>16 river / rivers</code></span><textarea name="key" rows="4" placeholder="1 TRUE&#10;2 NOT GIVEN&#10;3 fishing">${esc(m.key||"")}</textarea></label>
+    <div class="row"><button class="btn primary" type="submit">Lưu bài</button><button class="btn" type="button" data-act="mycancel">Huỷ</button>
+      ${S.myedit.id ? `<button class="btn" type="button" data-act="mydel" data-id="${esc(S.myedit.id)}" style="margin-left:auto">🗑 Xoá bài</button>` : ""}</div></form>`;
+}
+function mySave(f){
+  const u = UNITS[S.u], fd = new FormData(f), list = P.myread[u.id] = myReads(u).slice();
+  const d = {title: fd.get("title").trim(), text: fd.get("text").trim(), q: fd.get("q").trim(), key: fd.get("key").trim()};
+  if(!d.text) return toast("Hãy dán bài đọc trước khi lưu.");
+  let id = S.myedit.id;
+  if(id){ const i = list.findIndex(x => x.id === id); list[i] = Object.assign({}, list[i], d); }
+  else { id = Date.now().toString(36); list.push(Object.assign({id}, d)); }
+  save(); S.myedit = null;
+  Object.keys(RS_CACHE).forEach(k => delete RS_CACHE[k]); PL.key = "";
+  S.si.reading = sets(u, "reading").findIndex(x => x.mine === id); render(); toast("Đã lưu bài của bạn.");
+}
 function draftKey(u, i){ return i ? `${u.id}:w${i+1}` : u.id; }
 function curSet(u, k){ const a = sets(u, k), i = Math.min(S.si[k]||0, a.length-1); return {x:a[i], i, n:a.length, id:setId(u, k, i)}; }
 function setDone(u, k, i){
@@ -33,8 +81,8 @@ function setPicker(u, k){
   const a = sets(u, k); if(a.length < 2) return "";
   const cur = curSet(u, k).i;
   return `<div class="setbar"><div class="seg" role="tablist" aria-label="Chọn bài">${a.map((x,i)=>
-      `<button type="button" role="tab" data-act="set" data-k="${k}" data-i="${i}" aria-selected="${i===cur}" title="${esc(setTitle(k, x))}">Bài ${i+1}${setDone(u, k, i)?' <span class="done">✓</span>':''}</button>`).join("")}</div>
-    <button class="btn small" type="button" data-act="setrand" data-k="${k}">🔀 Bài khác</button>
+      `<button type="button" role="tab" data-act="set" data-k="${k}" data-i="${i}" aria-selected="${i===cur}" title="${esc(setTitle(k, x))}">${x.mine ? "📄 " + esc(x.title.slice(0, 16)) + (x.title.length > 16 ? "…" : "") : "Bài " + (i+1)}${setDone(u, k, i)?' <span class="done">✓</span>':''}</button>`).join("")}</div>
+    <button class="btn small" type="button" data-act="setrand" data-k="${k}">🔀 Bài khác</button>${k==="reading" ? `<button class="btn small" type="button" data-act="mynew">＋ Bài của tôi</button>` : ""}
     <span class="muted small setname">${esc(setTitle(k, a[cur]).slice(0, 90))}${setTitle(k, a[cur]).length>90?"…":""}</span></div>`;
 }
 function done(u, tab){
@@ -77,7 +125,7 @@ function pickVoice(i){
 }
 // Chrome hay tự dừng khi đọc câu dài, nên chia văn bản thành từng câu rồi đọc nối tiếp
 function chunks(text){
-  const parts = String(text).match(/[^.!?;:]+[.!?;:]*["”’)]?\s*/g) || [String(text)], out = [];
+  const parts = String(text).match(/[\s\S]*?[.!?;:]+["”’)]?(?=\s|$)\s*|[\s\S]+$/g) || [String(text)], out = [];
   parts.forEach(p => { p = p.trim(); if(!p) return;
     if(out.length && (out[out.length-1] + " " + p).length < 160) out[out.length-1] += " " + p; else out.push(p); });
   return out;
@@ -187,7 +235,7 @@ function quizHTML(id, items){
     const ex = q.e ? `<p class="explain" hidden>${esc(q.e)}</p>` : "";
     if(q.t==="gap"){
       const parts = q.q.split("___"), inp = `<input class="gap" id="${esc(id)}-${i}" autocomplete="off" spellcheck="false" aria-label="Câu ${n}">`;
-      return `<div class="q" data-i="${i}"><div class="gapline"><span class="num">${n}</span>${esc(parts[0])}${inp}${esc(parts[1]||"")}<span class="fix"></span></div>${ex}</div>`;
+      return `<div class="q" data-i="${i}"><div class="gapline"><span class="num">${q.num||n}</span>${esc(parts[0])}${inp}${esc(parts[1]||"")}<span class="fix"></span></div>${ex}</div>`;
     }
     const multi = q.t==="pick", long = q.o.some(o => o.length > 22);
     if(!multi && q.o.length > 4) return `<div class="q" data-i="${i}"><p><span class="num">${n}</span>${esc(q.q)}</p>
@@ -469,11 +517,18 @@ function vReading(u){
   const C = curSet(u, "reading"), r = C.x;
   if(PL.key !== C.id){ PL.key = C.id; PL.i = 0; PL.at = 0; }
   let k = 0;
+  if(S.myedit) return setPicker(u, "reading") + myEditorHTML(u);
+  const side = r.mine ? `<div class="row" style="justify-content:space-between;margin-bottom:8px"><span class="eyebrow">Câu hỏi</span>
+        <button class="btn small" type="button" data-act="myedit" data-id="${esc(r.mine)}">✎ Sửa bài</button></div>
+      ${r.qtext ? `<div class="myq">${esc(r.qtext)}</div>` : `<p class="muted small">Bạn chưa dán câu hỏi. Bấm ✎ Sửa bài để thêm.</p>`}
+      ${r.quiz ? quizHTML(C.id, r.quiz) : `<label class="vp-f" style="margin-top:12px"><span class="small muted">Câu trả lời / ghi chú của bạn (tự lưu). Thêm đáp án ở ✎ Sửa bài để web tự chấm.</span>
+        <textarea id="mynote" rows="6" data-k="${esc(C.id)}">${esc(P.drafts[C.id]||"")}</textarea></label>`}`
+    : quizHTML(C.id, r.quiz);
   return setPicker(u, "reading") + playerHTML(u, C) + `<div class="reading">
     <article class="sheet passage plsrc" id="scriptbox"><span class="eyebrow">Đọc hiểu · ${esc(r.est)}</span><h2 style="margin:6px 0 14px">${esc(r.title)}</h2>
-      ${r.paras.map((p,i)=>`<p><span class="pn">${"ABCDEFG"[i]}</span>${splitSent(p).map(t=>`<span class="rs" data-line="${k}" data-act="plline" data-i="${k++}">${esc(t)}</span>`).join(" ")}</p>`).join("")}
+      ${r.paras.map((p,i)=>`<p><span class="pn">${String.fromCharCode(65+i)}</span>${splitSent(p).map(t=>`<span class="rs" data-line="${k}" data-act="plline" data-i="${k++}">${esc(t)}</span>`).join(" ")}</p>`).join("")}
       ${r.note?`<p class="muted small">${esc(r.note)}</p>`:""}</article>
-    <div class="sheet sticky">${quizHTML(C.id, r.quiz)}</div></div>`;
+    <div class="sheet sticky">${side}</div></div>`;
 }
 
 function vListening(u){
@@ -744,17 +799,21 @@ document.addEventListener("click", e => {
   const b = e.target.closest("[data-act]"); if(!b) return;
   const a = b.dataset.act, u = UNITS[S.u];
   if(a==="home"){ S.view="home"; render(); }
-  else if(a==="unit"){ S.vsearch=""; S.typ=null; S.typedOk=0; S.si={}; S.randq=null; S.view="unit"; S.u=+b.dataset.u; S.tab="vocab"; S.vmode="word"; S.card=0; S.flipped=false; S.vq=null; render(); window.scrollTo(0,0); }
+  else if(a==="unit"){ S.vsearch=""; S.myedit=null; S.typ=null; S.typedOk=0; S.si={}; S.randq=null; S.view="unit"; S.u=+b.dataset.u; S.tab="vocab"; S.vmode="word"; S.card=0; S.flipped=false; S.vq=null; render(); window.scrollTo(0,0); }
   else if(a==="review"){ S.view="review"; S.r=+b.dataset.r; S.rq=null; render(); window.scrollTo(0,0); }
   else if(a==="newrq"){ S.rq=null; render(); }
-  else if(a==="tab"){ S.tab=b.dataset.tab; S.gradeErr=""; render(); }
+  else if(a==="tab"){ S.tab=b.dataset.tab; S.gradeErr=""; S.myedit=null; render(); }
   else if(a==="flip"){ if(b.dataset.swiped){ delete b.dataset.swiped; return; } S.flipped=!S.flipped; b.classList.toggle("flipped", S.flipped); }
   else if(a==="goto"){ S.onlyNew=false; S.card=+b.dataset.i; S.flipped=false; render(); window.scrollTo({top:0,behavior:"smooth"}); }
   else if(a==="vmode"){ S.typ=null; S.vmode=b.dataset.m; S.card=0; S.flipped=false; render(); }
   else if(a==="onlynew"){ S.onlyNew=b.checked; S.card=0; S.flipped=false; render(); }
   else if(a==="known"){ const k=b.dataset.k; if(P.known[k]) delete P.known[k]; else { P.known[k]=true; if(!S.onlyNew) S.card++; S.flipped=false; } save(); render(); }
   else if(a==="newvq"){ S.vq=null; render(); }
-  else if(a==="set"){ S.si[b.dataset.k]=+b.dataset.i; S.gradeErr=""; render(); }
+  else if(a==="set"){ S.si[b.dataset.k]=+b.dataset.i; S.gradeErr=""; S.myedit=null; render(); }
+  else if(a==="mynew"){ S.myedit={id:null}; render(); }
+  else if(a==="myedit"){ S.myedit={id:b.dataset.id}; render(); }
+  else if(a==="mycancel"){ S.myedit=null; render(); }
+  else if(a==="mydel"){ if(!confirm("Xoá bài này khỏi trình duyệt?")) return; P.myread[u.id]=myReads(u).filter(x=>x.id!==b.dataset.id); delete P.scores[`${u.id}:reading:my:${b.dataset.id}`]; delete P.drafts[`${u.id}:reading:my:${b.dataset.id}`]; save(); S.myedit=null; S.si.reading=0; PL.key=""; render(); toast("Đã xoá bài."); }
   else if(a==="setrand"){ const k=b.dataset.k, n=sets(u,k).length, c=curSet(u,k).i; S.si[k]=(c+1+Math.floor(Math.random()*(n-1)))%n; render(); }
   else if(a==="randq"){ const pt=b.dataset.p, pool=[];
     UNITS.forEach((uu,ui)=>sets(uu,"speaking").forEach(sp=>{
@@ -865,6 +924,7 @@ function focusEditor(){ const f=$("#vedit"); if(f){ f.scrollIntoView({behavior:"
 function vocabChanged(){ S.edit=null; S.vq=null; S.flipped=false; save(); render(); }
 document.addEventListener("submit", e => {
   if(e.target.id === "cardtype"){ e.preventDefault(); cardTypeCheck($("#cardin")); return; }
+  if(e.target.id === "myedit"){ e.preventDefault(); mySave(e.target); return; }
   if(e.target.id === "typ"){ e.preventDefault();
     if(S.typ.res) return typNext();
     const v = $("#typin").value; if(!v.trim()) return;
@@ -903,6 +963,7 @@ document.addEventListener("change", e => {
 let draftT;
 document.addEventListener("input", e => {
   if(e.target.id === "cardin"){ e.target.classList.remove("wrong"); return; }
+  if(e.target.id === "mynote"){ P.drafts[e.target.dataset.k] = e.target.value; save(); return; }
   if(e.target.id === "vsearch"){ S.vsearch = e.target.value; wlFilter(); return; }
   if(e.target.id === "raterange"){ const v=$("#ratev"); if(v) v.textContent = e.target.value; return; }
   if(e.target.id === "rate"){ plRestartHere(); return; }

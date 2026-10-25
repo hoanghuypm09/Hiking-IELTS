@@ -341,3 +341,8 @@ body,.top,.sheet,.card .face,.player{transition:background-color .25s,color .25s
 .passage .rs:hover{background:var(--accent-soft)}
 .passage .rs.now{background:var(--mark);color:var(--mark-ink);box-shadow:0 0 0 2px var(--mark)}
 .setbar + .player,.player + .reading{margin-top:16px}
+/* Bài Reading của tôi */
+.myed input,.myed textarea,#mynote{font:inherit;font-size:.92rem;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--ink);width:100%;box-sizing:border-box;resize:vertical}
+.myed input:focus,.myed textarea:focus,#mynote:focus{outline:none;border-color:var(--accent);background:var(--sheet)}
+.myed code{font-size:.8rem;background:var(--accent-soft);padding:0 4px;border-radius:4px}
+.myq{white-space:pre-wrap;font-size:.92rem;line-height:1.6;max-height:55vh;overflow:auto;background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:10px 12px;margin-bottom:12px}
