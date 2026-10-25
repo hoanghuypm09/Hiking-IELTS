@@ -1,0 +1,378 @@
+const UNITS = window.UNITS || [];
+
+/* ============ STATE & STORAGE ============ */
+const KEY = "ielts45-progress-v2";
+function load(){ try{ return JSON.parse(localStorage.getItem(KEY)) || {}; }catch(e){ return {}; } }
+const P = Object.assign({known:{},scores:{},drafts:{},spoke:{}}, load());
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(P)); }catch(e){} }
+
+const TABS = [["vocab","Từ vựng"],["grammar","Ngữ pháp"],["reading","Reading"],["listening","Listening"],["writing","Writing"],["speaking","Speaking"]];
+const FOCUS = {vocab:"vocab", grammar:null, reading:"reading", listening:"listening", writing:"writing", speaking:"speaking"};
+const S = {view:"home", u:0, r:0, tab:"vocab", card:0, flipped:false, vq:null, rq:null, timer:null};
+const QUIZ = {};
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const shuffle = a => { a = a.slice(); for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]];} return a; };
+const shuffleOpts = q => { const idx = shuffle(q.o.map((_,i)=>i)); return Object.assign({}, q, {o: idx.map(i=>q.o[i]), a: idx.indexOf(q.a)}); };
+function toast(msg){ const t=$("#toast"); t.textContent=msg; t.hidden=false; clearTimeout(t._h); t._h=setTimeout(()=>t.hidden=true,2600); }
+function wordCount(t){ return (t.trim().match(/\S+/g)||[]).length; }
+
+function done(u, tab){
+  const unit = UNITS[u], id = unit.id;
+  if(tab==="vocab") return unit.vocab.every(v => P.known[id+":"+v.w]);
+  if(tab==="writing") return wordCount(P.drafts[id]||"") >= unit.writing.min;
+  if(tab==="speaking") return !!P.spoke[id];
+  const sc = P.scores[id+":"+tab]; return sc != null && sc >= 0.7;
+}
+function unitPct(u){ return TABS.filter(t => done(u,t[0])).length / TABS.length; }
+
+/* ============ SPEECH ============ */
+let voices = [];
+function loadVoices(){ try{ voices = speechSynthesis.getVoices().filter(v => /^en/i.test(v.lang)); }catch(e){} }
+if("speechSynthesis" in window){ loadVoices(); speechSynthesis.onvoiceschanged = loadVoices; }
+function pickVoice(i){
+  const gb = voices.filter(v => /en-GB/i.test(v.lang)); const pool = gb.length ? gb : voices;
+  return pool.length ? pool[i % pool.length] : null;
+}
+function speak(text, opt={}){
+  if(!("speechSynthesis" in window)){ toast("Trình duyệt này không hỗ trợ đọc giọng nói."); return null; }
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = "en-GB"; u.rate = opt.rate || Number(($("#rate")||{}).value || 0.9);
+  const v = pickVoice(opt.voice||0); if(v) u.voice = v;
+  if(opt.pitch) u.pitch = opt.pitch;
+  if(opt.onend) u.onend = opt.onend;
+  speechSynthesis.speak(u); return u;
+}
+function stopSpeech(){ try{ speechSynthesis.cancel(); }catch(e){} document.querySelectorAll(".script .now").forEach(e=>e.classList.remove("now")); }
+
+/* ============ RENDER: shell ============ */
+function renderRail(){
+  let h = '<div class="label">10 unit · Complete IELTS 4–5</div>';
+  UNITS.forEach((u,i) => {
+    h += `<button class="unit-btn" type="button" data-act="unit" data-u="${i}" aria-current="${S.view==='unit'&&S.u===i}">
+      <span><b>${i+1}</b> · ${esc(u.title)}</span><small>${esc(u.vi)}</small>
+      <span class="bar"><i style="width:${Math.round(unitPct(i)*100)}%"></i></span></button>`;
+    if(i%2===1){ const r=(i-1)/2, sc=P.scores["review:"+r];
+      h += `<button class="unit-btn rev" type="button" data-act="review" data-r="${r}" aria-current="${S.view==='review'&&S.r===r}">↻ Ôn tập Unit ${i}–${i+1}${sc!=null?` · ${Math.round(sc*100)}%`:""}</button>`; }
+  });
+  $("#rail").innerHTML = h;
+}
+
+function renderHome(){
+  const reviews = [0,1,2,3,4].filter(r => UNITS[r*2+1]);
+  return `<section class="hero"><span class="eyebrow">Lộ trình band 4.0 → 5.0 · 10 unit</span>
+    <h1>Học theo đúng thứ tự sách Complete IELTS Bands 4–5.</h1>
+    <p>Mỗi unit có cùng chủ đề, điểm ngữ pháp, dạng câu hỏi Reading/Listening và dạng bài Writing/Speaking như trong sách. Bài đọc, bài nghe và bài mẫu được viết mới để bạn luyện thêm, dùng song song với sách. Sau mỗi 2 unit có một bài ôn tập.</p></section>
+  <div class="grid3">${UNITS.map((u,i)=>`<button type="button" class="sheet ucard" data-act="unit" data-u="${i}">
+      <span class="eyebrow">Unit ${i+1} · ${Math.round(unitPct(i)*100)}%</span>
+      <h2>${esc(u.title)}</h2><span class="muted small">${esc(u.vi)} · ${esc(u.grammar.title)}</span>
+      <span class="dots">${TABS.map(t=>`<span class="dot ${done(i,t[0])?'on':''}" title="${t[1]}">${t[1].slice(0,5)}</span>`).join("")}</span>
+    </button>`).join("")}</div>
+  <div class="revrow">${reviews.map(r=>`<button class="btn" type="button" data-act="review" data-r="${r}">↻ Ôn tập Unit ${r*2+1}–${r*2+2}</button>`).join("")}</div>
+  <section class="exam"><h3 style="margin-bottom:10px">Cấu trúc bài thi IELTS Academic</h3>
+    <div class="tablewrap sheet" style="padding:6px 12px"><table>
+      <thead><tr><th>Kỹ năng</th><th>Thời gian</th><th>Số câu / phần</th><th>Mẹo cho band 4–5</th></tr></thead>
+      <tbody>
+      <tr><td><b>Listening</b></td><td>~30 phút + 10 phút chép</td><td>40 câu · 4 section</td><td>Đọc trước câu hỏi, đoán loại từ cần điền (số, tên, danh từ).</td></tr>
+      <tr><td><b>Reading</b></td><td>60 phút</td><td>40 câu · 3 bài</td><td>Không đọc từng chữ. Tìm từ khoá rồi đọc kỹ quanh đó.</td></tr>
+      <tr><td><b>Writing</b></td><td>60 phút</td><td>Task 1 (≥150 từ) · Task 2 (≥250 từ)</td><td>Viết đủ số từ, chia đoạn rõ ràng, làm Task 2 trước.</td></tr>
+      <tr><td><b>Speaking</b></td><td>11–14 phút</td><td>Part 1 · 2 · 3</td><td>Trả lời 2–3 câu, luôn thêm lý do hoặc ví dụ.</td></tr>
+      </tbody></table></div></section>`;
+}
+
+function renderUnit(){
+  const u = UNITS[S.u];
+  const head = `<span class="eyebrow">Unit ${S.u+1} · ${esc(u.vi)}</span><h1>${esc(u.title)}</h1>
+    <div class="tabs" role="tablist">${TABS.map(([k,l])=>`<button class="tab" role="tab" type="button" data-act="tab" data-tab="${k}" aria-selected="${S.tab===k}">${l}${done(S.u,k)?'<span class="done">✓</span>':''}</button>`).join("")}</div>`;
+  const fk = FOCUS[S.tab], f = u.focus || {};
+  let book = fk && f[fk] ? `<div class="book"><b>Theo sách</b><span>${esc(f[fk])}</span></div>` : "";
+  if(S.tab==="grammar") book = `<div class="book"><b>Theo sách</b><span>Key grammar: ${esc(u.grammar.title)}</span></div>`;
+  if(S.tab==="speaking" && f.pron) book += `<div class="book"><b>Phát âm</b><span>${esc(f.pron)}</span></div>`;
+  const body = {vocab:vVocab, grammar:vGrammar, reading:vReading, listening:vListening, writing:vWriting, speaking:vSpeaking}[S.tab](u);
+  return head + book + body;
+}
+
+/* ============ QUIZ ENGINE ============ */
+// item types: mc (default) {q,o,a,e} · gap {q,a:[accepted],e} · pick {q,o,a:[idx],e} · head {text,fig}
+const norm = s => String(s).toLowerCase().trim().replace(/[’']/g,"'").replace(/[£$]/g,"").replace(/(\d),(\d)/g,"$1$2").replace(/\s+/g," ").replace(/[.,;!?]+$/,"");
+function quizHTML(id, items){
+  QUIZ[id] = items; let n = 0;
+  const body = items.map((q,i) => {
+    if(q.t==="head") return `<p class="qhead">${esc(q.text)}</p>${q.fig&&FIGS[q.fig]?`<div class="fig">${FIGS[q.fig]()}</div>`:""}`;
+    n++;
+    const ex = q.e ? `<p class="explain" hidden>${esc(q.e)}</p>` : "";
+    if(q.t==="gap"){
+      const parts = q.q.split("___"), inp = `<input class="gap" id="${esc(id)}-${i}" autocomplete="off" spellcheck="false" aria-label="Câu ${n}">`;
+      return `<div class="q" data-i="${i}"><div class="gapline"><span class="num">${n}</span>${esc(parts[0])}${inp}${esc(parts[1]||"")}<span class="fix"></span></div>${ex}</div>`;
+    }
+    const multi = q.t==="pick", long = q.o.some(o => o.length > 22);
+    if(!multi && q.o.length > 4) return `<div class="q" data-i="${i}"><p><span class="num">${n}</span>${esc(q.q)}</p>
+      <div class="row"><select class="pick-sel" aria-label="Câu ${n}"><option value="">Chọn…</option>${q.o.map((o,j)=>`<option value="${j}">${esc(o)}</option>`).join("")}</select><span class="fix"></span></div>${ex}</div>`;
+    return `<div class="q" data-i="${i}"><p><span class="num">${n}</span>${esc(q.q)}</p>
+      <div class="opts ${long?'col':''}">${q.o.map((o,j)=>`<label class="opt"><input type="${multi?'checkbox':'radio'}" name="${esc(id)}-${i}" value="${j}"> ${esc(o)}</label>`).join("")}</div>${ex}</div>`;
+  }).join("");
+  return `<form class="quiz" data-id="${esc(id)}">${body}
+    <div class="row" style="margin-top:14px"><button class="btn primary" type="submit">Chấm điểm</button><button class="btn" type="reset">Làm lại</button><span class="qscore"></span>
+    ${P.scores[id]!=null?`<span class="muted small">Cao nhất: ${Math.round(P.scores[id]*100)}%</span>`:""}</div></form>`;
+}
+function gradeQuiz(f){
+  const items = QUIZ[f.dataset.id]; let got = 0, total = 0;
+  f.querySelectorAll(".q").forEach(el => {
+    const q = items[+el.dataset.i], ex = el.querySelector(".explain"); if(ex) ex.hidden = false;
+    if(q.t==="gap"){
+      total++; const inp = el.querySelector("input"), v = norm(inp.value);
+      const ok = !!v && q.a.some(a => norm(a)===v || norm(a).replace(/\s/g,"")===v.replace(/\s/g,""));
+      inp.classList.toggle("right", ok); inp.classList.toggle("wrong", !ok);
+      const fx = el.querySelector(".fix"); fx.className = "fix " + (ok?"ok":"no"); fx.textContent = ok ? "✓" : "→ " + q.a[0];
+      if(ok) got++; return;
+    }
+    const sel = el.querySelector("select");
+    if(sel){
+      total++; const ok = sel.value!=="" && +sel.value===q.a; if(ok) got++;
+      sel.classList.toggle("right", ok); sel.classList.toggle("wrong", !ok);
+      const fx = el.querySelector(".fix"); fx.className = "fix " + (ok?"ok":"no"); fx.textContent = ok ? "✓" : "→ " + q.o[q.a];
+      return;
+    }
+    const picked = [...el.querySelectorAll("input:checked")].map(x => +x.value);
+    const right = q.t==="pick" ? q.a : [q.a];
+    el.querySelectorAll(".opt").forEach((o,j) => { o.classList.toggle("right", right.includes(j)); o.classList.toggle("wrong", picked.includes(j) && !right.includes(j)); });
+    if(q.t==="pick"){ total += q.a.length; const hit = picked.filter(p => q.a.includes(p)).length, extra = picked.length - hit; got += Math.max(0, hit - extra); }
+    else { total++; if(picked[0]===q.a) got++; }
+  });
+  return [got, total];
+}
+function scoreHTML(r, n){ return `<span class="score ${r/n>=.7?'good':'low'}">${r}/${n}</span> <span class="muted">${r/n>=.7?'Tốt lắm!':'Xem giải thích rồi làm lại nhé.'}</span>`; }
+function recordScore(id, v){ if(P.scores[id]==null || v > P.scores[id]){ P.scores[id]=v; save(); renderRail(); } }
+
+/* ============ FIGURES & CHARTS ============ */
+const FIGS = {
+  scooter(){ return `<svg viewBox="0 0 420 235" role="img" aria-label="Sơ đồ xe scooter điện">
+    <circle cx="80" cy="180" r="30" fill="none" stroke="var(--ink)" stroke-width="5"/><circle cx="330" cy="180" r="30" fill="none" stroke="var(--ink)" stroke-width="5"/>
+    <circle cx="330" cy="180" r="12" fill="var(--accent)"/>
+    <rect x="110" y="165" width="200" height="16" rx="5" fill="var(--ink)"/><rect x="140" y="181" width="140" height="10" rx="3" fill="var(--accent)"/>
+    <line x1="88" y1="170" x2="120" y2="40" stroke="var(--ink)" stroke-width="7" stroke-linecap="round"/>
+    <line x1="92" y1="40" x2="150" y2="40" stroke="var(--ink)" stroke-width="7" stroke-linecap="round"/><rect x="108" y="28" width="24" height="10" rx="2" fill="var(--accent)"/>
+    <line x1="210" y1="192" x2="210" y2="212" stroke="var(--muted)"/><text x="198" y="226">(6)</text>
+    <line x1="342" y1="172" x2="375" y2="135" stroke="var(--muted)"/><text x="377" y="132">(7)</text>
+    <line x1="132" y1="30" x2="180" y2="16" stroke="var(--muted)"/><text x="183" y="18">(8)</text>
+    <text x="196" y="158" style="font-size:11px">deck</text><text x="296" y="232" style="font-size:11px">back wheel</text><text x="44" y="232" style="font-size:11px">front wheel</text></svg>`; }
+};
+const PALETTE = ["var(--accent)","var(--ink)","var(--c3)","var(--mark)","var(--muted)"];
+function legend(names, y){ let s="", x=10; names.forEach((n,j)=>{ s+=`<rect x="${x}" y="${y}" width="12" height="12" fill="${PALETTE[j]}" rx="2"/><text x="${x+17}" y="${y+10}">${esc(n)}</text>`; x += 34 + n.length*7; }); return s; }
+function barSVG(c){
+  const W=520,H=260,L=44,B=40,T=14,max=c.max,cw=(W-L-10)/c.cats.length,ns=c.series.length,bw=(cw-24)/ns;
+  let s=`<svg viewBox="0 0 ${W} ${H+(ns>1?24:0)}" role="img" aria-label="${esc(c.title)}">`;
+  for(let v=0; v<=max; v+=c.step){ const y=H-B-(v/max)*(H-B-T); s+=`<line class="grid" x1="${L}" x2="${W-10}" y1="${y}" y2="${y}"/><text x="${L-8}" y="${y+4}" text-anchor="end">${v}</text>`; }
+  c.cats.forEach((cat,i)=>{ const x0=L+i*cw+12;
+    c.series.forEach(([n,vals],j)=>{ const h=(vals[i]/max)*(H-B-T); s+=`<rect x="${x0+j*bw}" y="${H-B-h}" width="${bw-4}" height="${h}" fill="${PALETTE[j]}" rx="2"><title>${esc(n)} · ${esc(cat)}: ${vals[i]}</title></rect>`; });
+    s+=`<text x="${x0+(cw-24)/2}" y="${H-B+18}" text-anchor="middle">${esc(cat)}</text>`; });
+  if(ns>1) s+=legend(c.series.map(x=>x[0]), H);
+  return s+"</svg>";
+}
+function lineSVG(c){
+  const W=520,H=260,L=44,B=40,T=14,R=24,max=c.max,dx=(W-L-R)/(c.cats.length-1);
+  let s=`<svg viewBox="0 0 ${W} ${H+24}" role="img" aria-label="${esc(c.title)}">`;
+  for(let v=0; v<=max; v+=c.step){ const y=H-B-(v/max)*(H-B-T); s+=`<line class="grid" x1="${L}" x2="${W-R}" y1="${y}" y2="${y}"/><text x="${L-8}" y="${y+4}" text-anchor="end">${v}</text>`; }
+  c.cats.forEach((cat,i)=>{ s+=`<text x="${L+i*dx}" y="${H-B+18}" text-anchor="middle">${esc(cat)}</text>`; });
+  c.series.forEach(([n,vals],j)=>{ const pts=vals.map((v,i)=>`${L+i*dx},${H-B-(v/max)*(H-B-T)}`);
+    s+=`<polyline points="${pts.join(" ")}" fill="none" stroke="${PALETTE[j]}" stroke-width="2.5"/>`;
+    vals.forEach((v,i)=>{ s+=`<circle cx="${L+i*dx}" cy="${H-B-(v/max)*(H-B-T)}" r="3.5" fill="${PALETTE[j]}"><title>${esc(n)} ${esc(c.cats[i])}: ${v}</title></circle>`; }); });
+  return s+legend(c.series.map(x=>x[0]), H)+"</svg>";
+}
+function pieSVG(c){
+  const cx=110, cy=110, r=95, tot=c.data.reduce((a,d)=>a+d[1],0); let a0=-Math.PI/2, s=`<svg viewBox="0 0 420 225" role="img" aria-label="${esc(c.title)}">`;
+  c.data.forEach(([n,v],j)=>{ const a1=a0+v/tot*2*Math.PI, big=a1-a0>Math.PI?1:0;
+    s+=`<path d="M${cx},${cy} L${cx+r*Math.cos(a0)},${cy+r*Math.sin(a0)} A${r},${r} 0 ${big} 1 ${cx+r*Math.cos(a1)},${cy+r*Math.sin(a1)} Z" fill="${PALETTE[j%5]}" stroke="var(--sheet)" stroke-width="2"><title>${esc(n)}: ${v}%</title></path>`;
+    s+=`<rect x="235" y="${30+j*34}" width="14" height="14" rx="2" fill="${PALETTE[j%5]}"/><text x="256" y="${42+j*34}">${esc(n)} · ${v}%</text>`; a0=a1; });
+  return s+"</svg>";
+}
+function chartHTML(c){
+  let inner = "";
+  if(c.type==="bar") inner = barSVG(c);
+  else if(c.type==="line") inner = lineSVG(c);
+  else if(c.type==="pie") inner = pieSVG(c);
+  else if(c.type==="table") inner = `<div class="tablewrap"><table class="dtable"><thead><tr>${c.head.map(h=>`<th>${esc(h)}</th>`).join("")}</tr></thead><tbody>${c.rows.map(r=>`<tr>${r.map((x,i)=>i?`<td>${esc(x)}</td>`:`<td><b>${esc(x)}</b></td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
+  else if(c.type==="process") inner = `<div class="process">${c.steps.map((s,i)=>`<span class="step"><b>${i+1}</b>${esc(s)}</span>${i<c.steps.length-1?'<span class="arr">→</span>':''}`).join("")}</div>`;
+  return `<div class="chart"><h4>${esc(c.title)}</h4>${inner}</div>`;
+}
+
+/* ============ TABS ============ */
+function vocabQuestions(pool, n){
+  return shuffle(pool).slice(0,n).map(t => {
+    const o = shuffle([t.w, ...shuffle(pool.filter(x=>x!==t)).slice(0,3).map(x=>x.w)]);
+    return {q:`Từ nào nghĩa là “${t.vi}”?`, o, a:o.indexOf(t.w)};
+  });
+}
+function vVocab(u){
+  const v = u.vocab[S.card % u.vocab.length], k = u.id+":"+v.w;
+  if(!S.vq || S.vq.unit !== u.id) S.vq = {unit:u.id, items: vocabQuestions(u.vocab, 6)};
+  return `<div class="flash-area">
+    <div class="stack">
+      <button type="button" class="card ${S.flipped?'flipped':''}" data-act="flip" aria-label="Lật thẻ">
+        <div class="card-in">
+          <div class="face"><span class="pos">${esc(v.p)}</span><span class="word">${esc(v.w)}</span><span class="ipa">${esc(v.ipa)}</span><span class="hint">Bấm để xem nghĩa · thẻ ${S.card%u.vocab.length+1}/${u.vocab.length}</span></div>
+          <div class="face back"><span class="eyebrow">Nghĩa</span><h2>${esc(v.vi)}</h2><span class="ex">“${esc(v.ex)}”</span><span class="hint">Bấm để lật lại</span></div>
+        </div></button>
+      <div class="row">
+        <button class="btn" type="button" data-act="say" data-text="${esc(v.w)}">🔊 Nghe từ</button>
+        <button class="btn" type="button" data-act="say" data-text="${esc(v.ex)}">🔊 Câu ví dụ</button>
+        <span style="flex:1"></span>
+        <button class="btn" type="button" data-act="card" data-d="-1">← Trước</button>
+        <button class="btn" type="button" data-act="card" data-d="1">Sau →</button>
+      </div>
+      <div class="row">
+        <button class="btn ${P.known[k]?'':'primary'}" type="button" data-act="known" data-k="${esc(k)}">${P.known[k]?'Bỏ đánh dấu':'✓ Tôi đã thuộc từ này'}</button>
+        <span class="muted">${u.vocab.filter(x=>P.known[u.id+":"+x.w]).length}/${u.vocab.length} từ đã thuộc</span>
+      </div>
+    </div>
+    <div class="sheet wordlist"><span class="eyebrow" style="margin-bottom:6px">Từ vựng trọng tâm của unit</span>
+      ${u.vocab.map((x,i)=>`<div class="wl"><span><b>${esc(x.w)}</b> <span class="ipa">${esc(x.ipa)}</span><br><span class="muted small">${esc(x.vi)}</span></span>
+        <span class="row">${P.known[u.id+":"+x.w]?'<span class="tick">đã thuộc</span>':''}<button class="btn small" type="button" data-act="goto" data-i="${i}">Xem</button></span></div>`).join("")}
+    </div>
+  </div>
+  <div class="sheet" style="margin-top:20px"><div class="row" style="justify-content:space-between"><h3>Kiểm tra nhanh</h3><button class="btn small" type="button" data-act="newvq">Đổi câu hỏi</button></div>
+    ${quizHTML(u.id+":vocabquiz", S.vq.items)}</div>`;
+}
+
+function vGrammar(u){
+  const g = u.grammar;
+  return `<div class="stack"><h2>${esc(g.title)}</h2>
+    <div class="rule">${g.rules.map(r=>`<div class="sheet"><h3>${esc(r.h)}</h3><ul>${r.use.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>
+      <p style="margin-top:10px"><mark>${esc(r.form)}</mark></p><p class="ex" style="margin-top:8px">${esc(r.ex)}</p>
+      <p class="muted small" style="margin-top:6px">${esc(r.sig)}</p></div>`).join("")}</div>
+    <div class="sheet"><h3 style="margin-bottom:6px">Bài tập · chọn đáp án đúng</h3>${quizHTML(u.id+":grammar", g.quiz.map(shuffleOpts))}</div></div>`;
+}
+
+function vReading(u){
+  const r = u.reading;
+  return `<div class="reading">
+    <article class="sheet passage"><span class="eyebrow">Đọc hiểu · ${esc(r.est)}</span><h2 style="margin:6px 0 14px">${esc(r.title)}</h2>
+      ${r.paras.map((p,i)=>`<p><span class="pn">${"ABCDEFG"[i]}</span>${esc(p)}</p>`).join("")}
+      ${r.note?`<p class="muted small">${esc(r.note)}</p>`:""}</article>
+    <div class="sheet sticky">${quizHTML(u.id+":reading", r.quiz)}</div></div>`;
+}
+
+function vListening(u){
+  const l = u.listening;
+  return `<div class="stack">
+    <div class="sheet stack"><span class="eyebrow">${esc(l.title)}</span><p>${esc(l.intro)}</p>
+      <div class="row"><button class="btn primary" type="button" data-act="play">▶ Phát bài nghe</button><button class="btn" type="button" data-act="stop">■ Dừng</button>
+        <label class="row" style="gap:6px">Tốc độ <select id="rate" class="rate"><option value="0.75">Chậm</option><option value="0.9" selected>Vừa</option><option value="1">Bình thường</option></select></label></div>
+      <p class="muted small">Bài nghe do giọng máy của trình duyệt đọc, chỉ để luyện thêm. Hãy nghe audio của sách để quen giọng thật. Nên dùng Chrome hoặc Safari.</p></div>
+    <div class="sheet">${quizHTML(u.id+":listening", l.quiz)}</div>
+    <details class="sheet"><summary>Xem transcript</summary><div class="script">
+      ${l.script.map(([s,t],i)=>`<p data-line="${i}"><span class="sp">${s==="A"?"Speaker 1":"Speaker 2"}</span>${esc(t)}</p>`).join("")}</div></details></div>`;
+}
+function playDialogue(){
+  const l = UNITS[S.u].listening; stopSpeech(); let i = 0;
+  const next = () => {
+    document.querySelectorAll(".script .now").forEach(e=>e.classList.remove("now"));
+    if(i >= l.script.length) return;
+    const [sp, text] = l.script[i]; const el = document.querySelector(`[data-line="${i}"]`); if(el) el.classList.add("now");
+    i++; speak(text, {voice: sp==="A"?0:1, pitch: sp==="A"?1:1.2, onend: () => setTimeout(next, 350)});
+  };
+  next();
+}
+
+function vWriting(u){
+  const w = u.writing, txt = P.drafts[u.id]||"", n = wordCount(txt);
+  const checks = w.type==="Task 1"
+    ? ["Có câu mở bài paraphrase đề","Có đoạn Overview nêu xu hướng/điểm chính (không nêu số)","Số liệu chính xác, có so sánh","Dùng đúng thì (năm đã qua → past simple)","Đủ 150 từ"]
+    : ["Trả lời đúng và đủ mọi phần của câu hỏi","Mở bài nêu rõ quan điểm hoặc nội dung bài","Mỗi đoạn thân bài có 1 ý chính + ví dụ","Dùng từ nối: Firstly, However, In addition, In conclusion","Đọc lại sửa chính tả, chia động từ, dấu câu","Đủ 250 từ"];
+  return `<div class="stack">
+    <div class="sheet stack"><span class="eyebrow">Writing ${esc(w.type)} · ${esc(w.time)} · tối thiểu ${w.min} từ</span>
+      <p class="task">${esc(w.prompt)}</p>
+      ${w.charts?`<div class="charts">${w.charts.map(chartHTML).join("")}</div>`:""}
+      ${w.note?`<p class="muted small">${esc(w.note)}</p>`:""}
+      <details><summary>Dàn ý gợi ý</summary><ol>${w.plan.map(x=>`<li>${esc(x)}</li>`).join("")}</ol></details></div>
+    <div class="sheet stack"><div class="row" style="justify-content:space-between"><label for="draft"><h3>Bài viết của bạn</h3></label>
+      <span class="wc ${n>=w.min?'ok':'low'}" id="wc">${n} / ${w.min} từ</span></div>
+      <textarea id="draft" placeholder="Bắt đầu viết ở đây. Bài được tự động lưu trên trình duyệt này.">${esc(txt)}</textarea>
+      <div class="check"><span class="eyebrow">Tự kiểm tra trước khi nộp</span>
+        ${checks.map((c,i)=>`<label><input type="checkbox" id="ck${u.id}${i}"> ${c}</label>`).join("")}</div></div>
+    <details class="sheet"><summary>Xem bài mẫu (khoảng band 6)</summary><div class="model">${esc(w.model)}</div>
+      <p class="muted small" style="margin-top:8px">${wordCount(w.model)} từ. Hãy viết bài của bạn trước, sau đó so sánh cách chia đoạn và từ nối.</p></details></div>`;
+}
+
+function vSpeaking(u){
+  const s = u.speaking, line = q => `<div class="qline"><span>${esc(q)}</span><button class="btn small" type="button" data-act="say" data-text="${esc(q)}" aria-label="Nghe câu hỏi">🔊</button></div>`;
+  const sample = (q,a) => `<details><summary>Câu trả lời mẫu: “${esc(q)}”</summary><p>${esc(a)}</p><button class="btn small" type="button" data-act="say" data-text="${esc(a)}" style="margin-top:8px">🔊 Nghe mẫu</button></details>`;
+  return `<div class="stack">
+    <div class="sheet"><span class="eyebrow">Mẹo của unit</span><p style="margin-top:6px">${esc(s.tip)}</p></div>
+    <div class="sheet part"><span class="eyebrow">Part 1 · 4–5 phút · câu hỏi về bản thân</span>${s.p1.map(line).join("")}${sample(s.p1sample.q, s.p1sample.a)}</div>
+    <div class="sheet part"><span class="eyebrow">Part 2 · 1 phút chuẩn bị · nói 1–2 phút</span>
+      <div class="cue"><h3>${esc(s.cue.t)}</h3><p>You should say:</p><ul>${s.cue.pts.map(x=>`<li>${esc(x)}</li>`).join("")}</ul><p>${esc(s.cue.end)}</p></div>
+      <div class="row"><span class="timer" id="timer">1:00</span><button class="btn primary" type="button" data-act="prep">Chuẩn bị (1 phút)</button><button class="btn" type="button" data-act="talk">Bắt đầu nói (2 phút)</button><button class="btn" type="button" data-act="tstop">Dừng</button></div>
+      ${s.notes?`<details><summary>Ghi chú mẫu trong 1 phút</summary><p class="notes">${esc(s.notes)}</p></details>`:""}
+      <details><summary>Bài nói mẫu</summary><p>${esc(s.p2sample)}</p><button class="btn small" type="button" data-act="say" data-text="${esc(s.p2sample)}" style="margin-top:8px">🔊 Nghe mẫu</button></details></div>
+    <div class="sheet part"><span class="eyebrow">Part 3 · 4–5 phút · thảo luận</span>${s.p3.map(line).join("")}${s.p3sample?sample(s.p3sample.q, s.p3sample.a):""}</div>
+    <div class="sheet part"><span class="eyebrow">Cụm từ hữu ích</span><div class="phr">${s.phrases.map(p=>`<span>${esc(p)}</span>`).join("")}</div></div>
+    <div class="row"><button class="btn ${P.spoke[u.id]?'':'primary'}" type="button" data-act="spoke">${P.spoke[u.id]?'Bỏ đánh dấu':'✓ Tôi đã luyện nói xong unit này'}</button></div></div>`;
+}
+function runTimer(sec){
+  clearInterval(S.timer); let t = sec; const el = $("#timer");
+  const show = () => { if(el) el.textContent = Math.floor(t/60)+":"+String(t%60).padStart(2,"0"); };
+  show(); S.timer = setInterval(() => { t--; show(); if(t<=0){ clearInterval(S.timer); toast(sec===60?"Hết giờ chuẩn bị. Bắt đầu nói!":"Hết 2 phút. Bạn đã hoàn thành Part 2."); } }, 1000);
+}
+
+/* ============ REVIEW (after every two units, like the book) ============ */
+function renderReview(){
+  const a = UNITS[S.r*2], b = UNITS[S.r*2+1];
+  if(!S.rq || S.rq.r !== S.r){
+    const vocab = vocabQuestions(a.vocab.concat(b.vocab), 8);
+    const gram = shuffle(a.grammar.quiz).slice(0,4).concat(shuffle(b.grammar.quiz).slice(0,4)).map(shuffleOpts);
+    S.rq = {r:S.r, items:[{t:"head",text:"Phần 1: Từ vựng Unit "+(S.r*2+1)+"–"+(S.r*2+2)}, ...vocab, {t:"head",text:"Phần 2: Ngữ pháp · "+a.grammar.title+" / "+b.grammar.title}, ...gram]};
+  }
+  return `<span class="eyebrow">Vocabulary and grammar review</span><h1>Ôn tập Unit ${S.r*2+1}–${S.r*2+2}</h1>
+    <p class="muted" style="margin:8px 0 18px;max-width:62ch">Câu hỏi được trộn ngẫu nhiên từ hai unit ${esc(a.title)} và ${esc(b.title)}. Bấm “Đổi đề” để làm một bộ câu hỏi khác.</p>
+    <div class="sheet"><div class="row" style="justify-content:flex-end;margin-bottom:6px"><button class="btn small" type="button" data-act="newrq">Đổi đề</button></div>${quizHTML("review:"+S.r, S.rq.items)}</div>`;
+}
+
+/* ============ EVENTS ============ */
+function render(){
+  stopSpeech(); clearInterval(S.timer); renderRail();
+  $("#main").innerHTML = S.view==="home" ? renderHome() : S.view==="review" ? renderReview() : renderUnit();
+}
+
+document.addEventListener("click", e => {
+  const b = e.target.closest("[data-act]"); if(!b) return;
+  const a = b.dataset.act, u = UNITS[S.u];
+  if(a==="home"){ S.view="home"; render(); }
+  else if(a==="unit"){ S.view="unit"; S.u=+b.dataset.u; S.tab="vocab"; S.card=0; S.flipped=false; S.vq=null; render(); window.scrollTo(0,0); }
+  else if(a==="review"){ S.view="review"; S.r=+b.dataset.r; S.rq=null; render(); window.scrollTo(0,0); }
+  else if(a==="newrq"){ S.rq=null; render(); }
+  else if(a==="tab"){ S.tab=b.dataset.tab; render(); }
+  else if(a==="flip"){ S.flipped=!S.flipped; b.classList.toggle("flipped", S.flipped); }
+  else if(a==="card"){ S.card=(S.card+ +b.dataset.d+u.vocab.length)%u.vocab.length; S.flipped=false; render(); }
+  else if(a==="goto"){ S.card=+b.dataset.i; S.flipped=false; render(); window.scrollTo({top:0,behavior:"smooth"}); }
+  else if(a==="known"){ const k=b.dataset.k; if(P.known[k]) delete P.known[k]; else { P.known[k]=true; S.card=(S.card+1)%u.vocab.length; S.flipped=false; } save(); render(); }
+  else if(a==="newvq"){ S.vq=null; render(); }
+  else if(a==="say"){ stopSpeech(); speak(b.dataset.text); }
+  else if(a==="play"){ playDialogue(); }
+  else if(a==="stop"){ stopSpeech(); }
+  else if(a==="prep"){ runTimer(60); }
+  else if(a==="talk"){ runTimer(120); }
+  else if(a==="tstop"){ clearInterval(S.timer); }
+  else if(a==="spoke"){ P.spoke[u.id]=!P.spoke[u.id]; save(); render(); }
+});
+
+document.addEventListener("submit", e => {
+  const f = e.target.closest("form.quiz"); if(!f) return; e.preventDefault();
+  const [got, total] = gradeQuiz(f);
+  f.querySelector(".qscore").innerHTML = scoreHTML(got, total);
+  if(!f.dataset.id.endsWith("vocabquiz")) recordScore(f.dataset.id, got/total);
+});
+document.addEventListener("reset", e => { const f=e.target.closest("form.quiz"); if(!f) return;
+  setTimeout(()=>{ f.querySelectorAll(".opt").forEach(o=>o.classList.remove("right","wrong")); f.querySelectorAll(".gap,.pick-sel").forEach(o=>o.classList.remove("right","wrong"));
+    f.querySelectorAll(".fix").forEach(x=>{x.textContent="";x.className="fix";}); f.querySelectorAll(".explain").forEach(x=>x.hidden=true); f.querySelector(".qscore").innerHTML=""; }); });
+
+let draftT;
+document.addEventListener("input", e => {
+  if(e.target.id !== "draft") return;
+  const u = UNITS[S.u], n = wordCount(e.target.value), wc = $("#wc");
+  wc.textContent = `${n} / ${u.writing.min} từ`; wc.className = "wc " + (n>=u.writing.min?"ok":"low");
+  clearTimeout(draftT); draftT = setTimeout(()=>{ P.drafts[u.id]=e.target.value; save(); renderRail(); }, 500);
+});
+
+render();
