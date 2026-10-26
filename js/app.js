@@ -289,9 +289,31 @@ function renderUnit(){
   let book = fk && f[fk] ? `<div class="book"><b>Theo sách</b><span>${esc(f[fk])}</span></div>` : "";
   if(S.tab==="grammar") book = `<div class="book"><b>Theo sách</b><span>Key grammar: ${esc(u.grammar.title)}</span></div>`;
   if(S.tab==="speaking" && f.pron) book += `<div class="book"><b>Phát âm</b><span>${esc(f.pron)}</span></div>`;
+  book += tipsHTML(u, S.tab);
   const body = {vocab:vVocab, grammar:vGrammar, reading:vReading, listening:vListening, writing:vWriting, speaking:vSpeaking}[S.tab](u);
   return head + book + body;
 }
+
+/* ============ MẸO LÀM BÀI & LỖI THƯỜNG GẶP (data/tips.js) ============ */
+const tipData = u => (window.TIPS || {})[u.id];
+function tipsHTML(u, tab){
+  const T = tipData(u), groups = T && T.tips && T.tips[tab]; if(!groups || !groups.length) return "";
+  return `<details class="tipbox" data-k="tip" ${P.tipClosed?"":"open"}><summary><span>💡 Mẹo làm bài</span><span class="muted small">${groups.map(g=>esc(g.type.replace(/ \(.*\)$/,""))).join(" · ")}</span></summary>
+    <div class="tipgrid">${groups.map(g=>`<div><h4>${esc(g.type)}</h4><ul>${g.tips.map(t=>`<li>${esc(t)}</li>`).join("")}</ul></div>`).join("")}</div></details>`;
+}
+function mistakesHTML(u, kind){
+  const T = tipData(u), list = T && (T.mistakes || []).filter(m => m.k === kind); if(!list || !list.length) return "";
+  return `<details class="tipbox warn" data-k="mis" ${P.misClosed?"":"open"}><summary><span>⚠️ Lỗi thường gặp</span><span class="muted small">${list.length} lỗi thí sinh IELTS hay mắc</span></summary>
+    <div class="mlist">${list.map(m=>`<div class="mrow"><div class="mbad">❌ <s>${esc(m.bad)}</s></div><div class="mgood">✅ ${esc(m.good)}</div><div class="muted small">${esc(m.why)}</div></div>`).join("")}</div></details>`;
+}
+function fixHTML(u){
+  const T = tipData(u); if(!T || !T.fix || !T.fix.length) return "";
+  S.fixq = S.fixq && S.fixq.u === u.id ? S.fixq : {u: u.id, items: shuffle(T.fix)};
+  return `<div class="sheet"><div class="row" style="justify-content:space-between"><h3>Tìm và sửa lỗi</h3><button class="btn small" type="button" data-act="fixnew">🔀 Trộn câu</button></div>
+    <p class="muted small" style="margin:4px 0 10px">Mỗi câu có MỘT lỗi. Gõ lại từ hoặc cụm từ đúng để thay cho chỗ sai.</p>${quizHTML(u.id+":fix", S.fixq.items)}</div>`;
+}
+document.addEventListener("toggle", e => { const d = e.target; if(!d.classList || !d.classList.contains("tipbox")) return;
+  const key = d.dataset.k === "mis" ? "misClosed" : "tipClosed", c = !d.open; if(!!P[key] !== c){ P[key] = c; save(); } }, true);
 
 /* ============ QUIZ ENGINE ============ */
 // item types: mc (default) {q,o,a,e} · gap {q,a:[accepted],e} · pick {q,o,a:[idx],e} · head {text,fig}
@@ -618,6 +640,7 @@ function vVocab(u){
       ${V.mode==="word"?`<p class="muted small sa-legend"><span class="sa-s"><b>≈</b> đồng nghĩa</span> · <span class="sa-a"><b>≠</b> trái nghĩa</span></p>`:""}
       ${list}<p id="wlnone" class="muted small" hidden>Không tìm thấy ${V.M.unit} nào khớp.</p></div>
   </div>
+  ${mistakesHTML(u, "vocab")?`<div style="margin-top:20px">${mistakesHTML(u, "vocab")}</div>`:""}
   <div class="sheet" style="margin-top:20px"><div class="row" style="justify-content:space-between"><h3>Kiểm tra nhanh</h3><button class="btn small" type="button" data-act="newvq">Đổi câu hỏi</button></div>
     <p class="qhead">Phần 1: Chọn ${V.M.unit} đúng với nghĩa</p>${quizHTML(V.qid+"quiz", S.vq.items)}
     ${S.vq.gaps.length?`<p class="qhead" style="margin-top:18px">Phần 2: Điền ${V.M.gapName} vào câu (gợi ý nghĩa trong ngoặc)</p>${quizHTML(V.qid+"gap", S.vq.gaps)}`:""}
@@ -630,6 +653,7 @@ function vGrammar(u){
     <div class="rule">${g.rules.map(r=>`<div class="sheet"><h3>${esc(r.h)}</h3><ul>${r.use.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>
       <p style="margin-top:10px"><mark>${esc(r.form)}</mark></p><p class="ex" style="margin-top:8px">${esc(r.ex)}</p>
       <p class="muted small" style="margin-top:6px">${esc(r.sig)}</p></div>`).join("")}</div>
+    ${mistakesHTML(u, "grammar")}${fixHTML(u)}
     ${gBankHTML(u)}</div>`;
 }
 
@@ -989,6 +1013,7 @@ document.addEventListener("click", e => {
   else if(a==="onlynew"){ S.onlyNew=b.checked; S.card=0; S.flipped=false; render(); }
   else if(a==="known"){ const k=b.dataset.k; if(P.known[k]) delete P.known[k]; else { P.known[k]=true; if(!S.onlyNew) S.card++; S.flipped=false; } save(); render(); }
   else if(a==="newvq"){ S.vq=null; render(); }
+  else if(a==="fixnew"){ S.fixq=null; render(); }
   else if(a==="gtype"){ gState(u).type=b.dataset.k; gState(u, true); render(); }
   else if(a==="gshuffle"){ gState(u, true); render(); toast("Đã trộn bộ câu mới."); }
   else if(a==="gpage"){ const st=gState(u); st.page=(st.page + +b.dataset.d + st.pages) % st.pages; if(st.page===0 && +b.dataset.d>0) st.order=shuffle(st.order); st.items=null; render(); const q=document.querySelector(".gnav"); if(q) q.scrollIntoView({block:"nearest"}); }
