@@ -519,7 +519,12 @@ function editorHTML(u, V){
     <div class="row" style="margin-top:12px"><button class="btn primary" type="submit">Lưu</button><button class="btn" type="button" data-act="vcancel">Hủy</button><span style="flex:1"></span>${extra}</div></form>`;
 }
 function vocabDeck(u){
-  const V = vocabPool(u), all = V.list.map((_,i)=>i);
+  const V = vocabPool(u); let all = V.list.map((_,i)=>i);
+  if(P.shuf){ // trộn thẻ: giữ một thứ tự ngẫu nhiên cho mỗi unit + loại từ đến khi bấm trộn lại
+    const sk = u.id + V.key + all.length;
+    if(!S.shufOrder || S.shufOrder.k !== sk) S.shufOrder = {k: sk, o: shuffle(all)};
+    all = S.shufOrder.o;
+  }
   if(!S.onlyNew) return all;
   const left = all.filter(i => !P.known[V.key+V.list[i].w]);
   return left.length ? left : all;
@@ -602,7 +607,11 @@ function vVocab(u){
         <button class="btn ${P.known[k]?'':'primary'}" type="button" data-act="known" data-k="${esc(k)}">${P.known[k]?'Bỏ đánh dấu':`✓ Tôi đã thuộc ${V.M.unit} này`}</button>
         <span class="muted">${nKnown}/${pool.length} ${V.M.unit} đã thuộc</span>
       </div>
-      <label class="row small"><input type="checkbox" id="onlynew" data-act="onlynew" ${S.onlyNew?"checked":""}> Chỉ ôn những ${V.M.unit} chưa thuộc</label>
+      <div class="row small" style="gap:16px">
+        <label class="row small"><input type="checkbox" id="onlynew" data-act="onlynew" ${S.onlyNew?"checked":""}> Chỉ ôn những ${V.M.unit} chưa thuộc</label>
+        <label class="row small"><input type="checkbox" data-act="shuf" ${P.shuf?"checked":""}> 🔀 Trộn thẻ</label>
+        ${P.shuf?`<button class="btn small" type="button" data-act="reshuf">Trộn lại</button>`:""}
+      </div>
     </div>
     <div class="sheet wordlist"><div class="wl-head"><span class="eyebrow">${V.M.name} của unit · <span id="wlcount">${pool.length}</span> ${V.M.unit}</span>
       <div class="wl-search"><input id="vsearch" type="search" placeholder="Tìm ${V.M.unit}, nghĩa hoặc ví dụ…" value="${esc(S.vsearch||"")}" autocomplete="off" spellcheck="false" aria-label="Tìm trong danh sách ${V.M.unit}"></div></div>
@@ -973,8 +982,10 @@ document.addEventListener("click", e => {
   else if(a==="newrq"){ S.rq=null; render(); }
   else if(a==="tab"){ S.tab=b.dataset.tab; S.gradeErr=""; S.myedit=null; render(); }
   else if(a==="flip"){ if(b.dataset.swiped){ delete b.dataset.swiped; return; } S.flipped=!S.flipped; b.classList.toggle("flipped", S.flipped); }
-  else if(a==="goto"){ S.onlyNew=false; S.card=+b.dataset.i; S.flipped=false; render(); window.scrollTo({top:0,behavior:"smooth"}); }
+  else if(a==="goto"){ S.onlyNew=false; S.card=Math.max(0, vocabDeck(u).indexOf(+b.dataset.i)); S.flipped=false; render(); window.scrollTo({top:0,behavior:"smooth"}); }
   else if(a==="vmode"){ S.typ=null; S.vmode=b.dataset.m; S.card=0; S.flipped=false; render(); }
+  else if(a==="shuf"){ P.shuf=b.checked; save(); S.shufOrder=null; S.card=0; S.flipped=false; render(); toast(P.shuf?"Đã trộn thẻ: thẻ sẽ hiện theo thứ tự ngẫu nhiên.":"Đã tắt trộn thẻ: thẻ hiện theo thứ tự của sách."); }
+  else if(a==="reshuf"){ S.shufOrder=null; S.card=0; S.flipped=false; render(); toast("Đã trộn lại bộ thẻ."); }
   else if(a==="onlynew"){ S.onlyNew=b.checked; S.card=0; S.flipped=false; render(); }
   else if(a==="known"){ const k=b.dataset.k; if(P.known[k]) delete P.known[k]; else { P.known[k]=true; if(!S.onlyNew) S.card++; S.flipped=false; } save(); render(); }
   else if(a==="newvq"){ S.vq=null; render(); }
