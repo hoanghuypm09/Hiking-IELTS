@@ -249,7 +249,7 @@ document.addEventListener("keydown", e => { if(e.key === "Escape") toggleBooks(f
 /* ============ RENDER: shell ============ */
 function renderRail(){
   let h = `<div class="label">${UNITS.length} unit · ${esc(curBook().short)}</div>`;
-  if(window.PRON) h += `<button class="unit-btn rev pron" type="button" data-act="pron" aria-current="${S.view==='pron'}">🔊 Phát âm đuôi -s/-es, -ed</button>`;
+  if(window.PRON) h += `<button class="unit-btn rev pron" type="button" data-act="pron" aria-current="${S.view==='pron'}">🔊 Phát âm: bảng IPA, -s/-es, -ed</button>`;
   UNITS.forEach((u,i) => {
     h += `<button class="unit-btn" type="button" data-act="unit" data-u="${i}" aria-current="${S.view==='unit'&&S.u===i}">
       <span><b>${i+1}</b> · ${esc(u.title)}</span><small>${esc(u.vi)}</small>
@@ -270,7 +270,7 @@ function renderHome(){
       <h2>${esc(u.title)}</h2><span class="muted small">${esc(u.vi)} · ${esc(u.grammar.title)}</span>
       <span class="dots">${TABS.map(t=>`<span class="dot ${done(i,t[0])?'on':''}" title="${t[1]}">${t[1].slice(0,5)}</span>`).join("")}</span>
     </button>`).join("")}</div>
-  <div class="revrow">${reviews.map(r=>`<button class="btn" type="button" data-act="review" data-r="${r}">↻ Ôn tập Unit ${r*2+1}–${r*2+2}</button>`).join("")}${window.PRON?`<button class="btn" type="button" data-act="pron">🔊 Phát âm đuôi -s/-es, -ed</button>`:""}</div>
+  <div class="revrow">${reviews.map(r=>`<button class="btn" type="button" data-act="review" data-r="${r}">↻ Ôn tập Unit ${r*2+1}–${r*2+2}</button>`).join("")}${window.PRON?`<button class="btn" type="button" data-act="pron">🔊 Phát âm: bảng IPA, -s/-es, -ed</button>`:""}</div>
   <section class="exam"><h3 style="margin-bottom:10px">Cấu trúc bài thi IELTS Academic</h3>
     <div class="tablewrap sheet" style="padding:6px 12px"><table>
       <thead><tr><th>Kỹ năng</th><th>Thời gian</th><th>Số câu / phần</th><th>Mẹo cho band 4–5</th></tr></thead>
@@ -990,7 +990,7 @@ function renderReview(){
 }
 
 /* ============ PHÁT ÂM ĐUÔI -S/-ES, -ED (data/pron.js) ============ */
-const PTABS = [["s","Đuôi -s / -es"], ["ed","Đuôi -ed"], ["use","Cách dùng & chính tả"]];
+const PTABS = [["ipa","Bảng IPA"], ["s","Đuôi -s / -es"], ["ed","Đuôi -ed"], ["use","Cách dùng & chính tả"]];
 const PORDER = {s:["s","z","iz"], ed:["t","d","id"]};
 const isVowelSound = s => /^[aeiouɑɒɔəɜʊɪæʌ]/.test(s);
 function pronWords(t){ return PRON[t].groups.flatMap(g => g.words.split(" ").map(x => { const [w, s] = x.split(":"); return {w, s, k:g.k, ipa:g.ipa}; })); }
@@ -1009,10 +1009,43 @@ function pronQuiz(t, listen){
   });
   return [{t:"head", text:"Phần 1: Chọn cách đọc phần đuôi"}, ...sound, {t:"head", text:"Phần 2: Tìm từ phát âm khác"}, ...odd];
 }
+// IPA chart (data/ipa.js): letters of the example word that make the sound are highlighted.
+const ipaSplit = x => { const i = x.lastIndexOf(":"); return [x.slice(0, i), x.slice(i + 1)]; };
+const ipaMark = x => { const [w, part] = ipaSplit(x), i = w.indexOf(part); return i < 0 ? esc(w) : esc(w.slice(0, i)) + "<mark>" + esc(part) + "</mark>" + esc(w.slice(i + part.length)); };
+const IPA_SETS = [["short","long"], ["diph"], ["pair","other"]];
+function ipaQuiz(){
+  const pools = IPA_SETS.map(ks => IPA.groups.filter(g => ks.includes(g.k)).flatMap(g => g.sounds));
+  const per = [5, 3, 4];
+  return pools.flatMap((pool, n) => shuffle(pool).slice(0, per[n]).map(snd => {
+    const x = shuffle(snd.ex)[0], [w, part] = ipaSplit(x);
+    const o = shuffle([snd].concat(shuffle(pool.filter(y => y !== snd)).slice(0, 3)));
+    return {q: `Phần “${part}” trong từ “${w}” đọc là âm nào?`, o: o.map(y => "/" + y.s + "/"), a: o.indexOf(snd), say: w,
+      e: `${w}: “${part}” đọc /${snd.s}/ (${snd.vi}). Ví dụ khác: ${snd.ex.filter(y => y !== x).map(y => ipaSplit(y)[0]).join(", ")}.`};
+  }));
+}
+function ipaHTML(){
+  if(!window.IPA) return "";
+  if(!S.pq || S.pq.t !== "ipa") S.pq = {t:"ipa", items: ipaQuiz()};
+  const cell = snd => { const [w] = ipaSplit(snd.ex[0]);
+    return `<button class="ipa-cell ${snd.v===0?"vl":snd.v===1?"vd":""}" type="button" data-act="say" data-text="${esc(w)}" title="Bấm để nghe “${esc(w)}”">
+      <span class="ipa-sym">/${esc(snd.s)}/</span><span class="ipa-key">${ipaMark(snd.ex[0])}</span>
+      <span class="ipa-vi">${esc(snd.vi)}</span><span class="ipa-more">${snd.ex.slice(1).map(ipaMark).join(" · ")}</span></button>`; };
+  return `<details class="tipbox" open><summary><span>💡 Cách dùng bảng</span><span class="muted small">44 âm của tiếng Anh-Anh · bấm vào ô để nghe từ ví dụ</span></summary>
+      <div class="tipgrid"><div><ul>${IPA.tips.map(x => `<li>${esc(x)}</li>`).join("")}</ul></div></div></details>
+    ${IPA.groups.map(g => `<section class="pr-sec"><h3>${esc(g.title)} <span class="muted small">· ${g.sounds.length} âm</span></h3><p class="muted small" style="margin:-4px 0 10px">${esc(g.note)}</p>
+      ${g.k==="pair"?`<p class="small ipa-legend"><span class="vl">vô thanh</span><span class="vd">hữu thanh</span></p>`:""}
+      <div class="ipa-grid ${g.k==="pair"?"pairs":""}">${g.sounds.map(cell).join("")}</div></section>`).join("")}
+    <section class="pr-sec"><h3>Cặp âm dễ nhầm</h3><p class="muted small" style="margin:-4px 0 10px">Bấm nghe lần lượt hai từ và để ý sự khác nhau.</p>
+      <div class="ipa-pairs">${IPA.pairs.map(([a, b, l]) => `<div class="sheet"><button class="chip" type="button" data-act="say" data-text="${esc(a)}">${esc(a)}</button><button class="chip" type="button" data-act="say" data-text="${esc(b)}">${esc(b)}</button><span class="muted small">${esc(l)}</span></div>`).join("")}</div></section>
+    <section class="pr-sec"><h3>Luyện tập</h3>
+      <div class="sheet"><div class="row" style="justify-content:space-between;margin-bottom:6px"><span class="muted small">12 câu ngẫu nhiên. Bấm 🔊 để nghe từ.</span>
+        <button class="btn small" type="button" data-act="pnew">🔀 Đổi đề</button></div>${quizHTML("pron:ipa", S.pq.items)}</div></section>`;
+}
 function renderPron(){
-  const t = S.ptab || "s";
-  const head = `<span class="eyebrow">Pronunciation · dùng chung cho mọi unit</span><h1>Phát âm đuôi -s/-es và -ed</h1>
+  const t = S.ptab || "ipa";
+  const head = `<span class="eyebrow">Pronunciation · dùng chung cho mọi unit</span><h1>Phát âm</h1>
     <div class="tabs" role="tablist">${PTABS.map(([k,l]) => `<button class="tab" role="tab" type="button" data-act="ptab" data-t="${k}" aria-selected="${t===k}">${l}${P.scores["pron:"+k]!=null?`<span class="done">${Math.round(P.scores["pron:"+k]*100)}%</span>`:""}</button>`).join("")}</div>`;
+  if(t === "ipa") return head + ipaHTML();
   if(t === "use"){
     if(!S.pq || S.pq.t !== "use") S.pq = {t, items: shuffle(PRON.use).slice(0, 10).map(q => Object.assign({t:"gap"}, q))};
     return head + `<p class="muted" style="margin:0 0 14px;max-width:62ch">Viết dạng đúng của từ trong ngoặc. Có câu cần thêm -s/-es hoặc -ed, có câu phải giữ nguyên hoặc dùng dạng bất quy tắc. Mỗi lần “Đổi đề” lấy 10 câu ngẫu nhiên từ ${PRON.use.length} câu.</p>

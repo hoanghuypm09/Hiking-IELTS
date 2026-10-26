@@ -439,3 +439,24 @@ body,.top,.sheet,.card .face,.player{transition:background-color .25s,color .25s
 .chip:hover{border-color:var(--accent)}
 .pr-more summary{cursor:pointer;font-size:.88em;color:var(--muted);margin-top:8px}
 .qsay{margin-left:6px;padding:2px 8px}
+
+/* ===== IPA chart ===== */
+.ipa-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.ipa-grid.pairs{grid-template-columns:repeat(4,1fr)}
+@media (max-width:700px){.ipa-grid.pairs{grid-template-columns:repeat(2,1fr)}}
+.ipa-cell{display:flex;flex-direction:column;align-items:flex-start;gap:3px;text-align:left;background:var(--sheet);border:1px solid var(--line);border-radius:10px;padding:10px 12px;cursor:pointer;color:var(--ink);font:inherit;min-width:0}
+.ipa-cell:hover{border-color:var(--accent)}
+.ipa-cell.vl{border-top:3px solid var(--c3)}
+.ipa-cell.vd{border-top:3px solid var(--accent)}
+.ipa-sym{font-family:var(--ipa);font-size:1.5rem;font-weight:700;color:var(--accent);line-height:1.1}
+.ipa-key{font-weight:600}
+.ipa-key mark,.ipa-more mark{background:var(--mark);color:var(--mark-ink);border-radius:3px;padding:0 1px}
+.ipa-vi{font-size:.84em;color:var(--muted);line-height:1.35}
+.ipa-more{font-size:.8em;color:var(--muted)}
+.ipa-legend{display:flex;gap:14px;margin:0 0 8px}
+.ipa-legend span{border-top:3px solid;padding-top:2px}
+.ipa-legend .vl{border-color:var(--c3)}
+.ipa-legend .vd{border-color:var(--accent)}
+.ipa-pairs{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px}
+.ipa-pairs .sheet{padding:8px 10px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.ipa-pairs .chips{margin:0}
