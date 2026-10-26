@@ -249,6 +249,7 @@ document.addEventListener("keydown", e => { if(e.key === "Escape") toggleBooks(f
 /* ============ RENDER: shell ============ */
 function renderRail(){
   let h = `<div class="label">${UNITS.length} unit · ${esc(curBook().short)}</div>`;
+  if(window.PRON) h += `<button class="unit-btn rev pron" type="button" data-act="pron" aria-current="${S.view==='pron'}">🔊 Phát âm đuôi -s/-es, -ed</button>`;
   UNITS.forEach((u,i) => {
     h += `<button class="unit-btn" type="button" data-act="unit" data-u="${i}" aria-current="${S.view==='unit'&&S.u===i}">
       <span><b>${i+1}</b> · ${esc(u.title)}</span><small>${esc(u.vi)}</small>
@@ -269,7 +270,7 @@ function renderHome(){
       <h2>${esc(u.title)}</h2><span class="muted small">${esc(u.vi)} · ${esc(u.grammar.title)}</span>
       <span class="dots">${TABS.map(t=>`<span class="dot ${done(i,t[0])?'on':''}" title="${t[1]}">${t[1].slice(0,5)}</span>`).join("")}</span>
     </button>`).join("")}</div>
-  <div class="revrow">${reviews.map(r=>`<button class="btn" type="button" data-act="review" data-r="${r}">↻ Ôn tập Unit ${r*2+1}–${r*2+2}</button>`).join("")}</div>
+  <div class="revrow">${reviews.map(r=>`<button class="btn" type="button" data-act="review" data-r="${r}">↻ Ôn tập Unit ${r*2+1}–${r*2+2}</button>`).join("")}${window.PRON?`<button class="btn" type="button" data-act="pron">🔊 Phát âm đuôi -s/-es, -ed</button>`:""}</div>
   <section class="exam"><h3 style="margin-bottom:10px">Cấu trúc bài thi IELTS Academic</h3>
     <div class="tablewrap sheet" style="padding:6px 12px"><table>
       <thead><tr><th>Kỹ năng</th><th>Thời gian</th><th>Số câu / phần</th><th>Mẹo cho band 4–5</th></tr></thead>
@@ -329,9 +330,10 @@ function quizHTML(id, items){
       return `<div class="q" data-i="${i}"><div class="gapline"><span class="num">${q.num||n}</span>${esc(parts[0])}${inp}${esc(parts[1]||"")}<span class="fix"></span></div>${ex}</div>`;
     }
     const multi = q.t==="pick", long = q.o.some(o => o.length > 22);
-    if(!multi && q.o.length > 4) return `<div class="q" data-i="${i}"><p><span class="num">${n}</span>${esc(q.q)}</p>
+    const say = q.say ? ` <button class="btn small qsay" type="button" data-act="say" data-text="${esc(q.say)}" aria-label="Nghe">🔊</button>` : "";
+    if(!multi && q.o.length > 4) return `<div class="q" data-i="${i}"><p><span class="num">${n}</span>${esc(q.q)}${say}</p>
       <div class="row"><select class="pick-sel" aria-label="Câu ${n}"><option value="">Chọn…</option>${q.o.map((o,j)=>`<option value="${j}">${esc(o)}</option>`).join("")}</select><span class="fix"></span></div>${ex}</div>`;
-    return `<div class="q" data-i="${i}"><p><span class="num">${n}</span>${esc(q.q)}</p>
+    return `<div class="q" data-i="${i}"><p><span class="num">${n}</span>${esc(q.q)}${say}</p>
       <div class="opts ${long?'col':''}">${q.o.map((o,j)=>`<label class="opt"><input type="${multi?'checkbox':'radio'}" name="${esc(id)}-${i}" value="${j}"> ${esc(o)}</label>`).join("")}</div>${ex}</div>`;
   }).join("");
   return `<form class="quiz" data-id="${esc(id)}">${body}
@@ -987,11 +989,64 @@ function renderReview(){
     <div class="sheet"><div class="row" style="justify-content:flex-end;margin-bottom:6px"><button class="btn small" type="button" data-act="newrq">Đổi đề</button></div>${quizHTML("review:"+S.r, S.rq.items)}</div>`;
 }
 
+/* ============ PHÁT ÂM ĐUÔI -S/-ES, -ED (data/pron.js) ============ */
+const PTABS = [["s","Đuôi -s / -es"], ["ed","Đuôi -ed"], ["use","Cách dùng & chính tả"]];
+const PORDER = {s:["s","z","iz"], ed:["t","d","id"]};
+const isVowelSound = s => /^[aeiouɑɒɔəɜʊɪæʌ]/.test(s);
+function pronWords(t){ return PRON[t].groups.flatMap(g => g.words.split(" ").map(x => { const [w, s] = x.split(":"); return {w, s, k:g.k, ipa:g.ipa}; })); }
+function pronWhy(x){
+  const kind = {iz:"âm gió (s, z, sh, ch, ge…)", id:"/t/ hoặc /d/", s:"âm vô thanh", t:"âm vô thanh"}[x.k] || (isVowelSound(x.s) ? "nguyên âm" : "phụ âm hữu thanh");
+  return `${x.w}: âm cuối của từ gốc là /${x.s}/, thuộc nhóm ${kind}, nên đuôi đọc ${x.ipa}.`;
+}
+function pronQuiz(t, listen){
+  const words = shuffle(pronWords(t)), ipa = k => PRON[t].groups.find(g => g.k === k).ipa, ord = PORDER[t];
+  const sound = words.slice(0, 8).map(x => ({q: listen ? "Bấm 🔊 nghe từ, rồi chọn cách đọc phần đuôi:" : `Phần đuôi của “${x.w}” đọc là:`,
+    o: ord.map(ipa), a: ord.indexOf(x.k), e: pronWhy(x), say: x.w}));
+  const odd = [0,1,2,3].map(() => {
+    const [ka, kb] = shuffle(ord.slice()), A = shuffle(words.filter(x => x.k === ka)).slice(0, 3), B = shuffle(words.filter(x => x.k === kb))[0];
+    const o = shuffle(A.concat(B));
+    return {q: "Chọn từ có phần đuôi được phát âm KHÁC các từ còn lại:", o: o.map(x => x.w), a: o.indexOf(B), e: `${B.w} đọc ${B.ipa}; ${A.map(x => x.w).join(", ")} đọc ${A[0].ipa}.`};
+  });
+  return [{t:"head", text:"Phần 1: Chọn cách đọc phần đuôi"}, ...sound, {t:"head", text:"Phần 2: Tìm từ phát âm khác"}, ...odd];
+}
+function renderPron(){
+  const t = S.ptab || "s";
+  const head = `<span class="eyebrow">Pronunciation · dùng chung cho mọi unit</span><h1>Phát âm đuôi -s/-es và -ed</h1>
+    <div class="tabs" role="tablist">${PTABS.map(([k,l]) => `<button class="tab" role="tab" type="button" data-act="ptab" data-t="${k}" aria-selected="${t===k}">${l}${P.scores["pron:"+k]!=null?`<span class="done">${Math.round(P.scores["pron:"+k]*100)}%</span>`:""}</button>`).join("")}</div>`;
+  if(t === "use"){
+    if(!S.pq || S.pq.t !== "use") S.pq = {t, items: shuffle(PRON.use).slice(0, 10).map(q => Object.assign({t:"gap"}, q))};
+    return head + `<p class="muted" style="margin:0 0 14px;max-width:62ch">Viết dạng đúng của từ trong ngoặc. Có câu cần thêm -s/-es hoặc -ed, có câu phải giữ nguyên hoặc dùng dạng bất quy tắc. Mỗi lần “Đổi đề” lấy 10 câu ngẫu nhiên từ ${PRON.use.length} câu.</p>
+      <div class="sheet"><div class="row" style="justify-content:flex-end;margin-bottom:6px"><button class="btn small" type="button" data-act="pnew">🔀 Đổi đề</button></div>${quizHTML("pron:use", S.pq.items)}</div>`;
+  }
+  const D = PRON[t], listen = !!P.pronListen;
+  if(!S.pq || S.pq.t !== t || S.pq.listen !== listen) S.pq = {t, listen, items: pronQuiz(t, listen)};
+  const chip = w => `<button class="chip" type="button" data-act="say" data-text="${esc(w)}">${esc(w)}</button>`;
+  const groups = PORDER[t].map(k => D.groups.find(g => g.k === k));
+  return head + `
+    <section class="pr-sec"><h3>1. Khi nào dùng ${t==="s"?"-s / -es":"-ed"}?</h3>
+      <div class="pr-use">${D.use.map(([h, ex, note]) => `<div class="sheet"><h4>${esc(h)}</h4><p class="pr-ex">${esc(ex)}</p><p class="muted small">${esc(note)}</p></div>`).join("")}</div></section>
+    <section class="pr-sec"><h3>2. Cách viết</h3>
+      <div class="tablewrap sheet" style="padding:6px 12px"><table><thead><tr><th>Quy tắc</th><th>Ví dụ</th><th>Lưu ý</th></tr></thead><tbody>
+      ${D.spell.map(([r, ex, note]) => `<tr><td><b>${esc(r)}</b></td><td>${esc(ex)}</td><td class="muted small">${esc(note)}</td></tr>`).join("")}</tbody></table></div></section>
+    <section class="pr-sec"><h3>3. Cách phát âm</h3>
+      <p class="muted small" style="margin:-4px 0 12px">Quyết định bởi <b>âm cuối</b> của từ gốc, không phải chữ cái cuối. Bấm vào từ để nghe.</p>
+      <div class="pr-grid">${groups.map(g => { const w = g.words.split(" ").map(x => x.split(":")[0]);
+        return `<div class="sheet pr-card"><div class="pr-ipa">${esc(g.ipa)}</div><p><b>${esc(g.when)}</b></p><p class="muted small">${esc(g.letters)}</p>
+          <p class="pr-mnemo">💡 ${esc(g.mnemo)}</p><div class="chips">${w.slice(0, 10).map(chip).join("")}</div>
+          <details class="pr-more"><summary>Xem thêm ${w.length - 10} từ</summary><div class="chips">${w.slice(10).map(chip).join("")}</div></details></div>`; }).join("")}</div></section>
+    <details class="tipbox warn" open><summary><span>⚠️ Lưu ý và ngoại lệ</span><span class="muted small">${D.notes.length} điểm hay sai</span></summary>
+      <div class="mlist">${D.notes.map(([h, b]) => `<div class="mrow"><div><b>${esc(h)}</b></div><div class="muted small">${esc(b)}</div></div>`).join("")}</div></details>
+    <section class="pr-sec"><h3>4. Luyện tập</h3>
+      <div class="sheet"><div class="row" style="justify-content:space-between;margin-bottom:6px">
+        <label class="small"><input type="checkbox" data-act="plisten" ${listen?"checked":""}> Chế độ nghe (ẩn chữ, chỉ nghe)</label>
+        <button class="btn small" type="button" data-act="pnew">🔀 Đổi đề</button></div>${quizHTML("pron:"+t, S.pq.items)}</div></section>`;
+}
+
 /* ============ EVENTS ============ */
 function render(){
   stopSpeech(); clearInterval(S.timer); renderRail();
   PL.playing = false; cancelAnimationFrame(PL.raf);
-  $("#main").innerHTML = S.view==="home" ? renderHome() : S.view==="review" ? renderReview() : renderUnit();
+  $("#main").innerHTML = S.view==="home" ? renderHome() : S.view==="review" ? renderReview() : S.view==="pron" ? renderPron() : renderUnit();
   plUI(); wlFilter();
 }
 
@@ -1004,6 +1059,10 @@ document.addEventListener("click", e => {
   else if(a==="unit"){ S.vsearch=""; S.myedit=null; S.typ=null; S.typedOk=0; S.si={}; S.randq=null; S.view="unit"; S.u=+b.dataset.u; S.tab="vocab"; S.vmode="word"; S.card=0; S.flipped=false; S.vq=null; render(); window.scrollTo(0,0); }
   else if(a==="review"){ S.view="review"; S.r=+b.dataset.r; S.rq=null; render(); window.scrollTo(0,0); }
   else if(a==="newrq"){ S.rq=null; render(); }
+  else if(a==="pron"){ S.view="pron"; S.pq=null; render(); window.scrollTo(0,0); }
+  else if(a==="ptab"){ S.ptab=b.dataset.t; S.pq=null; render(); }
+  else if(a==="pnew"){ S.pq=null; render(); toast("Đã đổi đề mới."); }
+  else if(a==="plisten"){ P.pronListen=b.checked; save(); S.pq=null; render(); toast(P.pronListen?"Chế độ nghe: bấm 🔊 ở mỗi câu để nghe từ.":"Đã tắt chế độ nghe."); }
   else if(a==="tab"){ S.tab=b.dataset.tab; S.gradeErr=""; S.myedit=null; render(); }
   else if(a==="flip"){ if(b.dataset.swiped){ delete b.dataset.swiped; return; } S.flipped=!S.flipped; b.classList.toggle("flipped", S.flipped); }
   else if(a==="goto"){ S.onlyNew=false; S.card=Math.max(0, vocabDeck(u).indexOf(+b.dataset.i)); S.flipped=false; render(); window.scrollTo({top:0,behavior:"smooth"}); }

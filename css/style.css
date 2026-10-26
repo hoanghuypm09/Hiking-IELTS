@@ -420,3 +420,22 @@ body,.top,.sheet,.card .face,.player{transition:background-color .25s,color .25s
 .mrow{padding:8px 0;border-bottom:1px dashed var(--line);display:flex;flex-direction:column;gap:3px;font-size:.93rem}
 .mbad s{color:var(--bad);text-decoration-thickness:1px}
 .mgood{color:var(--ok)}
+
+/* ===== Pronunciation page (-s/-es, -ed) ===== */
+.unit-btn.pron{margin-bottom:10px}
+.pr-sec{margin:22px 0}
+.pr-sec h3{margin-bottom:10px}
+.pr-use{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.pr-use .sheet{padding:16px}
+.pr-use h4{margin:0 0 6px}
+.pr-ex{margin:0 0 6px;font-style:italic}
+.pr-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}
+.pr-card{padding:16px}
+.pr-card p{margin:4px 0}
+.pr-ipa{font-family:var(--ipa);font-size:1.9rem;font-weight:700;color:var(--accent);line-height:1.1;margin-bottom:6px}
+.pr-mnemo{background:var(--paper);border-radius:8px;padding:6px 10px;font-size:.92em}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.chip{border:1px solid var(--line);background:var(--sheet);color:var(--ink);border-radius:999px;padding:3px 10px;font-size:.9em;cursor:pointer}
+.chip:hover{border-color:var(--accent)}
+.pr-more summary{cursor:pointer;font-size:.88em;color:var(--muted);margin-top:8px}
+.qsay{margin-left:6px;padding:2px 8px}
