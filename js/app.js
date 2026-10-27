@@ -2,7 +2,8 @@ const UNITS = window.UNITS || [];
 const EXTRA = window.EXTRA || {};
 
 /* ============ STATE & STORAGE ============ */
-const KEY = "ielts45-progress-v2";
+// Each account keeps its own progress; admin keeps the original key so earlier progress is not lost.
+const KEY = "ielts45-progress-v2" + (window.HIKING_USER && window.HIKING_USER !== "admin" ? ":" + window.HIKING_USER : "");
 function load(){ try{ return JSON.parse(localStorage.getItem(KEY)) || {}; }catch(e){ return {}; } }
 const P = Object.assign({known:{},scores:{},drafts:{},spoke:{},custom:{},edits:{},hidden:{},grades:{},myread:{},graderUrl:"",voice:"",accent:"GB",rate:0.9}, load());
 function save(){ try{ localStorage.setItem(KEY, JSON.stringify(P)); }catch(e){} }
