@@ -285,13 +285,13 @@ function renderHome(){
 function renderUnit(){
   const u = UNITS[S.u];
   const head = `<span class="eyebrow">Unit ${S.u+1} · ${esc(u.vi)}</span><h1>${esc(u.title)}</h1>
-    <div class="tabs" role="tablist">${TABS.map(([k,l])=>`<button class="tab" role="tab" type="button" data-act="tab" data-tab="${k}" aria-selected="${S.tab===k}">${l}${done(S.u,k)?'<span class="done">✓</span>':''}</button>`).join("")}</div>`;
+    <div class="tabs" role="tablist">${TABS.map(([k,l])=>`<button class="tab" role="tab" type="button" data-act="tab" data-tab="${k}" aria-selected="${S.tab===k}">${l}${done(S.u,k)?'<span class="done">✓</span>':''}</button>`).join("")}<button class="tab" role="tab" type="button" data-act="tab" data-tab="game" aria-selected="${S.tab==="game"}">🎮 Game</button></div>`;
   const fk = FOCUS[S.tab], f = u.focus || {};
   let book = fk && f[fk] ? `<div class="book"><b>Theo sách</b><span>${esc(f[fk])}</span></div>` : "";
   if(S.tab==="grammar") book = `<div class="book"><b>Theo sách</b><span>Key grammar: ${esc(u.grammar.title)}</span></div>`;
   if(S.tab==="speaking" && f.pron) book += `<div class="book"><b>Phát âm</b><span>${esc(f.pron)}</span></div>`;
   book += tipsHTML(u, S.tab);
-  const body = {vocab:vVocab, grammar:vGrammar, reading:vReading, listening:vListening, writing:vWriting, speaking:vSpeaking}[S.tab](u);
+  const body = {vocab:vVocab, grammar:vGrammar, reading:vReading, listening:vListening, writing:vWriting, speaking:vSpeaking, game:vGame}[S.tab](u);
   return head + book + body;
 }
 
@@ -976,6 +976,168 @@ function runTimer(sec){
   show(); S.timer = setInterval(() => { t--; show(); if(t<=0){ clearInterval(S.timer); toast(sec===60?"Hết giờ chuẩn bị. Bắt đầu nói!":"Hết 2 phút. Bạn đã hoàn thành Part 2."); } }, 1000);
 }
 
+/* ============ GAME: luyện từ vựng & viết câu theo unit ============ */
+// S.g = {k: game kind, ...state}. Only #game is redrawn while playing, so the timer keeps running.
+const GAMES = [
+  ["match", "🃏", "Ghép cặp", "Lật và ghép từ tiếng Anh với nghĩa tiếng Việt càng nhanh càng tốt.", "Từ vựng"],
+  ["speed", "⚡", "Đua 60 giây", "Đọc nghĩa, chọn đúng từ tiếng Anh. Trả lời đúng liên tiếp để nhân điểm.", "Từ vựng"],
+  ["build", "🧩", "Xếp câu", "Sắp xếp các từ thành câu hoàn chỉnh, lấy từ câu ví dụ và bài mẫu Writing của unit.", "Writing"],
+  ["write", "✍️", "Viết câu với từ", "Viết câu của riêng bạn có dùng từ được cho, máy kiểm tra các lỗi cơ bản.", "Writing"]
+];
+P.games = P.games || {};
+const gBest = (u, k) => P.games[u.id + ":" + k];
+const gKeep = (u, k, v, lower) => { const o = gBest(u, k); if(o == null || (lower ? v < o : v > o)){ P.games[u.id + ":" + k] = v; save(); return true; } return false; };
+const fmtSec = t => Math.floor(t / 60) + ":" + String(t % 60).padStart(2, "0");
+function gamePool(u){
+  const seen = {};
+  return u.vocab.concat(u.phrases || [], u.collocs || []).filter(v => v.w && v.vi && !seen[v.w] && (seen[v.w] = 1));
+}
+function gameSentences(u){
+  const model = sets(u, "writing").map(c => (c && c.model) || "").join(" ").split(/(?<=[.!?])\s+/);
+  const ex = gamePool(u).map(v => v.ex || "");
+  return [...new Set(ex.concat(model).map(x => x.trim().replace(/\s+/g, " ")))].filter(x => /^[A-Z]/.test(x) && /[.!?]$/.test(x) && !/[()"“”]/.test(x) && wordCount(x) >= 5 && wordCount(x) <= 14);
+}
+function vGame(u){
+  if(S.g && S.g.u !== u.id) S.g = null;
+  if(!S.g){
+    const best = k => { const b = gBest(u, k); if(b == null) return "Chưa chơi";
+      return k === "match" ? "Nhanh nhất: " + fmtSec(b) : k === "speed" ? "Kỷ lục: " + b + " điểm" : "Cao nhất: " + b + "%"; };
+    return `<p class="muted" style="margin:0 0 14px;max-width:62ch">Bốn trò chơi dùng đúng từ vựng và câu mẫu của unit này. Mỗi lần chơi là một bộ câu hỏi mới.</p>
+      <div class="game-cards">${GAMES.map(([k, ic, t, d, tag]) => `<div class="sheet gcard"><div class="gc-ic">${ic}</div><div><span class="tag">${tag}</span><h3>${t}</h3><p class="muted small">${d}</p>
+        <p class="small gc-best">🏆 ${best(k)}</p></div><button class="btn primary" type="button" data-act="gstart" data-k="${k}">Chơi</button></div>`).join("")}</div>`;
+  }
+  return `<div class="row" style="justify-content:space-between;margin-bottom:10px"><button class="btn small" type="button" data-act="gback">← Chọn trò khác</button><b>${GAMES.find(g => g[0] === S.g.k).slice(1, 3).join(" ")}</b></div><div id="game" class="sheet game">${gameBody(u)}</div>`;
+}
+function gameStart(u, k){
+  clearInterval(S.gtimer);
+  const pool = shuffle(gamePool(u));
+  if(k === "match"){
+    const pick = pool.slice(0, 6), tiles = shuffle(pick.flatMap((v, i) => [{i, side:"w", text:v.w}, {i, side:"vi", text:v.vi}]));
+    S.g = {u:u.id, k, pick, tiles, sel:null, gone:{}, miss:0, t:0, end:false};
+    S.gtimer = setInterval(() => { if(S.g && S.g.k === "match" && !S.g.end){ S.g.t++; const e = $("#gtime"); if(e) e.textContent = fmtSec(S.g.t); } }, 1000);
+  } else if(k === "speed"){
+    S.g = {u:u.id, k, pool, n:0, score:0, combo:0, t:60, q:null, missed:[], end:false, flash:null};
+    speedNext(); S.gtimer = setInterval(() => { if(!S.g || S.g.k !== "speed" || S.g.end) return; S.g.t--; if(S.g.t <= 0){ S.g.end = true; clearInterval(S.gtimer); S.g.rec = gKeep(u, "speed", S.g.score); gameDraw(); } else { const e = $("#gtime"); if(e) e.textContent = S.g.t + "s"; } }, 1000);
+  } else if(k === "build"){
+    S.g = {u:u.id, k, list: shuffle(gameSentences(u)).slice(0, 6), i:0, pts:0, max:0, end:false}; buildNext();
+  } else if(k === "write"){
+    S.g = {u:u.id, k, list: pool.filter(v => wordCount(v.w) <= 4 && /^[a-z]/i.test(v.w)).slice(0, 3), i:0, stars:0, res:null, end:false};
+  }
+}
+function speedNext(){
+  const G = S.g, v = G.pool[G.n % G.pool.length]; G.n++;
+  const o = shuffle([v].concat(shuffle(G.pool.filter(x => x !== v && x.vi !== v.vi)).slice(0, 3)));
+  G.q = {v, o, a: o.indexOf(v)};
+}
+function buildNext(){
+  const G = S.g, sen = G.list[G.i]; if(!sen){ G.end = true; G.pct = G.max ? Math.round(G.pts / G.max * 100) : 0; G.rec = gKeep(UNITS[S.u], "build", G.pct); return; }
+  const words = sen.split(" ");
+  let bank; do { bank = shuffle(words.map((w, j) => ({w, j}))); } while(words.length > 1 && bank.every((b, j) => b.j === j));
+  G.cur = {sen, words, bank, ans:[], hints:0, checked:null}; G.max += 10;
+}
+// Accept common inflections: study → studies/studied, live → lived, plan → planned.
+const SKIPW = ["something","someone","somebody","sb","sth","do","doing","a","an","the","to","of","in","on","for","with","at","be","your","one's","someone's"];
+const IRREG = {get:"got gotten",fall:"fell fallen",grow:"grew grown",take:"took taken",make:"made",go:"went gone",come:"came",find:"found",give:"gave given",keep:"kept",build:"built",run:"ran",catch:"caught",bring:"brought",buy:"bought",spend:"spent",teach:"taught",think:"thought",see:"saw seen",leave:"left",feel:"felt",lose:"lost",hold:"held",write:"wrote written",speak:"spoke spoken",break:"broke broken",begin:"began begun",rise:"rose risen",fly:"flew flown",drive:"drove driven",eat:"ate eaten",choose:"chose chosen",meet:"met",pay:"paid",sell:"sold",tell:"told",say:"said",have:"had has",lead:"led",wear:"wore worn",win:"won",understand:"understood",send:"sent",stand:"stood",sleep:"slept",know:"knew known",draw:"drew drawn",forget:"forgot forgotten",dig:"dug",feed:"fed",hide:"hid hidden",shake:"shook shaken",lend:"lent",bear:"bore born"};
+function usesWord(sentence, w){
+  const toks = sentence.toLowerCase().replace(/[’]/g, "'").match(/[a-z'-]+/g) || [];
+  const need = w.toLowerCase().replace(/\(.*?\)/g, " ").match(/[a-z'-]+/g).filter(x => !SKIPW.includes(x));
+  return (need.length ? need : w.toLowerCase().match(/[a-z'-]+/g)).every(x => { const stem = x.length > 3 && /[eys]$/.test(x) ? x.slice(0, -1) : x;
+    return toks.some(t => t.startsWith(stem) || (IRREG[x] || "").split(" ").includes(t)); });
+}
+function writeCheck(v, txt){
+  const t = txt.trim(), n = wordCount(t);
+  const checks = [
+    [usesWord(t, v.w), `Có dùng “${v.w}”`, `Chưa thấy “${v.w}” trong câu (nếu bạn dùng dạng bất quy tắc thì bỏ qua lỗi này).`],
+    [n >= 5, `Câu đủ dài (${n} từ)`, `Câu hơi ngắn (${n} từ). Hãy viết ít nhất 5 từ và thêm chi tiết.`],
+    [/^[A-Z]/.test(t), "Viết hoa chữ cái đầu câu", "Chữ cái đầu câu cần viết hoa."],
+    [/[.!?]$/.test(t), "Có dấu câu ở cuối", "Thêm dấu chấm (.), chấm hỏi (?) hoặc chấm than (!) ở cuối câu."],
+    [!/\bi\b/.test(t), "Viết hoa đại từ I", "Đại từ “I” luôn viết hoa."]
+  ];
+  return {checks, stars: Math.max(0, Math.min(3, checks.filter(c => c[0]).length - 2))};
+}
+function gameDraw(){ const e = $("#game"); if(e) e.innerHTML = gameBody(UNITS[S.u]); }
+function gameEnd(title, lines, k){
+  return `<div class="gend"><div class="gend-ic">🎉</div><h3>${title}</h3>${lines.map(l => `<p>${l}</p>`).join("")}
+    <div class="row" style="justify-content:center"><button class="btn primary" type="button" data-act="gstart" data-k="${k}">Chơi lại</button><button class="btn" type="button" data-act="gback">Chọn trò khác</button></div></div>`;
+}
+function gameBody(u){
+  const G = S.g, rec = G.rec ? `<span class="tag">Kỷ lục mới!</span>` : "";
+  if(G.k === "match"){
+    if(G.end) return gameEnd("Ghép xong cả 6 cặp!", [`Thời gian: <b>${fmtSec(G.t)}</b> · Ghép sai: <b>${G.miss}</b> lần ${rec}`, `Nhanh nhất của bạn: ${fmtSec(gBest(u, "match"))}`,
+      `<span class="muted small">${G.pick.map(v => esc(v.w) + " = " + esc(v.vi)).join(" · ")}</span>`], "match");
+    return `<div class="gbar2"><span>⏱ <b id="gtime">${fmtSec(G.t)}</b></span><span>✓ ${Object.keys(G.gone).length / 2}/6</span><span>✗ ${G.miss}</span></div>
+      <p class="muted small">Chọn một ô tiếng Anh và một ô nghĩa tiếng Việt khớp với nhau.</p>
+      <div class="mgrid">${G.tiles.map((x, j) => G.gone[j] ? `<span class="mtile gone"></span>` :
+        `<button class="mtile ${x.side} ${G.sel === j ? "sel" : ""} ${G.bad && G.bad.includes(j) ? "bad" : ""}" type="button" data-act="gtile" data-j="${j}">${esc(x.text)}</button>`).join("")}</div>`;
+  }
+  if(G.k === "speed"){
+    if(G.end) return gameEnd("Hết giờ!", [`Điểm: <b>${G.score}</b> ${rec}`, `Kỷ lục của bạn: ${gBest(u, "speed")} điểm`,
+      G.missed.length ? `<span class="muted small">Từ cần ôn: ${G.missed.map(v => `<b>${esc(v.w)}</b> (${esc(v.vi)})`).join(" · ")}</span>` : "Không sai câu nào, giỏi lắm!"], "speed");
+    const q = G.q;
+    return `<div class="gbar2"><span>⏱ <b id="gtime">${G.t}s</b></span><span>Điểm: <b>${G.score}</b></span><span>${G.combo > 1 ? "🔥 x" + G.combo : "&nbsp;"}</span></div>
+      ${G.flash ? `<p class="small gflash ${G.flash.ok ? "ok" : "no"}">${G.flash.ok ? "✓ Đúng" : "✗ Đáp án: " + esc(G.flash.w)}</p>` : `<p class="small gflash">&nbsp;</p>`}
+      <div class="gq"><span class="muted small">${esc(q.v.p || "")}</span><div class="gq-vi">${esc(q.v.vi)}</div></div>
+      <div class="gopts">${q.o.map((o, j) => `<button class="btn" type="button" data-act="gpick" data-j="${j}">${esc(o.w)}</button>`).join("")}</div>`;
+  }
+  if(G.k === "build"){
+    if(G.end) return gameEnd("Hoàn thành 6 câu!", [`Điểm: <b>${G.pts}/${G.max}</b> (${G.pct}%) ${rec}`, `Cao nhất của bạn: ${gBest(u, "build")}%`], "build");
+    const C = G.cur, done = C.checked != null;
+    return `<div class="gbar2"><span>Câu <b>${G.i + 1}</b>/${G.list.length}</span><span>Điểm: <b>${G.pts}</b></span><span>💡 ${C.hints}</span></div>
+      <p class="muted small">Bấm các từ theo đúng thứ tự. Bấm vào từ ở dòng trên để bỏ ra. Mỗi gợi ý trừ 3 điểm.</p>
+      <div class="bline ${done ? (C.checked ? "ok" : "no") : ""}">${C.ans.length ? C.ans.map((b, j) => `<button class="chip on" type="button" data-act="gun" data-j="${j}" ${done ? "disabled" : ""}>${esc(b.w)}</button>`).join("") : `<span class="muted small">Câu của bạn sẽ hiện ở đây…</span>`}</div>
+      <div class="chips bbank">${C.bank.map((b, j) => b.used ? "" : `<button class="chip" type="button" data-act="gadd" data-j="${j}" ${done ? "disabled" : ""}>${esc(b.w)}</button>`).join("")}</div>
+      ${done ? `<p class="small">${C.checked ? "✓ Chính xác!" : "✗ Câu đúng là:"} <b>${esc(C.sen)}</b> <button class="btn small" type="button" data-act="say" data-text="${esc(C.sen)}">🔊</button></p>
+        <div class="row"><button class="btn primary" type="button" data-act="gnext">${G.i + 1 < G.list.length ? "Câu tiếp →" : "Xem kết quả"}</button></div>`
+      : `<div class="row"><button class="btn primary" type="button" data-act="gcheck" ${C.bank.some(b => !b.used) ? "disabled" : ""}>Kiểm tra</button><button class="btn" type="button" data-act="ghint">💡 Gợi ý</button><button class="btn" type="button" data-act="gclear">Xếp lại</button></div>`}`;
+  }
+  if(G.k === "write"){
+    if(G.end){ const pct = Math.round(G.stars / (G.list.length * 3) * 100); G.rec = G.rec || gKeep(u, "write", pct);
+      return gameEnd("Hoàn thành thử thách viết!", [`Bạn được <b>${G.stars}/${G.list.length * 3}</b> ⭐ ${G.rec ? `<span class="tag">Kỷ lục mới!</span>` : ""}`, "Hãy đọc lại các câu mẫu để học thêm cách dùng từ."], "write"); }
+    const v = G.list[G.i], R = G.res;
+    return `<div class="gbar2"><span>Từ <b>${G.i + 1}</b>/${G.list.length}</span><span>⭐ ${G.stars}</span><span>&nbsp;</span></div>
+      <div class="gq"><span class="muted small">${esc(v.p || "")} ${v.ipa ? `· <span class="ipa">${esc(v.ipa)}</span>` : ""}</span><div class="gq-vi">${esc(v.w)} <button class="btn small" type="button" data-act="say" data-text="${esc(v.w)}">🔊</button></div><span class="muted">${esc(v.vi)}</span></div>
+      <p class="small">Viết một câu của riêng bạn có dùng từ trên, tốt nhất là về chủ đề của unit hoặc về bản thân bạn.</p>
+      <textarea id="gwrite" rows="3" placeholder="Ví dụ: …" ${R ? "readonly" : ""}>${esc(G.txt || "")}</textarea>
+      ${R ? `<div class="gchecks">${R.checks.map(c => `<div class="${c[0] ? "ok" : "no"}">${c[0] ? "✓ " + esc(c[1]) : "✗ " + esc(c[2])}</div>`).join("")}</div>
+        <p>${"⭐".repeat(R.stars)}${"☆".repeat(3 - R.stars)}</p>
+        ${v.ex ? `<p class="small">Câu mẫu: <i>${esc(v.ex)}</i> <button class="btn small" type="button" data-act="say" data-text="${esc(v.ex)}">🔊</button></p>` : ""}
+        <div class="row"><button class="btn primary" type="button" data-act="gwnext">${G.i + 1 < G.list.length ? "Từ tiếp →" : "Xem kết quả"}</button><button class="btn" type="button" data-act="gwredo">Viết lại câu này</button></div>`
+      : `<div class="row"><button class="btn primary" type="button" data-act="gwcheck">Kiểm tra</button></div>`}`;
+  }
+  return "";
+}
+function gameAct(a, b){
+  const G = S.g, u = UNITS[S.u]; if(!G && a !== "gstart") return;
+  if(a === "gstart"){ gameStart(u, b.dataset.k); render(); return; }
+  if(a === "gback"){ clearInterval(S.gtimer); S.g = null; render(); return; }
+  if(a === "gtile"){
+    const j = +b.dataset.j, x = G.tiles[j]; G.bad = null;
+    if(G.sel == null || G.sel === j){ G.sel = G.sel === j ? null : j; }
+    else { const y = G.tiles[G.sel];
+      if(y.side === x.side){ G.sel = j; }
+      else if(y.i === x.i){ G.gone[j] = G.gone[G.sel] = 1; G.sel = null; speak(G.pick[x.i].w);
+        if(Object.keys(G.gone).length === G.tiles.length){ G.end = true; clearInterval(S.gtimer); G.rec = gKeep(u, "match", G.t, true); } }
+      else { G.miss++; G.bad = [j, G.sel]; G.sel = null; } }
+    gameDraw(); return;
+  }
+  if(a === "gpick"){ if(G.end) return; const ok = +b.dataset.j === G.q.a;
+    if(ok){ G.combo++; G.score += 10 + (G.combo > 1 ? (G.combo - 1) * 2 : 0); } else { G.combo = 0; G.missed.includes(G.q.v) || G.missed.push(G.q.v); }
+    G.flash = {ok, w: G.q.v.w}; speedNext(); gameDraw(); return; }
+  if(a === "gadd"){ const C = G.cur, x = C.bank[+b.dataset.j]; x.used = true; C.ans.push(x); gameDraw(); return; }
+  if(a === "gun"){ const C = G.cur, x = C.ans.splice(+b.dataset.j, 1)[0]; x.used = false; gameDraw(); return; }
+  if(a === "gclear"){ const C = G.cur; C.ans.forEach(x => x.used = false); C.ans = []; gameDraw(); return; }
+  if(a === "ghint"){ const C = G.cur;
+    let k = 0; while(k < C.ans.length && C.ans[k].w === C.words[k]) k++;
+    C.ans.slice(k).forEach(x => x.used = false); C.ans = C.ans.slice(0, k);
+    if(k < C.words.length){ const x = C.bank.find(y => !y.used && y.w === C.words[k]); x.used = true; C.ans.push(x); C.hints++; }
+    gameDraw(); return; }
+  if(a === "gcheck"){ const C = G.cur; C.checked = C.ans.map(x => x.w).join(" ") === C.sen; if(C.checked) G.pts += Math.max(1, 10 - 3 * C.hints); gameDraw(); return; }
+  if(a === "gnext"){ G.i++; buildNext(); gameDraw(); return; }
+  if(a === "gwcheck"){ const t = ($("#gwrite") || {}).value || ""; if(!t.trim()){ toast("Hãy viết một câu trước nhé."); return; } G.txt = t; G.res = writeCheck(G.list[G.i], t); G.stars += G.res.stars; gameDraw(); return; }
+  if(a === "gwredo"){ G.stars -= G.res.stars; G.res = null; gameDraw(); const e = $("#gwrite"); if(e) e.focus(); return; }
+  if(a === "gwnext"){ G.i++; G.res = null; G.txt = ""; if(G.i >= G.list.length) G.end = true; gameDraw(); return; }
+}
+
 /* ============ REVIEW (after every two units, like the book) ============ */
 function renderReview(){
   const a = UNITS[S.r*2], b = UNITS[S.r*2+1];
@@ -1078,6 +1240,7 @@ function renderPron(){
 /* ============ EVENTS ============ */
 function render(){
   stopSpeech(); clearInterval(S.timer); renderRail();
+  if(!(S.view==="unit" && S.tab==="game")){ clearInterval(S.gtimer); S.g = null; }
   PL.playing = false; cancelAnimationFrame(PL.raf);
   $("#main").innerHTML = S.view==="home" ? renderHome() : S.view==="review" ? renderReview() : S.view==="pron" ? renderPron() : renderUnit();
   plUI(); wlFilter();
@@ -1092,6 +1255,7 @@ document.addEventListener("click", e => {
   else if(a==="unit"){ S.vsearch=""; S.myedit=null; S.typ=null; S.typedOk=0; S.si={}; S.randq=null; S.view="unit"; S.u=+b.dataset.u; S.tab="vocab"; S.vmode="word"; S.card=0; S.flipped=false; S.vq=null; render(); window.scrollTo(0,0); }
   else if(a==="review"){ S.view="review"; S.r=+b.dataset.r; S.rq=null; render(); window.scrollTo(0,0); }
   else if(a==="newrq"){ S.rq=null; render(); }
+  else if(/^g(start|back|tile|pick|add|un|clear|hint|check|next|wcheck|wredo|wnext)$/.test(a)){ gameAct(a, b); }
   else if(a==="pron"){ S.view="pron"; S.pq=null; render(); window.scrollTo(0,0); }
   else if(a==="ptab"){ S.ptab=b.dataset.t; S.pq=null; render(); }
   else if(a==="pnew"){ S.pq=null; render(); toast("Đã đổi đề mới."); }
