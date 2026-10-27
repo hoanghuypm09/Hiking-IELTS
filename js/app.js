@@ -1091,9 +1091,11 @@ function typeBody(u, G){
 function typeCheck(){
   const G = S.g, it = G.list[G.i], inp = $("#gtype"), v = inp ? inp.value : "";
   if(!v.trim()) return;
-  if(norm(v) === norm(it.ans)){ G.state = "ok"; G.pts += Math.max(1, (G.tries ? 5 : 10) - 2 * G.hint); speak(it.ans); }
+  if(norm(v) === norm(it.ans)){ G.state = "ok"; G.pts += Math.max(1, (G.tries ? 5 : 10) - 2 * G.hint); }
   else if(G.tries){ G.state = "no"; G.miss = (G.miss || []).concat(it); }
   else G.tries = 1;
+  // Read the answer aloud as soon as it is checked: the word, or the full sentence in the gap game.
+  stopSpeech(); speak(G.k === "gap" && G.state ? it.v.ex : it.ans);
   gameDraw(); const e = $("#gtype"); if(e) e.focus();
 }
 document.addEventListener("submit", e => { if(!e.target.classList.contains("gform")) return; e.preventDefault(); typeCheck(); });
@@ -1178,9 +1180,9 @@ function gameAct(a, b){
     C.ans.slice(k).forEach(x => x.used = false); C.ans = C.ans.slice(0, k);
     if(k < C.words.length){ const x = C.bank.find(y => !y.used && y.w === C.words[k]); x.used = true; C.ans.push(x); C.hints++; }
     gameDraw(); return; }
-  if(a === "gcheck"){ const C = G.cur; C.checked = C.ans.map(x => x.w).join(" ") === C.sen; if(C.checked) G.pts += Math.max(1, 10 - 3 * C.hints); gameDraw(); return; }
+  if(a === "gcheck"){ const C = G.cur; C.checked = C.ans.map(x => x.w).join(" ") === C.sen; if(C.checked) G.pts += Math.max(1, 10 - 3 * C.hints); stopSpeech(); speak(C.sen); gameDraw(); return; }
   if(a === "gnext"){ G.i++; buildNext(); gameDraw(); return; }
-  if(a === "gwcheck"){ const t = ($("#gwrite") || {}).value || ""; if(!t.trim()){ toast("Hãy viết một câu trước nhé."); return; } G.txt = t; G.res = writeCheck(G.list[G.i], t); G.stars += G.res.stars; gameDraw(); return; }
+  if(a === "gwcheck"){ const t = ($("#gwrite") || {}).value || ""; if(!t.trim()){ toast("Hãy viết một câu trước nhé."); return; } G.txt = t; G.res = writeCheck(G.list[G.i], t); G.stars += G.res.stars; stopSpeech(); speak(t.trim()); gameDraw(); return; }
   if(a === "gwredo"){ G.stars -= G.res.stars; G.res = null; gameDraw(); const e = $("#gwrite"); if(e) e.focus(); return; }
   if(a === "gthint"){ G.hint++; gameDraw(); const e = $("#gtype"); if(e) e.focus(); return; }
   if(a === "gtnext"){ G.i++; G.tries = 0; G.hint = 0; G.state = null;
