@@ -496,3 +496,12 @@ body,.top,.sheet,.card .face,.player{transition:background-color .25s,color .25s
 .gend{text-align:center;padding:10px 0}
 .gend-ic{font-size:2.4rem}
 .gend p{margin:6px 0}
+.lboxes{display:flex;flex-wrap:wrap;justify-content:center;gap:4px;margin:10px 0}
+.lboxes.inline{display:inline-flex;margin:0 4px;vertical-align:middle}
+.lbox{width:26px;height:32px;border-bottom:3px solid var(--line);display:inline-flex;align-items:center;justify-content:center;font-weight:700;font-size:1.05rem;text-transform:none}
+.lboxes.inline .lbox{width:18px;height:24px;font-size:.95rem}
+.lbox.on{border-color:var(--accent);color:var(--accent)}
+.lbox.sp{border:0;width:12px}
+.gap-s{text-align:left}
+.gap-line{font-size:1.1rem;line-height:2;margin:0 0 6px}
+.gform input{font:inherit;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--sheet);color:var(--ink);min-width:0;flex:1 1 180px;max-width:320px}
