@@ -607,7 +607,7 @@ function vVocab(u){
   const list = pool.map((x,i)=>{
     const head = x.g && x.g!==lastG ? `<p class="eyebrow wl-group">${esc(x.g)}</p>` : ""; lastG = x.g;
     return head + `<div class="wl" data-s="${esc(fold([x.w, x.vi, x.ex].join(" ")))}"><span><b>${esc(x.w)}</b> <span class="ipa">${esc(x.ipa)}</span><br><span class="muted small">${esc(x.vi)}</span>${saHTML(synAnt(u, x.w), "small")}</span>
-      <span class="row">${P.known[V.key+x.w]?'<span class="tick">đã thuộc</span>':''}${x._custom?'<span class="tick mine">của tôi</span>':x._edited?'<span class="tick mine">đã sửa</span>':''}<button class="btn small" type="button" data-act="goto" data-i="${i}">Xem</button><button class="btn small" type="button" data-act="vedit" data-id="${esc(x._id)}" aria-label="Sửa ${esc(x.w)}">✎</button></span></div>`;
+      <span class="row">${P.known[V.key+x.w]?'<span class="tick">đã thuộc</span>':''}${x._custom?'<span class="tick mine">của tôi</span>':x._edited?'<span class="tick mine">đã sửa</span>':''}<button class="btn small" type="button" data-act="say" data-text="${esc(x.w)}" aria-label="Nghe phát âm ${esc(x.w)}" title="Nghe phát âm">🔊</button><button class="btn small" type="button" data-act="goto" data-i="${i}">Xem</button><button class="btn small" type="button" data-act="vedit" data-id="${esc(x._id)}" aria-label="Sửa ${esc(x.w)}">✎</button></span></div>`;
   }).join("");
   const modes = modesHTML(u, V);
   const tip = V.M.tip ? `<p class="muted small" style="margin:-6px 0 14px">${V.M.tip}</p>` : "";
