@@ -12,3 +12,9 @@ binding = "AI"
 ALLOWED_ORIGINS = "*"
 # Thứ tự model Gemini muốn thử (chỉ dùng khi đã thêm secret GEMINI_API_KEY):
 # GEMINI_MODELS = "gemini-3.6-flash,gemini-3.5-flash-lite"
+
+# Kho lưu tài khoản và tiến độ học (đồng bộ giữa các máy).
+# Tạo bằng lệnh: npx wrangler kv namespace create DATA  rồi dán id nhận được vào dưới đây.
+[[kv_namespaces]]
+binding = "DATA"
+id = "DAN_ID_KV_VAO_DAY"

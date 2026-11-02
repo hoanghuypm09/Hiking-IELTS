@@ -15,6 +15,30 @@ Worker **luân phiên** giữa các gói miễn phí, bên này hết lượt th
 - Ở gói miễn phí, Google có thể dùng nội dung gửi lên để cải thiện sản phẩm. Bài luyện IELTS thì không sao, đừng ghi thông tin cá nhân trong bài.
 - Điểm do AI chấm chỉ là **ước lượng để tham khảo**, có thể lệch 0.5–1 band so với giám khảo thật.
 
+## Đồng bộ tài khoản và tiến độ giữa các máy (khuyên dùng)
+
+Cùng Worker này còn lưu **tài khoản** và **tiến độ học** (từ đã thêm, điểm, bài viết…) trên Cloudflare KV, nên đăng nhập ở Edge, Chrome, điện thoại đều thấy cùng một dữ liệu. Không cần tài khoản claude.ai. Gói miễn phí của KV đủ dùng cho vài người học (1.000 lần lưu và 100.000 lần đọc mỗi ngày).
+
+Làm sau khi đã có Worker ở phần cài đặt bên dưới (hoặc tạo Worker trước theo bước 1–3 ở đó):
+
+1. **Dán code mới**: mở Worker → **Edit code** → thay toàn bộ `worker.js` bằng file [`worker.js`](./worker.js) mới nhất → **Deploy**.
+2. **Tạo kho KV**: menu trái chọn **Storage & Databases → Workers KV** (hoặc **KV**) → **Create** (Create a namespace) → đặt tên `hiking-ielts-data` → **Add / Create**.
+3. **Gắn kho vào Worker**: mở Worker → tab **Bindings** (hoặc **Settings → Bindings**) → **Add binding** → chọn **KV namespace** → **Variable name** gõ đúng `DATA` (viết hoa) → chọn kho `hiking-ielts-data` → **Add / Deploy**.
+4. **Kiểm tra**: mở địa chỉ Worker trên trình duyệt, dòng `"sync":"on"` nghĩa là đã bật đồng bộ.
+5. **Kết nối trang web** (chọn một cách):
+   - **Dùng mọi máy (khuyên dùng):** sửa [`js/config.js`](../js/config.js), điền `serverUrl: "https://hiking-ielts-grader.<tên-tài-khoản>.workers.dev"` rồi đẩy lên GitHub. Nếu đã điền `graderUrl` thì không cần điền `serverUrl`, trang tự dùng chung địa chỉ đó.
+   - **Nhanh, từng máy:** ở màn hình đăng nhập bấm dòng **"Chưa có máy chủ đồng bộ"** ở dưới, dán địa chỉ Worker rồi bấm **Lưu**.
+6. **Đổi mật khẩu admin ngay**: đăng nhập `admin` / `123`, bấm tên ở góc trên → **Đổi mật khẩu**. (Hoặc trước khi đăng nhập lần đầu, thêm biến `ADMIN_PASSWORD` ở **Settings → Variables and Secrets**, loại Secret, để admin dùng mật khẩu đó thay cho `123`.)
+
+Sau khi bật:
+
+- Tài khoản đã tạo trước đó trên một trình duyệt sẽ tự chuyển lên máy chủ ở lần đăng nhập đầu tiên trên chính trình duyệt đó. Từ đã thêm trên trình duyệt đó cũng được gộp lên.
+- Trình duyệt đang đăng nhập sẵn cần **đăng xuất rồi đăng nhập lại** một lần để bắt đầu đồng bộ.
+- Đổi mật khẩu ở máy nào thì các máy khác bị đăng xuất và phải đăng nhập bằng mật khẩu mới.
+- Mất mạng vẫn học được: dữ liệu lưu tạm trong trình duyệt và tự gửi lên khi có mạng lại.
+- Mật khẩu được lưu dạng mã băm PBKDF2, không ai đọc được mật khẩu gốc, kể cả bạn trong trang Cloudflare. Sai mật khẩu 10 lần liên tiếp thì tài khoản bị khoá 15 phút.
+- Nếu đã đặt `ALLOWED_ORIGINS`, chỉ các trang có trong danh sách mới đăng nhập được.
+
 ## Cài đặt qua trang web Cloudflare (khoảng 10 phút)
 
 > Tên các nút trên trang Cloudflare có thể khác đôi chút tùy thời điểm, nhưng các bước chính giống nhau.
@@ -48,7 +72,7 @@ npx wrangler login
 npx wrangler deploy
 ```
 
-File [`wrangler.toml`](./wrangler.toml) đã khai báo sẵn binding `AI`. Thêm Gemini key bằng lệnh `npx wrangler secret put GEMINI_API_KEY`.
+File [`wrangler.toml`](./wrangler.toml) đã khai báo sẵn binding `AI` và `DATA`. Trước khi deploy, chạy `npx wrangler kv namespace create DATA` rồi dán `id` nhận được vào `wrangler.toml`. Thêm Gemini key bằng lệnh `npx wrangler secret put GEMINI_API_KEY`.
 
 ## Đổi model Gemini
 
@@ -63,3 +87,6 @@ Google thường xuyên ra model mới và ngừng model cũ. Nếu model mặc 
 | Kết quả luôn ghi "Chấm bởi Llama" dù đã thêm Gemini | Kiểm tra key ở bước 5, hoặc Gemini đã hết lượt trong ngày (reset khoảng 14–15 giờ chiều giờ Việt Nam). |
 | Origin not allowed | Giá trị `ALLOWED_ORIGINS` chưa có địa chỉ trang của bạn. |
 | Đã hết lượt chấm miễn phí hôm nay | Cả ba đều hết lượt. Cloudflare reset lúc 7 giờ sáng giờ Việt Nam, Gemini reset khoảng 14–15 giờ chiều. |
+| Đăng nhập báo "Máy chủ chưa gắn KV tên DATA" | Làm lại bước 2–3 phần đồng bộ, tên binding phải đúng là `DATA`. |
+| Menu tài khoản ghi "Chỉ lưu trên trình duyệt này: đăng xuất rồi đăng nhập lại" | Trình duyệt này đăng nhập từ trước khi bật đồng bộ: đăng xuất rồi đăng nhập lại. |
+| "Phiên đăng nhập đã hết hạn" | Mật khẩu vừa được đổi ở máy khác (hoặc đã quá 180 ngày): đăng nhập lại. |

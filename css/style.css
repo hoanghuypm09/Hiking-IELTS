@@ -526,6 +526,14 @@ body,.top,.sheet,.card .face,.player{transition:background-color .25s,color .25s
 .login-tabs{display:flex;width:100%}
 .login-tabs button{flex:1}
 .login-note{text-align:center;margin:0}
+.login:not(.modal){flex-direction:column;gap:12px;overflow:auto}
+.login-srv{width:100%;max-width:360px;font-size:.88em;color:var(--muted)}
+.login-srv summary{cursor:pointer;text-align:center;padding:4px;overflow-wrap:anywhere}
+.srv-form{display:flex;flex-direction:column;gap:8px;margin-top:8px;padding:12px;border:1px solid var(--line);border-radius:10px;background:var(--sheet)}
+.srv-form label{display:flex;flex-direction:column;gap:4px;font-weight:600;color:var(--ink)}
+.srv-form input{font:inherit;font-weight:400;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--ink);width:100%;box-sizing:border-box}
+.srv-form .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.srv-msg{color:var(--ink)}
 .usermenu{position:relative}
 .has-user #bookpill{display:none}
 .userbtn{display:inline-flex;align-items:center;gap:6px;max-width:200px}
