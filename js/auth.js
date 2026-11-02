@@ -1,6 +1,7 @@
 /* Đăng nhập, tạo tài khoản, đổi mật khẩu (chạy trước app.js).
-   Lưu ý: đây là trang tĩnh, không có máy chủ. Tài khoản tự tạo được lưu trong trình duyệt của máy đang dùng
-   (localStorage), nên chỉ dùng được trên máy đó, và ai xem mã nguồn vẫn đọc được dữ liệu học.
+   Tài khoản được lưu trong trình duyệt (localStorage). Khi trang mở trên claude.ai, danh sách tài khoản và
+   tiến độ học còn được đồng bộ lên kho dữ liệu riêng của người xem (capability db, xem js/sync.js), nên dùng
+   được trên mọi trình duyệt, mọi máy đã đăng nhập claude.ai. Ai xem mã nguồn vẫn đọc được nội dung bài học.
    Mật khẩu không lưu dạng chữ, chỉ lưu mã SHA-256 (có thêm "muối" ngẫu nhiên với tài khoản tự tạo).
    Mỗi tài khoản có tiến độ học riêng; admin dùng lại tiến độ cũ (xem PROGRESS_KEY trong app.js). */
 (function(){
@@ -17,6 +18,36 @@
   const saveAccounts = list => { try{ localStorage.setItem(ACC_KEY, JSON.stringify(list)); return true; }catch(e){ return false; } };
   const findAccount = user => localAccounts().find(a => a.user === user) || BUILTIN.find(a => a.user === user);
   function putAccount(acc){ const list = localAccounts().filter(a => a.user !== acc.user); list.push(acc); return saveAccounts(list); }
+
+  /* ---------- Cloud copy (claude.ai artifact only) ----------
+     The viewer's private data/users/<id>/ subtree holds "accounts" ({list}) and one "p-<user>" per account. */
+  const withTimeout = (p, ms) => Promise.race([p, new Promise(r => setTimeout(() => r(null), ms))]);
+  const cloudReady = (async () => {
+    for(let i = 0; i < 5 && !(window.claude && window.claude.use); i++) await new Promise(r => setTimeout(r, 100));
+    if(!(window.claude && window.claude.use)) return null;
+    try{
+      const [db, user] = await Promise.all([claude.use("db"), claude.use("user")]);
+      const uid = db && user ? await user.id() : null;
+      return uid ? {db, uid, doc: name => db.doc("data/users/" + uid + "/" + name)} : null;
+    }catch(e){ return null; }
+  })();
+  const stamp = a => a.changed || a.created || 0;
+  function mergeAccounts(a, b){
+    const m = {}; a.concat(b).forEach(x => { if(x && x.user && (!m[x.user] || stamp(x) > stamp(m[x.user]))) m[x.user] = x; });
+    return Object.values(m).sort((x, y) => x.user < y.user ? -1 : 1);
+  }
+  // Pull the cloud list, merge it with this browser's, and write back whichever side is missing something.
+  async function syncAccounts(){
+    const c = await withTimeout(cloudReady, 6000); if(!c) return false;
+    try{
+      const snap = await withTimeout(c.doc("accounts").get(), 6000); if(!snap) return false;
+      const remote = snap.exists ? (snap.data().list || []) : [], merged = mergeAccounts(localAccounts(), remote);
+      saveAccounts(merged);
+      if(JSON.stringify(merged) !== JSON.stringify(mergeAccounts(remote, []))) await c.doc("accounts").set({list: merged, updated: Date.now()});
+      return true;
+    }catch(e){ return false; }
+  }
+  window.HIKING_CLOUD = {ready: cloudReady, withTimeout};
 
   async function sha256(text){
     const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
@@ -39,7 +70,7 @@
     const m = document.createElement("div");
     m.className = "usermenu"; m.id = "usermenu";
     m.innerHTML = `<button class="btn small userbtn" type="button" aria-haspopup="menu" aria-expanded="false"><span class="u-av">${esc(acc.name.trim()[0] || "?").toUpperCase()}</span><span class="u-name">${esc(acc.name)}</span><i class="caret" aria-hidden="true">▾</i></button>
-      <div class="u-pop" role="menu" hidden><div class="u-who"><b>${esc(acc.name)}</b><span class="muted small">@${esc(acc.user)}</span></div>
+      <div class="u-pop" role="menu" hidden><div class="u-who"><b>${esc(acc.name)}</b><span class="muted small">@${esc(acc.user)}</span><span class="small u-sync" id="syncst">${esc((window.HIKING_CLOUD || {}).status || "☁ Đang kết nối đồng bộ…")}</span></div>
         <button type="button" role="menuitem" data-u="pass">🔑 Đổi mật khẩu</button><button type="button" role="menuitem" data-u="out">↩ Đăng xuất</button></div>`;
     wrap.appendChild(m); root.classList.add("has-user");
     const btn = m.querySelector(".userbtn"), pop = m.querySelector(".u-pop");
@@ -82,13 +113,16 @@
       <label class="login-rem"><input type="checkbox" name="rem" checked> Ghi nhớ đăng nhập trên máy này</label>
       <p class="login-err" role="alert" hidden></p>
       <button class="btn primary" type="submit">${signup ? "Tạo tài khoản" : "Đăng nhập"}</button>
-      ${signup ? `<p class="muted small login-note">Tài khoản được lưu trên trình duyệt của máy này. Sang máy khác cần tạo lại.</p>` : ""}</form>`;
+      ${signup ? `<p class="muted small login-note">Mở trang trên claude.ai thì tài khoản và tiến độ được đồng bộ sang mọi trình duyệt, mọi máy.</p>` : ""}</form>`;
     const f = box.querySelector("form"), card = f;
     wire(card);
     card.querySelectorAll("[data-m]").forEach(b => b.addEventListener("click", () => showLogin(b.dataset.m)));
     f.addEventListener("submit", async e => {
       e.preventDefault(); card.querySelector(".login-err").hidden = true;
-      const user = f.user.value.trim().toLowerCase(), pass = f.pass.value;
+      const user = f.user.value.trim().toLowerCase(), pass = f.pass.value, sub = f.querySelector("[type=submit]");
+      sub.disabled = true; const label = sub.textContent; sub.textContent = "Đang kiểm tra…";
+      await syncAccounts(); // pick up accounts created or changed on another browser
+      sub.disabled = false; sub.textContent = label;
       try{
         if(signup){
           const name = f.name.value.trim();
@@ -98,6 +132,7 @@
           const bad = checkPass(pass, f.pass2.value); if(bad) return fail(card, bad);
           const salt = newSalt();
           if(!putAccount({user, name, salt, sha256: await sha256(salt + ":" + pass), created: Date.now()})) return fail(card, "Không lưu được tài khoản (trình duyệt đang chặn lưu dữ liệu).");
+          await syncAccounts();
           return startSession(user, f.rem.checked);
         }
         const acc = findAccount(user);
@@ -131,6 +166,7 @@
         if(f.pass.value === f.old.value) return fail(f, "Mật khẩu mới phải khác mật khẩu cũ.");
         const salt = newSalt();
         if(!putAccount(Object.assign({}, acc, {salt, sha256: await sha256(salt + ":" + f.pass.value), changed: Date.now()}))) return fail(f, "Không lưu được mật khẩu mới.");
+        await syncAccounts();
         close(); if(typeof toast === "function") toast("Đã đổi mật khẩu."); else alert("Đã đổi mật khẩu.");
       }catch(x){ fail(f, "Trình duyệt này không hỗ trợ đổi mật khẩu (cần mở trang qua https)."); }
     });
@@ -139,6 +175,6 @@
 
   const s = session();
   window.HIKING_USER = s ? s.user : null;
-  if(s) document.addEventListener("DOMContentLoaded", () => userChip(findAccount(s.user)));
+  if(s){ document.addEventListener("DOMContentLoaded", () => userChip(findAccount(s.user))); syncAccounts(); }
   else { root.classList.add("locked"); document.addEventListener("DOMContentLoaded", () => showLogin("login")); }
 })();

@@ -6,7 +6,9 @@ const EXTRA = window.EXTRA || {};
 const KEY = "ielts45-progress-v2" + (window.HIKING_USER && window.HIKING_USER !== "admin" ? ":" + window.HIKING_USER : "");
 function load(){ try{ return JSON.parse(localStorage.getItem(KEY)) || {}; }catch(e){ return {}; } }
 const P = Object.assign({known:{},scores:{},drafts:{},spoke:{},custom:{},edits:{},hidden:{},grades:{},myread:{},graderUrl:"",voice:"",accent:"GB",rate:0.9}, load());
-function save(){ try{ localStorage.setItem(KEY, JSON.stringify(P)); }catch(e){} }
+// _updated stamps every change so js/sync.js can tell which copy (this browser or the cloud) is newer.
+const P_LOADED_UPDATED = P._updated || 0;
+function save(){ P._updated = Date.now(); try{ localStorage.setItem(KEY, JSON.stringify(P)); }catch(e){} if(window.HIKING_SYNC) HIKING_SYNC.push(); }
 
 const TABS = [["vocab","Từ vựng"],["grammar","Ngữ pháp"],["reading","Reading"],["listening","Listening"],["writing","Writing"],["speaking","Speaking"]];
 const FOCUS = {vocab:"vocab", grammar:null, reading:"reading", listening:"listening", writing:"writing", speaking:"speaking"};
