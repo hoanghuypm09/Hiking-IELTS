@@ -18,6 +18,9 @@ const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":
 const shuffle = a => { a = a.slice(); for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]];} return a; };
 const shuffleOpts = q => { const idx = shuffle(q.o.map((_,i)=>i)); return Object.assign({}, q, {o: idx.map(i=>q.o[i]), a: idx.indexOf(q.a)}); };
 function toast(msg){ const t=$("#toast"); t.textContent=msg; t.hidden=false; clearTimeout(t._h); t._h=setTimeout(()=>t.hidden=true,2600); }
+// Part-of-speech tag shown before a meaning, with the Vietnamese name on hover.
+const POS_VI = {n:"danh từ", v:"động từ", adj:"tính từ", adv:"trạng từ", "phr v":"cụm động từ", phrase:"cụm từ", "noun phrase":"cụm danh từ", collocation:"cụm từ cố định", suffix:"hậu tố", "n phr":"cụm danh từ", "v phr":"cụm động từ", "adj phr":"cụm tính từ", "prep phr":"cụm giới từ", phr:"cụm từ"};
+const posTag = p => p ? `<span class="wpos" title="${esc(String(p).split("/").map(x => POS_VI[x.replace(/ \(.*\)$/, "")] || x).join(" / "))}">${esc(p)}</span> ` : "";
 function wordCount(t){ return (t.trim().match(/\S+/g)||[]).length; }
 
 /* Mỗi kỹ năng có nhiều bài: bài 1 nằm trong UNITS, các bài thêm nằm trong window.EXTRA */
@@ -606,7 +609,7 @@ function vVocab(u){
   let lastG = null;
   const list = pool.map((x,i)=>{
     const head = x.g && x.g!==lastG ? `<p class="eyebrow wl-group">${esc(x.g)}</p>` : ""; lastG = x.g;
-    return head + `<div class="wl" data-s="${esc(fold([x.w, x.vi, x.ex].join(" ")))}"><span><b>${esc(x.w)}</b> <span class="ipa">${esc(x.ipa)}</span><br><span class="muted small">${esc(x.vi)}</span>${saHTML(synAnt(u, x.w), "small")}</span>
+    return head + `<div class="wl" data-s="${esc(fold([x.w, x.vi, x.ex].join(" ")))}"><span><b>${esc(x.w)}</b> <span class="ipa">${esc(x.ipa)}</span><br><span class="muted small">${posTag(x.p)}${esc(x.vi)}</span>${saHTML(synAnt(u, x.w), "small")}</span>
       <span class="row">${P.known[V.key+x.w]?'<span class="tick">đã thuộc</span>':''}${x._custom?'<span class="tick mine">của tôi</span>':x._edited?'<span class="tick mine">đã sửa</span>':''}<button class="btn small" type="button" data-act="say" data-text="${esc(x.w)}" aria-label="Nghe phát âm ${esc(x.w)}" title="Nghe phát âm">🔊</button><button class="btn small" type="button" data-act="goto" data-i="${i}">Xem</button><button class="btn small" type="button" data-act="vedit" data-id="${esc(x._id)}" aria-label="Sửa ${esc(x.w)}">✎</button></span></div>`;
   }).join("");
   const modes = modesHTML(u, V);
@@ -616,13 +619,13 @@ function vVocab(u){
       <button type="button" class="card ${S.flipped?'flipped':''} ${S.enter?'enter-'+S.enter:''}" data-act="flip" aria-label="Lật thẻ. Quẹt trái hoặc phải, hoặc dùng phím mũi tên, để đổi thẻ">
         <div class="card-in">
           <div class="face"><span class="pos">${esc(v.p)}</span><span class="word">${esc(v.w)}</span><span class="ipa">${esc(v.ipa)}</span><span class="hint">Bấm để xem nghĩa · quẹt ← → để đổi thẻ · ${S.card+1}/${deck.length}${v.g?" · "+esc(v.g):""}</span></div>
-          <div class="face back"><span class="eyebrow">Nghĩa</span><h2>${esc(v.vi)}</h2><span class="ex">“${esc(v.ex)}”</span>${saHTML(synAnt(u, v.w), "oncard")}<span class="hint">Bấm để lật lại</span></div>
+          <div class="face back"><span class="eyebrow">Nghĩa</span><h2>${posTag(v.p)}${esc(v.vi)}</h2><span class="ex">“${esc(v.ex)}”</span>${saHTML(synAnt(u, v.w), "oncard")}<span class="hint">Bấm để lật lại</span></div>
         </div></button>
       <div class="row">
         <button class="btn" type="button" data-act="say" data-text="${esc(v.w)}">🔊 Nghe từ</button>
         <button class="btn" type="button" data-act="say" data-text="${esc(v.ex)}">🔊 Câu ví dụ</button>
       </div>
-      <div class="cardinfo"><span><b>Nghĩa:</b> ${esc(v.vi)}</span>${v.ex?`<span class="ex">“${esc(v.ex)}”</span>`:""}${saHTML(synAnt(u, v.w))}</div>
+      <div class="cardinfo"><span><b>Nghĩa:</b> ${posTag(v.p)}${esc(v.vi)}</span>${v.ex?`<span class="ex">“${esc(v.ex)}”</span>`:""}${saHTML(synAnt(u, v.w))}</div>
       <form id="cardtype" class="cardtype" autocomplete="off" data-w="${esc(v.w)}">
         <input id="cardin" placeholder="Gõ lại ${V.M.unit} này rồi nhấn Enter" spellcheck="false" autocapitalize="off" aria-label="Gõ lại ${V.M.unit} trên thẻ">
         <button class="btn" type="submit">Kiểm tra</button>
