@@ -267,6 +267,19 @@ details[open] summary{margin-bottom:8px}
 .cardtype input.right{border-color:var(--ok);background:var(--ok-soft)}
 .cardtype input.wrong{border-color:var(--bad);background:var(--bad-soft)}
 .cardtype #cardmsg{flex-basis:100%}
+.mysent{display:flex;flex-direction:column;gap:8px;padding:12px 14px;border:2px dashed var(--accent);border-radius:12px;background:var(--accent-soft)}
+.mysent.done{border:1px solid var(--line);background:none}
+.mysent .ms-head{line-height:1.4}
+.mysent .ms-row{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end}
+.mysent textarea{flex:1 1 220px;min-height:64px;height:auto;min-width:0;font:inherit;font-size:1rem;padding:9px 12px;border:2px solid var(--line);border-radius:10px;background:var(--paper);color:var(--ink);resize:vertical}
+.mysent textarea:focus{outline:none;border-color:var(--accent)}
+.mysent textarea.wrong{border-color:var(--bad);background:var(--bad-soft)}
+.mysent textarea.need{border-color:var(--bad);animation:ms-shake .35s}
+@keyframes ms-shake{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+.mysent .ms-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px}
+.mysent .ms-list li{display:flex;justify-content:space-between;align-items:center;gap:8px;font-style:italic;font-size:.92rem}
+.mysent .ms-list li .row{font-style:normal;flex-wrap:nowrap}
+.mysent .ok{color:var(--ok)} .mysent .bad{color:var(--bad)}
 .cardinfo{display:flex;flex-direction:column;gap:2px;font-size:.85rem;line-height:1.45;color:var(--muted);margin-bottom:-6px}
 .cardinfo b{color:var(--ink);font-weight:600}
 .cardinfo .ex{font-style:italic}
