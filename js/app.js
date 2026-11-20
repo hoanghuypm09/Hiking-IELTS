@@ -5,7 +5,7 @@ const EXTRA = window.EXTRA || {};
 // Each account keeps its own progress; admin keeps the original key so earlier progress is not lost.
 const KEY = "ielts45-progress-v2" + (window.HIKING_USER && window.HIKING_USER !== "admin" ? ":" + window.HIKING_USER : "");
 function load(){ try{ return JSON.parse(localStorage.getItem(KEY)) || {}; }catch(e){ return {}; } }
-const P = Object.assign({known:{},scores:{},drafts:{},spoke:{},custom:{},edits:{},hidden:{},grades:{},myread:{},graderUrl:"",voice:"",accent:"GB",rate:0.9}, load());
+const P = Object.assign({known:{},scores:{},drafts:{},spoke:{},custom:{},edits:{},hidden:{},mysent:{},grades:{},myread:{},graderUrl:"",voice:"",accent:"GB",rate:0.9}, load());
 // _updated stamps every change so js/sync.js can tell which copy (this browser or the cloud) is newer.
 const P_LOADED_UPDATED = P._updated || 0;
 function save(){ P._updated = Date.now(); try{ localStorage.setItem(KEY, JSON.stringify(P)); }catch(e){} if(window.HIKING_SYNC) HIKING_SYNC.push(); }
@@ -559,6 +559,77 @@ function vocabDeck(u){
   const left = all.filter(i => !P.known[V.key+V.list[i].w]);
   return left.length ? left : all;
 }
+/* Câu ví dụ tự viết: mỗi thẻ phải có ít nhất một câu của người học dùng từ/cụm đó thì mới sang được thẻ sau.
+   Lưu trong P.mysent[khoá thẻ] = [{id, t, at}], nên được đồng bộ cùng tiến độ. */
+const SENT_IRREG = {};
+("be:is,am,are,was,were,been,being|have:has,had,having|do:does,did,done|go:goes,went,gone|make:made|take:took,taken|get:got,gotten|"+
+ "give:gave,given|come:came|see:saw,seen|know:knew,known|think:thought|find:found|tell:told|become:became|leave:left|feel:felt|"+
+ "bring:brought|begin:began,begun|keep:kept|hold:held|write:wrote,written|stand:stood|hear:heard|mean:meant|meet:met|run:ran|"+
+ "pay:paid|sit:sat|speak:spoke,spoken|lie:lay,lain,lying|lead:led|grow:grew,grown|lose:lost|fall:fell,fallen|send:sent|build:built|"+
+ "understand:understood|draw:drew,drawn|break:broke,broken|spend:spent|rise:rose,risen|drive:drove,driven|buy:bought|wear:wore,worn|"+
+ "choose:chose,chosen|seek:sought|throw:threw,thrown|catch:caught|deal:dealt|win:won|teach:taught|sell:sold|fight:fought|eat:ate,eaten|"+
+ "drink:drank,drunk|sleep:slept|fly:flew,flown,flies|forget:forgot,forgotten|hide:hid,hidden|ride:rode,ridden|steal:stole,stolen|"+
+ "swim:swam,swum|say:said|show:shown|learn:learnt|spell:spelt|burn:burnt|dream:dreamt|feed:fed|hang:hung|shake:shook,shaken|"+
+ "wake:woke,woken|bear:bore,born,borne|beat:beaten|bite:bit,bitten|blow:blew,blown|freeze:froze,frozen|light:lit|shine:shone|"+
+ "sing:sang,sung|sink:sank,sunk|strike:struck|swear:swore,sworn|tear:tore,torn|undertake:undertook,undertaken|withdraw:withdrew,withdrawn|"+
+ "overcome:overcame|child:children|person:people|man:men|woman:women|foot:feet|tooth:teeth|mouse:mice|good:better,best|bad:worse,worst|"+
+ "well:better,best|far:further,farther,furthest|criterion:criteria|phenomenon:phenomena|analysis:analyses|crisis:crises|life:lives|knife:knives|wife:wives")
+  .split("|").forEach(x => { const [b, f] = x.split(":"); SENT_IRREG[b] = f.split(","); });
+const SENT_SKIP = new Set(["sb","sth","someone","somebody","something","oneself","etc"]);
+const sentToks = x => String(x||"").toLowerCase().replace(/[’`]/g,"'").replace(/\b(one|sb|sth|someone|somebody|something)'s\b/g," ").match(/[a-z]+/g) || [];
+function sentStem(t){ const s = t.length > 4 ? t.replace(/(ies|es|e|y)$/,"") : t.replace(/e$/,""); return s.length >= 2 ? s : t; }
+function sentUses(w, sent){
+  const words = sentToks(sent);
+  const alts = String(w).replace(/\([^)]*\)/g," ").replace(/\.\.\.|…/g," ").split(/\s*\/\s*|\s*,\s*/).filter(x => x.trim());
+  return alts.some(alt => {
+    const need = alt.trim().split(/\s+/).filter(t => !t.includes("/")).flatMap(sentToks).filter(t => !SENT_SKIP.has(t));
+    return need.length && need.every(t => { const st = sentStem(t), irr = SENT_IRREG[t] || [];
+      return words.some(x => x.startsWith(st) || irr.includes(x)); });
+  });
+}
+function mySents(k){ return P.mysent[k] || []; }
+function sentProblem(v, k, txt){
+  const t = txt.replace(/\s+/g," ").trim();
+  if(!t) return "Hãy viết một câu có dùng “"+v.w+"”.";
+  if(wordCount(t) < 4) return "Câu hơi ngắn, hãy viết ít nhất 4 từ.";
+  if(v.ex && normT(t) === normT(v.ex)) return "Đây là câu ví dụ có sẵn. Hãy tự đặt một câu của riêng bạn.";
+  if(mySents(k).some(x => normT(x.t) === normT(t))) return "Bạn đã lưu câu này rồi, hãy viết một câu khác.";
+  if(!sentUses(v.w, t)) return "Câu chưa có “"+v.w+"”. Có thể đổi dạng từ (thêm -s, -ed, -ing…), nhưng phải dùng đúng từ này.";
+  return "";
+}
+function curCard(){
+  const u = UNITS[S.u], V = vocabPool(u), pool = V.list; if(!pool.length) return null;
+  const deck = vocabDeck(u), i = ((S.card % deck.length) + deck.length) % deck.length, v = pool[deck[i]];
+  return v ? {v, k: V.key+v.w, V} : null;
+}
+// true nếu được phép rời thẻ hiện tại sang thẻ mới; nếu chưa có câu ví dụ thì nhắc và đưa con trỏ vào ô nhập câu
+function sentGate(){
+  if(!$("#mysent")) return true;
+  const c = curCard(); if(!c || mySents(c.k).length) return true;
+  const m = $("#sentmsg"), i = $("#sentin");
+  if(m){ m.textContent = "🔒 Viết một câu ví dụ có dùng “"+c.v.w+"” rồi bấm Lưu câu để mở thẻ tiếp theo."; m.className = "small bad"; }
+  if(i){ i.classList.remove("need"); void i.offsetWidth; i.classList.add("need"); i.focus({preventScroll:true}); i.scrollIntoView({block:"center", behavior:"smooth"}); }
+  return false;
+}
+function sentSave(){
+  const c = curCard(), i = $("#sentin"), m = $("#sentmsg"); if(!c || !i) return;
+  const err = sentProblem(c.v, c.k, i.value);
+  if(err){ m.textContent = err; m.className = "small bad"; i.classList.add("wrong"); i.focus(); return; }
+  (P.mysent[c.k] = mySents(c.k).slice()).push({id: Date.now().toString(36), t: i.value.replace(/\s+/g," ").trim(), at: Date.now()});
+  save(); S.sentMsg = "✓ Đã lưu câu của bạn. Giờ bạn có thể sang thẻ tiếp theo."; render();
+}
+function sentHTML(v, k, V){
+  const list = mySents(k), msg = S.sentMsg; S.sentMsg = "";
+  return `<form id="mysent" class="mysent ${list.length?"done":"todo"}" autocomplete="off">
+    <label for="sentin" class="ms-head"><b>${list.length?"✓":"🔒"} Câu ví dụ của bạn</b> <span class="muted small">${list.length
+      ? `· đã viết ${list.length} câu, có thể viết thêm`
+      : `· bắt buộc: tự đặt một câu có dùng “${esc(v.w)}” trước khi sang ${V.M.unit} mới`}</span></label>
+    ${list.length?`<ul class="ms-list">${list.map(x=>`<li><span>“${esc(x.t)}”</span><span class="row"><button class="btn small" type="button" data-act="say" data-text="${esc(x.t)}" aria-label="Nghe câu này" title="Nghe">🔊</button><button class="btn small" type="button" data-act="sentdel" data-id="${esc(x.id)}" aria-label="Xóa câu này" title="Xóa">✕</button></span></li>`).join("")}</ul>`:""}
+    <div class="ms-row"><textarea id="sentin" rows="2" placeholder="Vd: ${esc(V.M.unit==="từ"?"I want to use this word in my own sentence.":"Write your own sentence with this phrase.")}" aria-label="Câu ví dụ có dùng ${esc(v.w)}"></textarea>
+      <button class="btn ${list.length?"":"primary"}" type="submit">Lưu câu</button></div>
+    <span id="sentmsg" class="small ${msg?"ok":"muted"}" role="status">${msg?esc(msg):list.length?"":"Mẹo: đổi dạng từ (thêm -s, -ed, -ing…) vẫn được tính. Nhấn Ctrl+Enter để lưu nhanh."}</span>
+  </form>`;
+}
 function gapQuestions(pool, n){
   const re = w => new RegExp("\\b"+w.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")+"\\b","i");
   return shuffle(pool.filter(t => re(t.w).test(t.ex))).slice(0,n).map(t => {
@@ -611,8 +682,8 @@ function vVocab(u){
   let lastG = null;
   const list = pool.map((x,i)=>{
     const head = x.g && x.g!==lastG ? `<p class="eyebrow wl-group">${esc(x.g)}</p>` : ""; lastG = x.g;
-    return head + `<div class="wl" data-s="${esc(fold([x.w, x.vi, x.ex].join(" ")))}"><span><b>${esc(x.w)}</b> <span class="ipa">${esc(x.ipa)}</span><br><span class="muted small">${posTag(x.p)}${esc(x.vi)}</span>${saHTML(synAnt(u, x.w), "small")}</span>
-      <span class="row">${P.known[V.key+x.w]?'<span class="tick">đã thuộc</span>':''}${x._custom?'<span class="tick mine">của tôi</span>':x._edited?'<span class="tick mine">đã sửa</span>':''}<button class="btn small" type="button" data-act="say" data-text="${esc(x.w)}" aria-label="Nghe phát âm ${esc(x.w)}" title="Nghe phát âm">🔊</button><button class="btn small" type="button" data-act="goto" data-i="${i}">Xem</button><button class="btn small" type="button" data-act="vedit" data-id="${esc(x._id)}" aria-label="Sửa ${esc(x.w)}">✎</button></span></div>`;
+    return head + `<div class="wl" data-s="${esc(fold([x.w, x.vi, x.ex, ...mySents(V.key+x.w).map(y=>y.t)].join(" ")))}"><span><b>${esc(x.w)}</b> <span class="ipa">${esc(x.ipa)}</span><br><span class="muted small">${posTag(x.p)}${esc(x.vi)}</span>${saHTML(synAnt(u, x.w), "small")}</span>
+      <span class="row">${mySents(V.key+x.w).length?`<span class="tick mine" title="Số câu ví dụ bạn đã viết">✍ ${mySents(V.key+x.w).length} câu</span>`:''}${P.known[V.key+x.w]?'<span class="tick">đã thuộc</span>':''}${x._custom?'<span class="tick mine">của tôi</span>':x._edited?'<span class="tick mine">đã sửa</span>':''}<button class="btn small" type="button" data-act="say" data-text="${esc(x.w)}" aria-label="Nghe phát âm ${esc(x.w)}" title="Nghe phát âm">🔊</button><button class="btn small" type="button" data-act="goto" data-i="${i}">Xem</button><button class="btn small" type="button" data-act="vedit" data-id="${esc(x._id)}" aria-label="Sửa ${esc(x.w)}">✎</button></span></div>`;
   }).join("");
   const modes = modesHTML(u, V);
   const tip = V.M.tip ? `<p class="muted small" style="margin:-6px 0 14px">${V.M.tip}</p>` : "";
@@ -633,6 +704,7 @@ function vVocab(u){
         <button class="btn" type="submit">Kiểm tra</button>
         <span id="cardmsg" class="small muted" role="status">${S.typedOk?`✓ Đã gõ đúng ${S.typedOk} ${V.M.unit} liên tiếp`:""}</span>
       </form>
+      ${sentHTML(v, k, V)}
       <div class="row">
         <button class="btn ${P.known[k]?'':'primary'}" type="button" data-act="known" data-k="${esc(k)}">${P.known[k]?'Bỏ đánh dấu':`✓ Tôi đã thuộc ${V.M.unit} này`}</button>
         <span class="muted">${nKnown}/${pool.length} ${V.M.unit} đã thuộc</span>
@@ -1321,12 +1393,14 @@ document.addEventListener("click", e => {
   else if(a==="plisten"){ P.pronListen=b.checked; save(); S.pq=null; render(); toast(P.pronListen?"Chế độ nghe: bấm 🔊 ở mỗi câu để nghe từ.":"Đã tắt chế độ nghe."); }
   else if(a==="tab"){ S.tab=b.dataset.tab; S.gradeErr=""; S.myedit=null; render(); }
   else if(a==="flip"){ if(b.dataset.swiped){ delete b.dataset.swiped; return; } S.flipped=!S.flipped; b.classList.toggle("flipped", S.flipped); }
-  else if(a==="goto"){ S.onlyNew=false; S.card=Math.max(0, vocabDeck(u).indexOf(+b.dataset.i)); S.flipped=false; render(); window.scrollTo({top:0,behavior:"smooth"}); }
+  else if(a==="goto"){ const V=vocabPool(u), tx=V.list[+b.dataset.i], c=curCard();
+    if(tx && c && tx!==c.v && !mySents(V.key+tx.w).length && !sentGate()) return;
+    S.onlyNew=false; S.card=Math.max(0, vocabDeck(u).indexOf(+b.dataset.i)); S.flipped=false; render(); window.scrollTo({top:0,behavior:"smooth"}); }
   else if(a==="vmode"){ S.typ=null; S.vmode=b.dataset.m; S.card=0; S.flipped=false; render(); }
   else if(a==="shuf"){ P.shuf=b.checked; save(); S.shufOrder=null; S.card=0; S.flipped=false; render(); toast(P.shuf?"Đã trộn thẻ: thẻ sẽ hiện theo thứ tự ngẫu nhiên.":"Đã tắt trộn thẻ: thẻ hiện theo thứ tự của sách."); }
   else if(a==="reshuf"){ S.shufOrder=null; S.card=0; S.flipped=false; render(); toast("Đã trộn lại bộ thẻ."); }
   else if(a==="onlynew"){ S.onlyNew=b.checked; S.card=0; S.flipped=false; render(); }
-  else if(a==="known"){ const k=b.dataset.k; if(P.known[k]) delete P.known[k]; else { P.known[k]=true; if(!S.onlyNew) S.card++; S.flipped=false; } save(); render(); }
+  else if(a==="known"){ const k=b.dataset.k; if(P.known[k]) delete P.known[k]; else { if(!sentGate()) return; P.known[k]=true; if(!S.onlyNew) S.card++; S.flipped=false; } save(); render(); }
   else if(a==="newvq"){ S.vq=null; render(); }
   else if(a==="fixnew"){ S.fixq=null; render(); }
   else if(a==="gtype"){ gState(u).type=b.dataset.k; gState(u, true); render(); }
@@ -1360,9 +1434,10 @@ document.addEventListener("click", e => {
     vocabChanged(); }
   else if(a==="vreset"){ delete P.edits[u.id+":"+vocabPool(u).mode+":"+S.edit.id]; vocabChanged(); }
   else if(a==="vunhide"){ const pre=u.id+":"+vocabPool(u).mode+":"; Object.keys(P.hidden).filter(k=>k.startsWith(pre)).forEach(k=>delete P.hidden[k]); vocabChanged(); }
-  else if(a==="vexport"){ const blob=new Blob([JSON.stringify({app:"hiking-ielts", custom:P.custom, edits:P.edits, hidden:P.hidden}, null, 1)], {type:"application/json"});
+  else if(a==="vexport"){ const blob=new Blob([JSON.stringify({app:"hiking-ielts", custom:P.custom, edits:P.edits, hidden:P.hidden, mysent:P.mysent}, null, 1)], {type:"application/json"});
     const l=document.createElement("a"); l.href=URL.createObjectURL(blob); l.download="tu-vung-cua-toi.json"; l.click(); setTimeout(()=>URL.revokeObjectURL(l.href), 1000); }
   else if(a==="say"){ stopSpeech(); speak(b.dataset.text); }
+  else if(a==="sentdel"){ const c=curCard(); if(!c || !confirm("Xóa câu ví dụ này?")) return; P.mysent[c.k]=mySents(c.k).filter(x=>x.id!==b.dataset.id); if(!P.mysent[c.k].length) delete P.mysent[c.k]; save(); render(); }
   else if(a==="pltoggle"){ PL.playing ? plPause() : plResume(); }
   else if(a==="plprev"){ plGo(PL.i - 1); }
   else if(a==="plnext"){ plGo(PL.i + 1); }
@@ -1394,6 +1469,10 @@ function cardTypeCheck(input){
   const f = input.form, w = f.dataset.w, v = normT(input.value);
   if(cardTypeLock || !v) return;
   if(typAnswers(w).includes(v)){
+    const c = curCard();
+    if(c && !mySents(c.k).length){ input.classList.remove("wrong"); input.classList.add("right"); S.typedOk = (S.typedOk||0) + 1;
+      $("#cardmsg").textContent = "✓ Chính xác! Giờ hãy tự đặt một câu ví dụ bên dưới để sang thẻ mới."; stopSpeech(); speak(w);
+      const i = $("#sentin"); if(i) i.focus({preventScroll:true}); return; }
     cardTypeLock = true; input.classList.remove("wrong"); input.classList.add("right"); input.readOnly = true;
     S.typedOk = (S.typedOk||0) + 1; $("#cardmsg").textContent = "✓ Chính xác! Sang thẻ mới…";
     // Đợi đọc xong từ rồi mới qua thẻ; nếu máy không đọc được thì vẫn qua sau vài giây
@@ -1407,7 +1486,7 @@ function cardTypeCheck(input){
     const msg = $("#cardmsg"); msg.textContent = S.flipped ? "Chưa đúng, nhìn mặt trước của thẻ và thử lại." : "Chưa đúng, thử lại nhé. Bấm vào thẻ để xem nghĩa nếu cần.";
   }
 }
-function nextCard(d){ S.card += d; S.flipped = false; S.enter = d > 0 ? "right" : "left"; render(); S.enter = ""; }
+function nextCard(d){ if(d > 0 && !sentGate()) return; S.card += d; S.flipped = false; S.enter = d > 0 ? "right" : "left"; render(); S.enter = ""; }
 let plDrag = false;
 document.addEventListener("pointerdown", e => { const pr = e.target.closest("#plprog"); if(!pr) return; plDrag = true; pr.classList.add("drag"); try{ pr.setPointerCapture(e.pointerId); }catch(_){} plSeek(e.clientX); });
 document.addEventListener("pointermove", e => { const pr = e.target.closest("#plprog"); if(pr || plDrag) plHover(e.clientX); });
@@ -1430,6 +1509,7 @@ function endSwipe(e){
   s.c.classList.remove("dragging");
   if(Math.abs(s.dx) > Math.min(90, s.c.offsetWidth/4)){
     const d = s.dx < 0 ? 1 : -1;
+    if(d > 0 && !sentGate()){ s.c.style.transform = ""; return; }
     s.c.style.transform = `translateX(${-d*120}%) rotate(${-d*12}deg)`; s.c.style.opacity = "0";
     setTimeout(() => nextCard(d), 160);
   } else s.c.style.transform = "";
@@ -1437,6 +1517,7 @@ function endSwipe(e){
 document.addEventListener("pointerup", endSwipe);
 document.addEventListener("pointercancel", endSwipe);
 document.addEventListener("keydown", e => {
+  if(e.target.id === "sentin" && e.key === "Enter" && (e.ctrlKey || e.metaKey)){ e.preventDefault(); sentSave(); return; }
   if($("#player") && !/INPUT|TEXTAREA|SELECT|BUTTON/.test(document.activeElement.tagName)){
     if(e.key===" "){ e.preventDefault(); PL.playing ? plPause() : plResume(); return; }
     if(e.key==="ArrowRight"){ e.preventDefault(); plGo(PL.i + 1); return; }
@@ -1450,6 +1531,7 @@ function focusEditor(){ const f=$("#vedit"); if(f){ f.scrollIntoView({behavior:"
 function vocabChanged(){ S.edit=null; S.vq=null; S.flipped=false; save(); render(); }
 document.addEventListener("submit", e => {
   if(e.target.id === "cardtype"){ e.preventDefault(); cardTypeCheck($("#cardin")); return; }
+  if(e.target.id === "mysent"){ e.preventDefault(); sentSave(); return; }
   if(e.target.id === "myedit"){ e.preventDefault(); mySave(e.target); return; }
   if(e.target.id === "typ"){ e.preventDefault();
     if(S.typ.res) return typNext();
@@ -1481,7 +1563,7 @@ document.addEventListener("change", e => {
   if(e.target.id !== "vimport" || !e.target.files[0]) return;
   e.target.files[0].text().then(t => { const d = JSON.parse(t);
     if(d.app !== "hiking-ielts") throw 0;
-    ["custom","edits","hidden"].forEach(k => P[k] = Object.assign(P[k], d[k]||{}));
+    ["custom","edits","hidden","mysent"].forEach(k => P[k] = Object.assign(P[k]||{}, d[k]||{}));
     S.note = "Đã khôi phục từ vựng từ file sao lưu."; vocabChanged();
   }).catch(() => { S.note = "File không hợp lệ, hãy chọn file tu-vung-cua-toi.json."; render(); });
 });
@@ -1489,6 +1571,7 @@ document.addEventListener("change", e => {
 let draftT;
 document.addEventListener("input", e => {
   if(e.target.id === "cardin"){ e.target.classList.remove("wrong"); return; }
+  if(e.target.id === "sentin"){ e.target.classList.remove("wrong","need"); return; }
   if(e.target.id === "mynote"){ P.drafts[e.target.dataset.k] = e.target.value; save(); return; }
   if(e.target.id === "vsearch"){ S.vsearch = e.target.value; wlFilter(); return; }
   if(e.target.id === "raterange"){ const v=$("#ratev"); if(v) v.textContent = e.target.value; return; }
