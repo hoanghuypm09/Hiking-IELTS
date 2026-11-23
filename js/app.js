@@ -559,6 +559,13 @@ function vocabDeck(u){
   const left = all.filter(i => !P.known[V.key+V.list[i].w]);
   return left.length ? left : all;
 }
+// Điền vào câu trên thẻ: the example sentence with the word (or its inflected form) blanked out.
+function cardGap(v){
+  if(!v.ex) return null;
+  const g = gapItems([v])[0]; if(g) return {pre:g.pre, ans:g.ans, post:g.post};
+  const m = v.ex.match(new RegExp("\\b"+v.w.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")+"\\b","i"));
+  return m ? {pre:v.ex.slice(0, m.index), ans:m[0], post:v.ex.slice(m.index + m[0].length)} : null;
+}
 function gapQuestions(pool, n){
   const re = w => new RegExp("\\b"+w.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")+"\\b","i");
   return shuffle(pool.filter(t => re(t.w).test(t.ex))).slice(0,n).map(t => {
@@ -606,6 +613,7 @@ function vVocab(u){
   if(S.typ && S.typ.u===u.id && S.typ.mode===V.mode) return (modesHTML(u, V)) + typHTML(V);
   const deck = vocabDeck(u); S.card = ((S.card % deck.length) + deck.length) % deck.length;
   const v = pool[deck[S.card]], k = V.key+v.w;
+  const gapMode = P.cardMode === "gap", gap = gapMode ? cardGap(v) : null;
   const nKnown = pool.filter(x=>P.known[V.key+x.w]).length;
   if(!S.vq || S.vq.id !== V.qid) S.vq = {id:V.qid, items: vocabQuestions(pool, Math.min(10, pool.length), V.M.Unit), gaps: gapQuestions(pool, 8), syn: synQuestions(u, pool, 6)};
   let lastG = null;
@@ -620,16 +628,19 @@ function vVocab(u){
     <div class="stack">
       <button type="button" class="card ${S.flipped?'flipped':''} ${S.enter?'enter-'+S.enter:''}" data-act="flip" aria-label="Lật thẻ. Quẹt trái hoặc phải, hoặc dùng phím mũi tên, để đổi thẻ">
         <div class="card-in">
-          <div class="face"><span class="pos">${esc(v.p)}</span><span class="word">${esc(v.w)}</span><span class="ipa">${esc(v.ipa)}</span><span class="hint">Bấm để xem nghĩa · quẹt ← → để đổi thẻ · ${S.card+1}/${deck.length}${v.g?" · "+esc(v.g):""}</span></div>
-          <div class="face back"><span class="eyebrow">Nghĩa</span><h2>${posTag(v.p)}${esc(v.vi)}</h2><span class="ex">“${esc(v.ex)}”</span>${saHTML(synAnt(u, v.w), "oncard")}<span class="hint">Bấm để lật lại</span></div>
+          ${gap?`<div class="face gapface"><span class="pos">${esc(v.p)}</span><span class="eyebrow">Điền vào chỗ trống</span><span class="gapsen">${esc(gap.pre)}<span class="gapblank">${"_".repeat(Math.max(4, gap.ans.length))}</span>${esc(gap.post)}</span><span class="gapvi">${posTag(v.p)}${esc(v.vi)}</span><span class="hint">Bấm để xem đáp án · quẹt ← → để đổi thẻ · ${S.card+1}/${deck.length}</span></div>`
+          :`<div class="face"><span class="pos">${esc(v.p)}</span><span class="word">${esc(v.w)}</span><span class="ipa">${esc(v.ipa)}</span><span class="hint">Bấm để xem nghĩa · quẹt ← → để đổi thẻ · ${S.card+1}/${deck.length}${v.g?" · "+esc(v.g):""}</span></div>`}
+          <div class="face back">${gap?`<span class="eyebrow">Đáp án</span><span class="word">${esc(gap.ans)}</span>`:""}<span class="eyebrow">Nghĩa</span><h2>${posTag(v.p)}${esc(v.vi)}</h2><span class="ex">“${esc(v.ex)}”</span>${saHTML(synAnt(u, v.w), "oncard")}<span class="hint">Bấm để lật lại</span></div>
         </div></button>
       <div class="row">
         <button class="btn" type="button" data-act="say" data-text="${esc(v.w)}">🔊 Nghe từ</button>
         <button class="btn" type="button" data-act="say" data-text="${esc(v.ex)}">🔊 Câu ví dụ</button>
       </div>
-      <div class="cardinfo"><span><b>Nghĩa:</b> ${posTag(v.p)}${esc(v.vi)}</span>${v.ex?`<span class="ex">“${esc(v.ex)}”</span>`:""}${saHTML(synAnt(u, v.w))}</div>
-      <form id="cardtype" class="cardtype" autocomplete="off" data-w="${esc(v.w)}">
-        <input id="cardin" placeholder="Gõ lại ${V.M.unit} này rồi nhấn Enter" spellcheck="false" autocapitalize="off" aria-label="Gõ lại ${V.M.unit} trên thẻ">
+      <div class="seg cardmode" role="group" aria-label="Cách luyện trên thẻ"><button type="button" data-act="cardmode" data-m="type" aria-pressed="${!gapMode}">✍ Gõ lại ${V.M.unit}</button><button type="button" data-act="cardmode" data-m="gap" aria-pressed="${gapMode}">📝 Điền vào câu</button></div>
+      ${gap?"":`<div class="cardinfo"><span><b>Nghĩa:</b> ${posTag(v.p)}${esc(v.vi)}</span>${v.ex?`<span class="ex">“${esc(v.ex)}”</span>`:""}${saHTML(synAnt(u, v.w))}</div>`}
+      ${gapMode && !gap?`<p class="small muted" style="margin:0">Thẻ này chưa có câu ví dụ chứa ${V.M.unit} này, nên luyện gõ lại ${V.M.unit}.</p>`:""}
+      <form id="cardtype" class="cardtype" autocomplete="off" data-w="${esc(gap?gap.ans:v.w)}" data-say="${esc(gap?v.ex:v.w)}">
+        <input id="cardin" placeholder="${gap?"Điền từ còn thiếu vào câu rồi nhấn Enter":`Gõ lại ${V.M.unit} này rồi nhấn Enter`}" spellcheck="false" autocapitalize="off" aria-label="${gap?"Từ còn thiếu trong câu":`Gõ lại ${V.M.unit} trên thẻ`}">
         <button class="btn" type="submit">Kiểm tra</button>
         <span id="cardmsg" class="small muted" role="status">${S.typedOk?`✓ Đã gõ đúng ${S.typedOk} ${V.M.unit} liên tiếp`:""}</span>
       </form>
@@ -1382,6 +1393,7 @@ document.addEventListener("click", e => {
   else if(a==="accent"){ P.accent=b.dataset.a; P.voice=""; save(); loadVoices(); }
   else if(a==="voiceauto"){ P.voice=""; save(); loadVoices(); stopSpeech(); speak("Hello! This is the voice that will read your lessons."); }
   else if(a==="voicetest"){ stopSpeech(); speak("Hello! This is the voice that will read your lessons. I hope it sounds natural.", {rate:P.rate}); }
+  else if(a==="cardmode"){ P.cardMode = b.dataset.m; S.typedOk = 0; save(); render(); const i = $("#cardin"); if(i) i.focus({preventScroll:true}); }
   else if(a==="aigrade"){ if(!S.grading) aiGrade(); }
   else if(a==="gradersave"){ const v=$("#graderurl").value.trim(); if(!/^https:\/\/\S+$/.test(v)){ toast("Địa chỉ phải bắt đầu bằng https://"); return; } P.graderUrl=v; save(); aiUI(); renderAIPanel(); render(); aiTest(); }
   else if(a==="graderedit"){ P.graderUrl=""; if(window.HIKING_CONFIG) window.HIKING_CONFIG.graderUrl=""; save(); S.aiTest=null; aiUI(); renderAIPanel(); render(); }
@@ -1391,7 +1403,7 @@ document.addEventListener("click", e => {
 /* Gõ lại từ trên thẻ: đúng thì tự qua thẻ mới */
 let cardTypeLock = false;
 function cardTypeCheck(input){
-  const f = input.form, w = f.dataset.w, v = normT(input.value);
+  const f = input.form, w = f.dataset.w, said = f.dataset.say || w, v = normT(input.value);
   if(cardTypeLock || !v) return;
   if(typAnswers(w).includes(v)){
     cardTypeLock = true; input.classList.remove("wrong"); input.classList.add("right"); input.readOnly = true;
@@ -1399,12 +1411,12 @@ function cardTypeCheck(input){
     // Đợi đọc xong từ rồi mới qua thẻ; nếu máy không đọc được thì vẫn qua sau vài giây
     let moved = false;
     const go = () => { if(moved) return; moved = true; clearTimeout(t); cardTypeLock = false; nextCard(1); const i = $("#cardin"); if(i) i.focus({preventScroll:true}); };
-    const t = setTimeout(go, Math.min(5000, 1500 + w.length * 100));
+    const t = setTimeout(go, Math.min(9000, 1500 + said.length * 80));
     stopSpeech();
-    if(!speak(w, {onend: () => setTimeout(go, 300)})) setTimeout(go, 900);
+    if(!speak(said, {onend: () => setTimeout(go, 300)})) setTimeout(go, 900);
   } else {
     S.typedOk = 0; input.classList.add("wrong");
-    const msg = $("#cardmsg"); msg.textContent = S.flipped ? "Chưa đúng, nhìn mặt trước của thẻ và thử lại." : "Chưa đúng, thử lại nhé. Bấm vào thẻ để xem nghĩa nếu cần.";
+    const msg = $("#cardmsg"); msg.textContent = P.cardMode === "gap" && f.dataset.say !== w ? (S.flipped ? "Chưa đúng. Đáp án ở mặt sau thẻ, gõ lại cho đúng nhé." : "Chưa đúng, thử lại nhé. Từ có thể cần thêm đuôi -s, -ed, -ing… cho hợp câu. Bấm vào thẻ để xem đáp án.") : S.flipped ? "Chưa đúng, nhìn mặt trước của thẻ và thử lại." : "Chưa đúng, thử lại nhé. Bấm vào thẻ để xem nghĩa nếu cần.";
   }
 }
 function nextCard(d){ S.card += d; S.flipped = false; S.enter = d > 0 ? "right" : "left"; render(); S.enter = ""; }
