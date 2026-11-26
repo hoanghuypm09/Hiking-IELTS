@@ -517,7 +517,7 @@ function typHTML(V){
       <button class="btn primary" type="submit">${R?"Tiếp →":"Kiểm tra"}</button>
     </form>
     ${R ? `<div class="typ-res ${R.ok?"ok":"bad"}">${R.ok?"✓ Chính xác!":"✗ Chưa đúng. Đáp án:"} <b>${esc(ans)}</b> <span class="ipa">${esc(x.ipa||"")}</span>
-        <button class="btn small" type="button" data-act="say" data-text="${esc(ans)}">🔊</button>${x.ex?`<br><span class="muted small">“${esc(x.ex)}”</span>`:""}</div>`
+        <button class="btn small" type="button" data-act="say" data-text="${esc(ans)}">🔊</button>${x.ex?`<br><span class="muted small">“${esc(x.ex)}”</span>`:""}${exVi(x)?`<br><span class="muted small">${esc(exVi(x))}</span>`:""}</div>`
       : `<div class="row" style="margin-top:10px"><button class="btn small" type="button" data-act="typhint" ${T.hint>=2?"disabled":""}>💡 Gợi ý</button><button class="btn small" type="button" data-act="typskip">Bỏ qua</button>${hint?`<span class="typ-hint">${hint}</span>`:""}</div>`}
     <div class="row" style="margin-top:14px;justify-content:flex-end"><button class="btn small" type="button" data-act="typquit">Kết thúc ôn tập</button></div>
   </div>`;
@@ -538,14 +538,14 @@ function editorHTML(u, V){
   if(!S.edit || S.edit.u !== u.id || S.edit.m !== V.mode) return "";
   const x = S.edit.id === "new" ? {g:"Từ của tôi"} : V.list.find(y => y._id === S.edit.id);
   if(!x) return "";
-  const f = (n, label, ph, req) => `<label class="ve-f"><span class="small muted">${label}${req?" *":""}</span><input name="${n}" value="${esc(x[n]||"")}" placeholder="${esc(ph)}" ${req?"required":""} autocomplete="off"></label>`;
+  const f = (n, label, ph, req) => `<label class="ve-f"><span class="small muted">${label}${req?" *":""}</span><input name="${n}" value="${esc((n==="exvi" ? exVi(x) : x[n])||"")}" placeholder="${esc(ph)}" ${req?"required":""} autocomplete="off"></label>`;
   const extra = S.edit.id === "new" ? "" : x._custom
     ? `<button class="btn" type="button" data-act="vdel">🗑 Xóa ${V.M.unit} này</button>`
     : `${x._edited?`<button class="btn" type="button" data-act="vreset">↺ Khôi phục bản gốc</button>`:""}<button class="btn" type="button" data-act="vdel">🗑 Ẩn ${V.M.unit} này</button>`;
   return `<form class="sheet vedit" id="vedit"><h3>${S.edit.id==="new" ? `Thêm ${V.M.unit} mới` : `Sửa “${esc(x.w)}”`} <span class="muted small">· ${V.M.name}</span></h3>
     <div class="ve-grid">${f("w", V.M.Unit+" tiếng Anh", V.mode==="word"?"vd: persevere":"vd: make progress", true)}${f("vi", "Nghĩa tiếng Việt", "vd: tiến bộ", true)}
       ${f("p", "Loại từ", "n / v / adj / phrase…")}${f("ipa", "Phiên âm", "/ˈwɜːd/")}
-      ${f("ex", "Câu ví dụ", "Viết một câu có dùng từ này")}${f("g", "Nhóm", "vd: Từ của tôi")}</div>
+      ${f("ex", "Câu ví dụ", "Viết một câu có dùng từ này")}${f("exvi", "Nghĩa câu ví dụ", "Câu ví dụ dịch sang tiếng Việt")}${f("g", "Nhóm", "vd: Từ của tôi")}</div>
     <div class="row" style="margin-top:12px"><button class="btn primary" type="submit">Lưu</button><button class="btn" type="button" data-act="vcancel">Hủy</button><span style="flex:1"></span>${extra}</div></form>`;
 }
 function vocabDeck(u){
@@ -592,6 +592,9 @@ function synQuestions(u, pool, n){
   });
 }
 
+/* Nghĩa tiếng Việt của câu ví dụ: trường "exvi" của từ (người học tự nhập), nếu không có thì tra data/ex-vi.js */
+function exVi(v){ return (v && (v.exvi || (v.ex && (window.EXVI || {})[v.ex]))) || ""; }
+
 function vVocab(u){
   const V = vocabPool(u), pool = V.list;
   const nHidden = Object.keys(P.hidden).filter(k => k.startsWith(u.id+":"+V.mode+":")).length;
@@ -621,13 +624,13 @@ function vVocab(u){
       <button type="button" class="card ${S.flipped?'flipped':''} ${S.enter?'enter-'+S.enter:''}" data-act="flip" aria-label="Lật thẻ. Quẹt trái hoặc phải, hoặc dùng phím mũi tên, để đổi thẻ">
         <div class="card-in">
           <div class="face"><span class="pos">${esc(v.p)}</span><span class="word">${esc(v.w)}</span><span class="ipa">${esc(v.ipa)}</span><span class="hint">Bấm để xem nghĩa · quẹt ← → để đổi thẻ · ${S.card+1}/${deck.length}${v.g?" · "+esc(v.g):""}</span></div>
-          <div class="face back"><span class="eyebrow">Nghĩa</span><h2>${posTag(v.p)}${esc(v.vi)}</h2><span class="ex">“${esc(v.ex)}”</span>${saHTML(synAnt(u, v.w), "oncard")}<span class="hint">Bấm để lật lại</span></div>
+          <div class="face back"><span class="eyebrow">Nghĩa</span><h2>${posTag(v.p)}${esc(v.vi)}</h2><span class="ex">“${esc(v.ex)}”</span>${exVi(v)?`<span class="exvi">${esc(exVi(v))}</span>`:""}${saHTML(synAnt(u, v.w), "oncard")}<span class="hint">Bấm để lật lại</span></div>
         </div></button>
       <div class="row">
         <button class="btn" type="button" data-act="say" data-text="${esc(v.w)}">🔊 Nghe từ</button>
         <button class="btn" type="button" data-act="say" data-text="${esc(v.ex)}">🔊 Câu ví dụ</button>
       </div>
-      <div class="cardinfo"><span><b>Nghĩa:</b> ${posTag(v.p)}${esc(v.vi)}</span>${v.ex?`<span class="ex">“${esc(v.ex)}”</span>`:""}${saHTML(synAnt(u, v.w))}</div>
+      <div class="cardinfo"><span><b>Nghĩa:</b> ${posTag(v.p)}${esc(v.vi)}</span>${v.ex?`<span class="ex">“${esc(v.ex)}”</span>`:""}${exVi(v)?`<span class="exvi">${esc(exVi(v))}</span>`:""}${saHTML(synAnt(u, v.w))}</div>
       <form id="cardtype" class="cardtype" autocomplete="off" data-w="${esc(v.w)}">
         <input id="cardin" placeholder="Gõ lại ${V.M.unit} này rồi nhấn Enter" spellcheck="false" autocapitalize="off" aria-label="Gõ lại ${V.M.unit} trên thẻ">
         <button class="btn" type="submit">Kiểm tra</button>
@@ -1490,7 +1493,7 @@ document.addEventListener("submit", e => {
   }
   if(e.target.id === "vedit"){ e.preventDefault();
     const u = UNITS[S.u], m = S.edit.m, d = {}, fd = new FormData(e.target);
-    ["w","vi","p","ipa","ex","g"].forEach(k => d[k] = (fd.get(k)||"").trim());
+    ["w","vi","p","ipa","ex","exvi","g"].forEach(k => d[k] = (fd.get(k)||"").trim());
     if(!d.w || !d.vi) return;
     if(!d.g) d.g = "Từ của tôi";
     if(S.edit.id === "new"){ d._id = "c:"+Date.now().toString(36); (P.custom[u.id+":"+m] = P.custom[u.id+":"+m] || []).push(d); }
