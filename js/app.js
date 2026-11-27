@@ -1,4 +1,4 @@
-const UNITS = window.UNITS || [];
+let UNITS = window.UNITS || []; // đổi theo giáo trình đang chọn (xem BOOKS)
 const EXTRA = window.EXTRA || {};
 
 /* ============ STATE & STORAGE ============ */
@@ -224,11 +224,14 @@ async function aiTest(){
 
 /* ============ GIÁO TRÌNH (chọn sách ở logo; sau này thêm sách mới vào BOOKS) ============ */
 const BOOKS = [
-  {id:"c45", title:"Complete IELTS Bands 4–5", short:"Complete IELTS 4–5", band:"Band 4.0 – 5.0", cover:"4–5", units:() => window.UNITS},
-  {id:"c565", title:"Complete IELTS Bands 5–6.5", short:"Complete IELTS 5–6.5", band:"Band 5.0 – 6.5", cover:"5–6.5", soon:true},
+  {id:"c45", title:"Complete IELTS Bands 4–5", short:"Complete IELTS 4–5", band:"Band 4.0 – 5.0", cover:"4–5", route:"band 4.0 → 5.0", tipBand:"band 4–5", units:() => window.UNITS || []},
+  {id:"c565", title:"Complete IELTS Bands 5–6.5", short:"Complete IELTS 5–6.5", band:"Band 5.0 – 6.5", cover:"5–6.5", route:"band 5.0 → 6.5", tipBand:"band 5–6.5", units:() => window.UNITS_B2 || []},
   {id:"c6575", title:"Complete IELTS Bands 6.5–7.5", short:"Complete IELTS 6.5–7.5", band:"Band 6.5 – 7.5", cover:"6.5+", soon:true}
 ];
 const curBook = () => BOOKS.find(b => b.id === P.book && !b.soon) || BOOKS[0];
+UNITS = curBook().units();
+// Điểm ôn tập của sách đầu giữ khoá cũ "review:N" để không mất tiến độ; sách khác thêm mã sách vào khoá.
+const reviewKey = r => curBook().id === "c45" ? "review:" + r : "review:" + curBook().id + ":" + r;
 function bookUI(){
   const b = curBook(), band = document.getElementById("brandband"), pill = document.getElementById("bookpill");
   if(band) band.textContent = b.band;
@@ -260,16 +263,16 @@ function renderRail(){
     h += `<button class="unit-btn" type="button" data-act="unit" data-u="${i}" aria-current="${S.view==='unit'&&S.u===i}">
       <span><b>${i+1}</b> · ${esc(u.title)}</span><small>${esc(u.vi)}</small>
       <span class="bar"><i style="width:${Math.round(unitPct(i)*100)}%"></i></span></button>`;
-    if(i%2===1){ const r=(i-1)/2, sc=P.scores["review:"+r];
+    if(i%2===1){ const r=(i-1)/2, sc=P.scores[reviewKey(r)];
       h += `<button class="unit-btn rev" type="button" data-act="review" data-r="${r}" aria-current="${S.view==='review'&&S.r===r}">↻ Ôn tập Unit ${i}–${i+1}${sc!=null?` · ${Math.round(sc*100)}%`:""}</button>`; }
   });
   $("#rail").innerHTML = h;
 }
 
 function renderHome(){
-  const reviews = [0,1,2,3,4].filter(r => UNITS[r*2+1]);
-  return `<section class="hero"><span class="eyebrow">Lộ trình band 4.0 → 5.0 · 10 unit</span>
-    <h1>Học theo đúng thứ tự sách Complete IELTS Bands 4–5.</h1>
+  const reviews = [0,1,2,3,4].filter(r => UNITS[r*2+1]), B = curBook();
+  return `<section class="hero"><span class="eyebrow">Lộ trình ${esc(B.route)} · ${UNITS.length} unit</span>
+    <h1>Học theo đúng thứ tự sách ${esc(B.title)}.</h1>
     <p>Mỗi unit có cùng chủ đề, điểm ngữ pháp, dạng câu hỏi Reading/Listening và dạng bài Writing/Speaking như trong sách. Bài đọc, bài nghe và bài mẫu được viết mới để bạn luyện thêm, dùng song song với sách. Sau mỗi 2 unit có một bài ôn tập.</p></section>
   <div class="grid3">${UNITS.map((u,i)=>`<button type="button" class="sheet ucard" data-act="unit" data-u="${i}">
       <span class="eyebrow">Unit ${i+1} · ${Math.round(unitPct(i)*100)}%</span>
@@ -279,7 +282,7 @@ function renderHome(){
   <div class="revrow">${reviews.map(r=>`<button class="btn" type="button" data-act="review" data-r="${r}">↻ Ôn tập Unit ${r*2+1}–${r*2+2}</button>`).join("")}${window.PRON?`<button class="btn" type="button" data-act="pron">🔊 Phát âm: bảng IPA, -s/-es, -ed</button>`:""}</div>
   <section class="exam"><h3 style="margin-bottom:10px">Cấu trúc bài thi IELTS Academic</h3>
     <div class="tablewrap sheet" style="padding:6px 12px"><table>
-      <thead><tr><th>Kỹ năng</th><th>Thời gian</th><th>Số câu / phần</th><th>Mẹo cho band 4–5</th></tr></thead>
+      <thead><tr><th>Kỹ năng</th><th>Thời gian</th><th>Số câu / phần</th><th>Mẹo cho ${esc(B.tipBand)}</th></tr></thead>
       <tbody>
       <tr><td><b>Listening</b></td><td>~30 phút + 10 phút chép</td><td>40 câu · 4 section</td><td>Đọc trước câu hỏi, đoán loại từ cần điền (số, tên, danh từ).</td></tr>
       <tr><td><b>Reading</b></td><td>60 phút</td><td>40 câu · 3 bài</td><td>Không đọc từng chữ. Tìm từ khoá rồi đọc kỹ quanh đó.</td></tr>
@@ -517,7 +520,7 @@ function typHTML(V){
       <button class="btn primary" type="submit">${R?"Tiếp →":"Kiểm tra"}</button>
     </form>
     ${R ? `<div class="typ-res ${R.ok?"ok":"bad"}">${R.ok?"✓ Chính xác!":"✗ Chưa đúng. Đáp án:"} <b>${esc(ans)}</b> <span class="ipa">${esc(x.ipa||"")}</span>
-        <button class="btn small" type="button" data-act="say" data-text="${esc(ans)}">🔊</button>${x.ex?`<br><span class="muted small">“${esc(x.ex)}”</span>`:""}</div>`
+        <button class="btn small" type="button" data-act="say" data-text="${esc(ans)}">🔊</button>${x.ex?`<br><span class="muted small">“${esc(x.ex)}”</span>`:""}${exVi(x)?`<br><span class="muted small">${esc(exVi(x))}</span>`:""}</div>`
       : `<div class="row" style="margin-top:10px"><button class="btn small" type="button" data-act="typhint" ${T.hint>=2?"disabled":""}>💡 Gợi ý</button><button class="btn small" type="button" data-act="typskip">Bỏ qua</button>${hint?`<span class="typ-hint">${hint}</span>`:""}</div>`}
     <div class="row" style="margin-top:14px;justify-content:flex-end"><button class="btn small" type="button" data-act="typquit">Kết thúc ôn tập</button></div>
   </div>`;
@@ -538,14 +541,14 @@ function editorHTML(u, V){
   if(!S.edit || S.edit.u !== u.id || S.edit.m !== V.mode) return "";
   const x = S.edit.id === "new" ? {g:"Từ của tôi"} : V.list.find(y => y._id === S.edit.id);
   if(!x) return "";
-  const f = (n, label, ph, req) => `<label class="ve-f"><span class="small muted">${label}${req?" *":""}</span><input name="${n}" value="${esc(x[n]||"")}" placeholder="${esc(ph)}" ${req?"required":""} autocomplete="off"></label>`;
+  const f = (n, label, ph, req) => `<label class="ve-f"><span class="small muted">${label}${req?" *":""}</span><input name="${n}" value="${esc((n==="exvi" ? exVi(x) : x[n])||"")}" placeholder="${esc(ph)}" ${req?"required":""} autocomplete="off"></label>`;
   const extra = S.edit.id === "new" ? "" : x._custom
     ? `<button class="btn" type="button" data-act="vdel">🗑 Xóa ${V.M.unit} này</button>`
     : `${x._edited?`<button class="btn" type="button" data-act="vreset">↺ Khôi phục bản gốc</button>`:""}<button class="btn" type="button" data-act="vdel">🗑 Ẩn ${V.M.unit} này</button>`;
   return `<form class="sheet vedit" id="vedit"><h3>${S.edit.id==="new" ? `Thêm ${V.M.unit} mới` : `Sửa “${esc(x.w)}”`} <span class="muted small">· ${V.M.name}</span></h3>
     <div class="ve-grid">${f("w", V.M.Unit+" tiếng Anh", V.mode==="word"?"vd: persevere":"vd: make progress", true)}${f("vi", "Nghĩa tiếng Việt", "vd: tiến bộ", true)}
       ${f("p", "Loại từ", "n / v / adj / phrase…")}${f("ipa", "Phiên âm", "/ˈwɜːd/")}
-      ${f("ex", "Câu ví dụ", "Viết một câu có dùng từ này")}${f("g", "Nhóm", "vd: Từ của tôi")}</div>
+      ${f("ex", "Câu ví dụ", "Viết một câu có dùng từ này")}${f("exvi", "Nghĩa câu ví dụ", "Câu ví dụ dịch sang tiếng Việt")}${f("g", "Nhóm", "vd: Từ của tôi")}</div>
     <div class="row" style="margin-top:12px"><button class="btn primary" type="submit">Lưu</button><button class="btn" type="button" data-act="vcancel">Hủy</button><span style="flex:1"></span>${extra}</div></form>`;
 }
 function vocabDeck(u){
@@ -592,6 +595,9 @@ function synQuestions(u, pool, n){
   });
 }
 
+/* Nghĩa tiếng Việt của câu ví dụ: trường "exvi" của từ (người học tự nhập), nếu không có thì tra data/ex-vi.js */
+function exVi(v){ return (v && (v.exvi || (v.ex && (window.EXVI || {})[v.ex]))) || ""; }
+
 function vVocab(u){
   const V = vocabPool(u), pool = V.list;
   const nHidden = Object.keys(P.hidden).filter(k => k.startsWith(u.id+":"+V.mode+":")).length;
@@ -621,13 +627,13 @@ function vVocab(u){
       <button type="button" class="card ${S.flipped?'flipped':''} ${S.enter?'enter-'+S.enter:''}" data-act="flip" aria-label="Lật thẻ. Quẹt trái hoặc phải, hoặc dùng phím mũi tên, để đổi thẻ">
         <div class="card-in">
           <div class="face"><span class="pos">${esc(v.p)}</span><span class="word">${esc(v.w)}</span><span class="ipa">${esc(v.ipa)}</span><span class="hint">Bấm để xem nghĩa · quẹt ← → để đổi thẻ · ${S.card+1}/${deck.length}${v.g?" · "+esc(v.g):""}</span></div>
-          <div class="face back"><span class="eyebrow">Nghĩa</span><h2>${posTag(v.p)}${esc(v.vi)}</h2><span class="ex">“${esc(v.ex)}”</span>${saHTML(synAnt(u, v.w), "oncard")}<span class="hint">Bấm để lật lại</span></div>
+          <div class="face back"><span class="eyebrow">Nghĩa</span><h2>${posTag(v.p)}${esc(v.vi)}</h2><span class="ex">“${esc(v.ex)}”</span>${exVi(v)?`<span class="exvi">${esc(exVi(v))}</span>`:""}${saHTML(synAnt(u, v.w), "oncard")}<span class="hint">Bấm để lật lại</span></div>
         </div></button>
       <div class="row">
         <button class="btn" type="button" data-act="say" data-text="${esc(v.w)}">🔊 Nghe từ</button>
         <button class="btn" type="button" data-act="say" data-text="${esc(v.ex)}">🔊 Câu ví dụ</button>
       </div>
-      <div class="cardinfo"><span><b>Nghĩa:</b> ${posTag(v.p)}${esc(v.vi)}</span>${v.ex?`<span class="ex">“${esc(v.ex)}”</span>`:""}${saHTML(synAnt(u, v.w))}</div>
+      <div class="cardinfo"><span><b>Nghĩa:</b> ${posTag(v.p)}${esc(v.vi)}</span>${v.ex?`<span class="ex">“${esc(v.ex)}”</span>`:""}${exVi(v)?`<span class="exvi">${esc(exVi(v))}</span>`:""}${saHTML(synAnt(u, v.w))}</div>
       <form id="cardtype" class="cardtype" autocomplete="off" data-w="${esc(v.w)}">
         <input id="cardin" placeholder="Gõ lại ${V.M.unit} này rồi nhấn Enter" spellcheck="false" autocapitalize="off" aria-label="Gõ lại ${V.M.unit} trên thẻ">
         <button class="btn" type="submit">Kiểm tra</button>
@@ -1212,7 +1218,7 @@ function renderReview(){
   }
   return `<span class="eyebrow">Vocabulary and grammar review</span><h1>Ôn tập Unit ${S.r*2+1}–${S.r*2+2}</h1>
     <p class="muted" style="margin:8px 0 18px;max-width:62ch">Câu hỏi được trộn ngẫu nhiên từ hai unit ${esc(a.title)} và ${esc(b.title)}. Bấm “Đổi đề” để làm một bộ câu hỏi khác.</p>
-    <div class="sheet"><div class="row" style="justify-content:flex-end;margin-bottom:6px"><button class="btn small" type="button" data-act="newrq">Đổi đề</button></div>${quizHTML("review:"+S.r, S.rq.items)}</div>`;
+    <div class="sheet"><div class="row" style="justify-content:flex-end;margin-bottom:6px"><button class="btn small" type="button" data-act="newrq">Đổi đề</button></div>${quizHTML(reviewKey(S.r), S.rq.items)}</div>`;
 }
 
 /* ============ PHÁT ÂM ĐUÔI -S/-ES, -ED (data/pron.js) ============ */
@@ -1315,7 +1321,7 @@ document.addEventListener("click", e => {
   const a = b.dataset.act, u = UNITS[S.u];
   if(a==="home"){ S.view="home"; render(); }
   else if(a==="books"){ toggleBooks(); }
-  else if(a==="book"){ P.book=b.dataset.b; save(); toggleBooks(false); bookUI(); S.view="home"; render(); window.scrollTo(0,0); toast("Đang học: " + curBook().title); }
+  else if(a==="book"){ P.book=b.dataset.b; save(); toggleBooks(false); UNITS = curBook().units(); S.u=0; S.r=0; S.rq=null; S.vq=null; S.typ=null; S.si={}; bookUI(); S.view="home"; render(); window.scrollTo(0,0); toast("Đang học: " + curBook().title); }
   else if(a==="unit"){ S.vsearch=""; S.myedit=null; S.typ=null; S.typedOk=0; S.si={}; S.randq=null; S.view="unit"; S.u=+b.dataset.u; S.tab="vocab"; S.vmode="word"; S.card=0; S.flipped=false; S.vq=null; render(); window.scrollTo(0,0); }
   else if(a==="review"){ S.view="review"; S.r=+b.dataset.r; S.rq=null; render(); window.scrollTo(0,0); }
   else if(a==="newrq"){ S.rq=null; render(); }
@@ -1490,7 +1496,7 @@ document.addEventListener("submit", e => {
   }
   if(e.target.id === "vedit"){ e.preventDefault();
     const u = UNITS[S.u], m = S.edit.m, d = {}, fd = new FormData(e.target);
-    ["w","vi","p","ipa","ex","g"].forEach(k => d[k] = (fd.get(k)||"").trim());
+    ["w","vi","p","ipa","ex","exvi","g"].forEach(k => d[k] = (fd.get(k)||"").trim());
     if(!d.w || !d.vi) return;
     if(!d.g) d.g = "Từ của tôi";
     if(S.edit.id === "new"){ d._id = "c:"+Date.now().toString(36); (P.custom[u.id+":"+m] = P.custom[u.id+":"+m] || []).push(d); }

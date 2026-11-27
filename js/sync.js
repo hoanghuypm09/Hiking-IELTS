@@ -13,7 +13,7 @@
   if(!A.token){ status(A.offline ? "💾 Đăng nhập lúc mất mạng: đăng xuất rồi đăng nhập lại để đồng bộ" : "💾 Chỉ lưu trên trình duyệt này: đăng xuất rồi đăng nhập lại để đồng bộ"); return; }
   // Write to this browser without stamping a new change (save() would bump _updated and trigger a push).
   const keepLocal = () => { try{ localStorage.setItem(KEY, JSON.stringify(P)); }catch(e){} };
-  function apply(x){ Object.keys(P).forEach(k => delete P[k]); Object.assign(P, x); keepLocal(); render(); if(typeof bookUI === "function") bookUI(); }
+  function apply(x){ Object.keys(P).forEach(k => delete P[k]); Object.assign(P, x); keepLocal(); if(typeof curBook === "function" && curBook().units() !== UNITS){ UNITS = curBook().units(); S.u = 0; S.view = "home"; } render(); if(typeof bookUI === "function") bookUI(); }
 
   // First-time merge: keep everything either side has. Scores keep the best, drafts the longer text,
   // word lists are joined by id; for plain settings the cloud copy wins.

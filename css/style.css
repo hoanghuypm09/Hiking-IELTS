@@ -99,9 +99,9 @@ main{min-width:0}
 .card.enter-left{animation:cardInL .22s ease}
 @keyframes cardInR{from{transform:translateX(40px);opacity:0}}
 @keyframes cardInL{from{transform:translateX(-40px);opacity:0}}
-.card-in{position:relative;width:100%;height:100%;min-height:240px;transition:transform .45s;transform-style:preserve-3d}
+.card-in{position:relative;display:grid;width:100%;height:100%;min-height:240px;transition:transform .45s;transform-style:preserve-3d}
 .card.flipped .card-in{transform:rotateY(180deg)}
-.face{position:absolute;inset:0;backface-visibility:hidden;border:1px solid var(--line);border-radius:14px;background:var(--sheet);padding:22px;display:flex;flex-direction:column;gap:8px;justify-content:center}
+.face{position:relative;grid-area:1/1;min-height:240px;backface-visibility:hidden;border:1px solid var(--line);border-radius:14px;background:var(--sheet);padding:22px;display:flex;flex-direction:column;gap:8px;justify-content:center}
 .face.back{transform:rotateY(180deg);background:var(--accent-soft)}
 .word{font-family:var(--display);font-weight:800;font-size:2.2rem;line-height:1.1}
 .ipa{font-family:var(--ipa);color:var(--muted)}
@@ -270,6 +270,8 @@ details[open] summary{margin-bottom:8px}
 .cardinfo{display:flex;flex-direction:column;gap:2px;font-size:.85rem;line-height:1.45;color:var(--muted);margin-bottom:-6px}
 .cardinfo b{color:var(--ink);font-weight:600}
 .cardinfo .ex{font-style:italic}
+.exvi{font-size:.92rem;color:var(--muted);line-height:1.45}
+.cardinfo .exvi{font-size:inherit}
 /* Listening player bar (YT Music style, theo màu nền trang) */
 .script p{cursor:pointer;border-radius:4px;padding:2px 4px;margin:0 -4px}
 .script p:hover{background:var(--accent-soft)}
